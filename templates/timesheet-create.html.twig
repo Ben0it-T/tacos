@@ -1,0 +1,159 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{trans.view_timesheet}}{% endblock %}
+
+{% block css %}
+    <link href="{{ basePath }}/lib/tempus-dominus/tempus-dominus.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block navbar %}
+    {% embed 'navbar.html.twig' with {'title': trans.view_timesheet, 'navLinks': navLinks } %}{% endembed %}
+{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-end py-2">
+         <a class="btn btn-close" href="{{ navLinks.timesheet }}" role="button"></a>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header fs-5 fw-bold">
+            {{ trans.form_title_create_timesheet_record }}
+        </div>
+
+        <form name="timesheet_edit_form" method="post" autocomplete="off">
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-sm-2">
+                        <label for="timesheet_edit_form_start_date" class="col-form-label">{{ trans.form_label_timesheet_start }}</label>
+                    </div>
+
+                    <div class="col-sm-5">
+                        <div class="input-group" id="pickerStartDate" data-td-target-input="nearest" data-td-target-toggle="nearest">
+                            <input id="timesheet_edit_form_start_date" name="timesheet_edit_form_start_date" type="text" class="form-control" data-td-target="#pickerStartDate" value="{{ startDate|date(trans.dateFormats_date) }}" placeholder="{{ trans.dateFormats_date_placeholder }}" tabindex="1" required="required" readonly>
+                            <span class="input-group-text" data-td-target="#pickerStartDate" data-td-toggle="datetimepicker">
+                                <i class="bi bi-calendar2-week"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-5">
+                        <div class="input-group" id="pickerStartTime" data-td-target-input="nearest" data-td-target-toggle="nearest">
+                            <input id="timesheet_edit_form_start_time" name="timesheet_edit_form_start_time" type="text" class="form-control" data-td-target="#pickerStartTime" value="{{ startDate|date(trans.dateFormats_time) }}" placeholder="{{ trans.dateFormats_time_placeholder }}" tabindex="2" required="required" readonly>
+                            <span class="input-group-text" data-td-target="#pickerStartTime" data-td-toggle="datetimepicker">
+                                <i class="bi bi-clock"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-sm-2">
+                        <label for="timesheet_edit_form_duration" class="col-form-label">{{ trans.form_label_timesheet_end }}</label>
+                    </div>
+
+                    <div class="col-sm-5">
+                        <div class="input-group" id="pickerDuration" data-td-target-input="nearest" data-td-target-toggle="nearest">
+                            <input id="timesheet_edit_form_duration" name="timesheet_edit_form_duration" type="text" class="form-control" data-td-target="#pickerDuration" placeholder="{{ trans.dateFormats_time_placeholder }}" tabindex="3" readonly>
+                            <span class="input-group-text" data-td-target="#pickerDuration" data-td-toggle="datetimepicker">
+                                <i class="bi bi-hourglass"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-5">
+                        <div class="input-group" id="pickerEndTime" data-td-target-input="nearest" data-td-target-toggle="nearest">
+                            <input id="timesheet_edit_form_end_time" name="timesheet_edit_form_end_time" type="text" class="form-control" data-td-target="#pickerEndTime" placeholder="{{ trans.dateFormats_time_placeholder }}" tabindex="4" readonly>
+                            <span class="input-group-text" data-td-target="#pickerEndTime" data-td-toggle="datetimepicker">
+                                <i class="bi bi-clock"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label for="timesheet_edit_form_customer" class="col-form-label col-sm-2">{{ trans.form_label_customer }}</label>
+                    <div class="col-sm-10">
+                        <select class="form-select" id="timesheet_edit_form_customer" name="timesheet_edit_form_customer" tabindex="5">
+                            <option selected value=""></option>
+                            {% for customer in customers %}
+                                <option value="{{ customer.id }}">{{ customer.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label for="timesheet_edit_form_project" class="col-form-label col-sm-2">{{ trans.form_label_project }}</label>
+                    <div class="col-sm-10">
+                        <select class="form-select" id="timesheet_edit_form_project" name="timesheet_edit_form_project" required="required" tabindex="6">
+                            <option selected value=""></option>
+                            {% for project in projects %}
+                                <option value="{{ project.id }}">{{ project.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label for="timesheet_edit_form_activity" class="col-form-label col-sm-2">{{ trans.form_label_activity }}</label>
+                    <div class="col-sm-10">
+                        <select class="form-select" id="timesheet_edit_form_activity" name="timesheet_edit_form_activity" required="required" tabindex="7">
+                            <option selected value=""></option>
+                            {% for activity in activities %}
+                                <option value="{{ activity.id }}">{{ activity.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label for="timesheet_edit_form_description" class="col-form-label col-sm-2">{{ trans.form_label_description }}</label>
+                    <div class="col-sm-10">
+                        <textarea class="form-control" id="timesheet_edit_form_description" name="timesheet_edit_form_description" rows="3" tabindex="8"></textarea>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label for="timesheet_edit_form_tags" class="col-form-label col-sm-2">{{ trans.form_label_tags }}</label>
+                    <div class="col-sm-10">
+                        <select class="form-select" id="timesheet_edit_form_tags" name="timesheet_edit_form_tags" tabindex="7">
+                            <option selected value=""></option>
+                            {% for tag in tags %}
+                                <option value="{{ tag.id }}" color="{{ tag.color }}">{{ tag.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-10 offset-sm-2 d-flex" id="timesheet_edit_form_selectedTags"></div>
+                </div>
+            </div>
+
+
+
+            <div class="card-footer">
+                <div class="mb-3 float-end">
+                    <button type="submit" class="btn btn-primary" tabindex="8">
+                        <i class="bi bi-floppy"></i>
+                        <span class="px-1">{{ trans.btn_save }}</span>
+                    </button>
+                </div>
+
+                <input type="hidden" name="{{ csrf.nameKey | raw }}" value="{{ csrf.name | raw }}">
+                <input type="hidden" name="{{ csrf.valueKey | raw }}" value="{{ csrf.value | raw }}">
+                <input type="hidden" id="dateFormats_L" value="{{ trans.dateFormats_L }}">
+                <input type="hidden" id="dateFormats_LT" value="{{ trans.dateFormats_LT }}">
+                <input type="hidden" id="dateFormats_startOfTheWeek" value="{{ trans.dateFormats_startOfTheWeek }}">
+                <input type="hidden" id="startDate" value="{{ startDate }}" >
+                <input type="hidden" id="endDate" value="{{ endDate }}" >
+            </div>
+        </form>
+
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script nonce="{{ nonce }}" src="{{ basePath }}/lib/tempus-dominus/tempus-dominus.min.js"></script>
+    <script nonce="{{ nonce }}" src="{{ basePath }}/js/tempus.js"></script>
+    <script nonce="{{ nonce }}" src="{{ basePath }}/js/timesheet.js"></script>
+{% endblock %}

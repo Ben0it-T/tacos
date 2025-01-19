@@ -1,0 +1,128 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{trans.view_timesheet}}{% endblock %}
+
+{% block css %}
+    <link href="{{ basePath }}/lib/tempus-dominus/tempus-dominus.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block navbar %}
+    {% embed 'navbar.html.twig' with {'title': trans.view_timesheet, 'navLinks': navLinks } %}{% endembed %}
+{% endblock %}
+
+{% block content %}
+
+    <div class="d-flex justify-content-between py-2">
+        <div>
+            <form name="timesheet_date_filter" method="GET" class="d-flex">
+                <label for="timesheet_date" class="form-label visually-hidden">{{ trans.form_label_date }}</label>
+                <div class="input-group" id="pickerDateFilter" data-td-target-input="nearest" data-td-target-toggle="nearest">
+                    <span class="input-group-text" data-td-target="#pickerDateFilter" data-td-toggle="datetimepicker">
+                        <i class="bi bi-calendar2-week"></i>
+                    </span>
+                    <input id="timesheet_date" type="text" class="form-control" data-td-target="#pickerDateFilter" value="{{ daterange.start|date(trans.dateFormats_date) }} - {{ daterange.end|date(trans.dateFormats_date) }}" placeholder="{{ trans.dateFormats_date_placeholder }}" tabindex="1" required="required" readonly>
+                    <button id="btnSubmit" class="btn btn-outline-secondary" type="button"><i class="bi bi-search"></i></button>
+                </div>
+                <input type="hidden" id="date" name="date" value="{{ daterange.start }} - {{ daterange.end }}">
+                <input type="hidden" id="dateFormats_L" value="{{ trans.dateFormats_L }}">
+                <input type="hidden" id="dateFormats_startOfTheWeek" value="{{ trans.dateFormats_startOfTheWeek }}">
+            </form>
+        </div>
+
+        <div class="d-flex">
+            <a type="button" class="btn btn-outline-secondary d-flex text-nowrap" href="{{ navLinks.timesheet_export }}" >
+                <i class="bi bi-box-arrow-up"></i>
+                <span class="d-none d-sm-block px-1">{{ trans.btn_export }}</span>
+            </a>
+
+            <a type="button" class="btn btn-outline-secondary d-flex ms-1 text-nowrap" href="{{ navLinks.timesheet_create }}" >
+                <i class="bi bi-plus-lg"></i>
+                <span class="d-none d-sm-block px-1">{{ trans.btn_create }}</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">{{ trans.table_row_date }}</th>
+                        <th scope="col">{{ trans.table_row_date_begin }}</th>
+                        <th scope="col">{{ trans.table_row_date_end }}</th>
+                        <th scope="col">{{ trans.table_row_date_duration }}</th>
+                        <th scope="col">{{ trans.table_row_project }}</th>
+                        <th scope="col">{{ trans.table_row_activity }}</th>
+                        <th scope="col">{{ trans.table_row_description }}</th>
+                        <th scope="col">{{ trans.table_row_tags }}</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody class="table-group-divider">
+                    {% for timesheet in timesheets %}
+                        <tr>
+                            <td>{{ timesheet.start is empty ? "" : timesheet.start|date(trans.dateFormats_date) }}</td>
+                            <td>{{ timesheet.start is empty ? "" : timesheet.start|date(trans.dateFormats_time) }}</td>
+                            <td>{{ timesheet.end is empty ? "" : timesheet.end|date(trans.dateFormats_time) }}</td>
+                            <td>{{ timesheet.duration }}</td>
+                            <td>
+                                <div class="d-inline-flex align-items-center text-nowrap">
+                                    <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ timesheet.project.color }};"><span class="visually-hidden">color</span></span>
+                                    <span class="ms-1">{{ timesheet.project.name }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-inline-flex align-items-center text-nowrap">
+                                    <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ timesheet.activity.color }};"><span class="visually-hidden">color</span></span>
+                                    <span class="ms-1">{{ timesheet.activity.name }}</span>
+                                </div>
+                            </td>
+                            <td>{{ timesheet.description|nl2br }}</td>
+                            <td>
+                                {% if timesheet.tags|length > 0 %}
+                                    {% for tag in timesheet.tags %}
+                                        <span class="badge me-2" style="background-color: {{ tag.color }};">{{ tag.name }}</span>
+                                    {% endfor %}
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="float-end text-nowrap">
+                                    {% if timesheet.end is empty %}
+                                    <a class="icon-link icon-link-hover mx-2" href="{{ timesheet.stopLink }}">
+                                        <i class="bi bi-stop-circle text-danger"></i>
+                                    </a>
+                                    {% endif %}
+                                    <a class="icon-link icon-link-hover mx-2" href="{{ timesheet.editLink }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    {% if duration > 0 %}
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td class="form-text">Total</td>
+                            <td class="form-text">{{ duration }}</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    {% endif %}
+
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script nonce="{{ nonce }}" src="{{ basePath }}/lib/tempus-dominus/tempus-dominus.min.js"></script>
+    <script nonce="{{ nonce }}" src="{{ basePath }}/js/tempus.js"></script>
+    <script nonce="{{ nonce }}" src="{{ basePath }}/js/my-times.js"></script>
+{% endblock %}

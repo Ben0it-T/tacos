@@ -1,0 +1,186 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{trans.view_activities }}{% endblock %}
+
+{% block navbar %}
+    {% embed 'navbar.html.twig' with {'title': trans.view_activities, 'navLinks': navLinks } %}{% endembed %}
+{% endblock %}
+
+{% block content %}
+    {% if userRole in [2, 3] %}
+    <div class="d-flex justify-content-end py-2">
+        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#createActivity">
+            <i class="bi bi-plus-lg"></i>
+            <span class="px-1">{{ trans.btn_create }}</span>
+        </button>
+    </div>
+    {% endif %}
+
+    <div class="card mb-3">
+        <div class="card-body table-responsive">
+            {% embed 'flash-messages.html.twig' %}{% endembed %}
+
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">{{ trans.table_row_name }}</th>
+                        <th scope="col">{{ trans.table_row_number }}</th>
+                        <th scope="col">{{ trans.table_row_project }}</th>
+                        <th scope="col">{{ trans.table_row_description }}</th>
+                        <th scope="col">{{ trans.table_row_teams }}</th>
+                        <th scope="col">{{ trans.table_row_visible }}</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for activity in activities %}
+                        <tr>
+                            <td>
+                                <div class="d-inline-flex align-items-center text-nowrap">
+                                    <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ activity.color }};"><span class="visually-hidden">color</span></span>
+                                    <span class="ms-2">{{ activity.name }}</span>
+                                </div>
+                            </td>
+                            <td>{{ activity.number }}</td>
+                            <td>{{ activity.project }}</td>
+                            <td>{{ activity.description|nl2br }}</td>
+                            <td>
+                                <span class="badge {{ activity.teams == 0 ? "text-bg-secondary" : "text-bg-primary" }} ">{{ activity.teams }}</span>
+                            </td>
+                            <td>
+                                {% if activity.visible == true %}
+                                    <span class="badge text-bg-success">{{ trans.badge_yes }}</span>
+                                {% else %}
+                                    <span class="badge text-bg-danger">{{ trans.badge_no }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="float-end text-nowrap">
+                                    <a class="icon-link icon-link-hover mx-2" href="{{ activity.viewLink }}">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    {% if userRole == 3 or (userRole == 2 and activity.teams > 0) %}
+                                    <a class="icon-link icon-link-hover mx-2" href="{{ activity.editLink }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% endif %}
+
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if userRole in [2, 3] %}
+    <div class="modal fade" id="createActivity" tabindex="-1" aria-labelledby="createActivityLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form name="activity_edit_form" method="post" autocomplete="off">
+
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="createActivityLabel">{{ trans.form_title_create_activity }}</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <label for="activity_edit_form_name" class="col-form-label col-sm-3">{{ trans.form_label_name }}</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="activity_edit_form_name" name="activity_edit_form_name" placeholder="{{ trans.form_label_name }}" minlength="5" maxlength="180" required="required" tabindex="1">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label for="activity_edit_form_color" class="col-form-label col-sm-3">{{ trans.form_label_color }}</label>
+                            <div class="col-sm-8">
+                                <select class="form-select" id="activity_edit_form_color" name="activity_edit_form_color" required="required" tabindex="2">
+                                    <option selected value=""></option>
+                                    {% for color in colors %}
+                                        <option value="{{ color.value }}">{{ color.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <label for="activity_edit_form_color" class="col-form-label col-sm-1">
+                                <span class="badge p-2 border border-light rounded-circle" id="activity_color"><span class="visually-hidden">color</span></span>
+                            </label>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label for="activity_edit_form_project" class="col-form-label col-sm-3">{{ trans.form_label_project }}</label>
+                            <div class="col-sm-9">
+                                <select class="form-select" id="activity_edit_form_project" name="activity_edit_form_project" tabindex="3">
+                                    <option selected value=""></option>
+                                    {% for project in projects %}
+                                        <option value="{{ project.id }}">{{ project.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">{{ trans.form_text_add_project|nl2br }}</div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label for="activity_edit_form_number" class="col-form-label col-sm-3">{{ trans.form_label_activity_number }}</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="activity_edit_form_number" name="activity_edit_form_number" placeholder="{{ trans.form_label_activity_number }}" minlength="0" maxlength="50" tabindex="4">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label for="activity_edit_form_description" class="col-form-label col-sm-3">{{ trans.form_label_description }}</label>
+                            <div class="col-sm-9">
+                                <textarea class="form-control" id="activity_edit_form_description" name="activity_edit_form_description" rows="3" tabindex="5"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label for="activity_edit_form_teams" class="col-form-label col-sm-3">{{ trans.form_label_add_team }}</label>
+                            <div class="col-sm-9">
+                                <select class="form-select" id="activity_edit_form_teams" name="activity_edit_form_teams" tabindex="6">
+                                    <option selected value=""></option>
+                                    {% for team in teams %}
+                                        <option value="{{ team.id }}">{{ team.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">{{ trans.form_text_add_team }}</div>
+                            </div>
+                        </div>
+                        <div class="mb-3" id="activity_edit_form_selectedTeams">
+                            <div class="row mb-3">
+                                <div class="col-sm-9 offset-sm-3">
+                                    {{ trans.form_label_selected_teams }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-sm-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="activity_edit_form_visible" name="activity_edit_form_visible" tabindex="7" checked>
+                                    <label class="form-check-label" for="activity_edit_form_visible">{{ trans.form_label_visible }}</label>
+                                    <div class="form-text">{{ trans.form_text_visible }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ trans.btn_close }}</button>
+                        <button type="submit" class="btn btn-primary">{{ trans.btn_save }}</button>
+                        <input type="hidden" name="{{ csrf.nameKey | raw }}" value="{{ csrf.name | raw }}">
+                        <input type="hidden" name="{{ csrf.valueKey | raw }}" value="{{ csrf.value | raw }}">
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block scripts %}
+    <script nonce="{{ nonce }}" src="{{ basePath }}/js/activities.js"></script>
+{% endblock %}

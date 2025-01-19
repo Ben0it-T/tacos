@@ -1,0 +1,113 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{trans.view_profile}}{% endblock %}
+
+{% block navbar %}
+    {% embed 'navbar.html.twig' with {'title': trans.view_profile, 'navLinks': navLinks } %}{% endembed %}
+{% endblock %}
+
+{% block content %}
+    <div class="card mb-3">
+        <div class="card-header fs-5 fw-bold">
+            {{ user.name }}
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-borderless w-auto">
+                    <tbody>
+                        <tr>
+                            <th scope="row">{{ trans.card_role }}</th>
+                            <td>
+                                {% if user.roleId == 3 %}
+                                    <span class="badge text-bg-danger">{{ user.role }}</span>
+                                {% elseif user.roleId == 2 %}
+                                    <span class="badge text-bg-primary">{{ user.role }}</span>
+                                {% else %}
+                                    <span class="badge text-bg-secondary">{{ user.role }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{{ trans.table_row_registrationDate }}</th>
+                            <td>{{ user.registrationDate is empty ? "" : user.registrationDate|date(trans.dateFormats_datetime) }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{{ trans.table_row_lastlogin }}</th>
+                            <td>{{ user.lastLogin is empty ? "" : user.lastLogin|date(trans.dateFormats_datetime) }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{{ trans.view_teams }}</th>
+                            <td>
+                                {% if user.teams|length > 0 %}
+                                <ul class="list-unstyled ms-1">
+                                {% for team in user.teams %}
+                                    <li>
+                                        <div class="d-inline-flex align-items-center">
+                                            <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ team.teamColor }};"><span class="visually-hidden">color</span></span>
+                                            <span class="ms-2">{{ team.teamName }}</span>
+                                            {% if team.teamlead == 1 %}
+                                                <i class="bi bi-award ms-3"></i>
+                                            {% endif %}
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                                </ul>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <form name="user_profile_form" method="post" autocomplete="off">
+            <div class="card-body">
+                {% embed 'flash-messages.html.twig' %}{% endembed %}
+
+                <div class="row mb-3">
+                    <label for="user_profile_form_name" class="col-form-label col-sm-3">{{ trans.form_label_name}}</label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" id="user_profile_form_name" name="user_profile_form_name" required="required" value="{{ user.name }}" placeholder="{{ trans.form_label_name }}" minlength="5" maxlength="180" tabindex="1">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="user_profile_form_username" class="col-form-label col-sm-3">{{ trans.form_label_username}}</label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" id="user_profile_form_username" name="user_profile_form_username" required="required" value="{{ user.username }}" autocomplete="username" placeholder="{{ trans.form_label_username }}" minlength="{{ form.loginMinLength }}" maxlength="180" tabindex="2">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="user_profile_form_email" class="col-form-label col-sm-3">{{ trans.form_label_email}}</label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" id="user_profile_form_email" name="user_profile_form_email" required="required" value="{{ user.email }}" autocomplete="username" placeholder="{{ trans.form_label_email }}" minlength="5" maxlength="180" tabindex="3">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="user_profile_form_password1" class="col-form-label col-sm-3">{{ trans.form_label_password_new }}</label>
+                    <div class="col-sm-9">
+                        <input type="password" class="form-control" id="user_profile_form_password1" name="user_profile_form_password1" autocomplete="new-password" placeholder="{{ trans.form_label_password_new }}" minlength="{{ form.pwdMinLength }}" maxlength="128" tabindex="4">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="user_profile_form_password2" class="col-form-label col-sm-3">{{ trans.form_label_password_confirm }}</label>
+                    <div class="col-sm-9">
+                        <input type="password" class="form-control" id="user_profile_form_password2" name="user_profile_form_password2" autocomplete="new-password" placeholder="{{ trans.form_label_password_confirm }}" minlength="{{ form.pwdMinLength }}" maxlength="128" tabindex="5">
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="mb-3 float-end">
+                    <button type="submit" class="btn btn-primary" tabindex="6">
+                        <i class="bi bi-floppy"></i>
+                        <span class="px-1">{{ trans.btn_save }}</span>
+                    </button>
+                </div>
+                <input type="hidden" name="{{ csrf.nameKey | raw }}" value="{{ csrf.name | raw }}">
+                <input type="hidden" name="{{ csrf.valueKey | raw }}" value="{{ csrf.value | raw }}">
+            </div>
+        </form>
+    </div>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{trans.view_activities }}{% endblock %}
+
+{% block navbar %}
+    {% embed 'navbar.html.twig' with {'title': trans.view_activities, 'navLinks': navLinks } %}{% endembed %}
+{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-end py-2">
+         <a class="btn btn-close" href="{{ navLinks.activities }}" role="button"></a>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header fs-5 fw-bold">
+            <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ activity.color }};"><span class="visually-hidden">color</span></span>
+            <span class="ms-2">{{ activity.name }}</span>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-borderless w-auto">
+                    <tbody>
+                        <tr>
+                            <th scope="row">{{ trans.table_row_visible }}</th>
+                            <td>
+                                {% if activity.visible == true %}
+                                    <span class="badge text-bg-success">{{ trans.badge_yes }}</span>
+                                {% else %}
+                                    <span class="badge text-bg-danger">{{ trans.badge_no }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{{ trans.table_row_project }}</th>
+                            <td>{{ selectedProject is empty ? "" :  selectedProject.name }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{{ trans.card_activity_number }}</th>
+                            <td>{{ activity.number }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{{ trans.table_row_description }}</th>
+                            <td>{{ activity.comment|nl2br }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{{ trans.table_row_creationDate }}</th>
+                            <td>{{ activity.createdAt is empty ? "" : activity.createdAt|date(trans.dateFormats_datetime) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header fs-5 fw-bold">
+            {{ trans.table_row_visibility }}
+        </div>
+
+        <div class="card-body">
+            {% if selectedTeams|length > 0 %}
+            <ul class="list-unstyled ms-1">{{ trans.card_teams_visibility }}
+                {% for selectedTeam in selectedTeams %}
+                    <li>
+                        <div class="d-inline-flex align-items-center">
+                            <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ selectedTeam.color }};"><span class="visually-hidden">color</span></span>
+                            <span class="ms-2">{{ selectedTeam.name }}</span>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+                {{ trans.card_teams_visibility_all }}
+            {% endif %}
+        </div>
+    </div>
+
+
+{% endblock %}

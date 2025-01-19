@@ -1,0 +1,24 @@
+# General
+.DS_Store
+._*
+_*
+*.sublime-project
+*.sublime-workspace
+
+# Config
+config/env.php
+config/local.*.php
+!config/local.example.php
+
+# Composer
+composer.phar
+composer.lock
+vendor/
+
+# App
+var/cache/*
+var/logs/*
+var/sessions/*
+var/templates/*
+var/tmp/*
+!.gitkeep

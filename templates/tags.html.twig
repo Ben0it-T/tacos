@@ -1,0 +1,122 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{trans.view_tags }}{% endblock %}
+
+{% block navbar %}
+    {% embed 'navbar.html.twig' with {'title': trans.view_tags, 'navLinks': navLinks } %}{% endembed %}
+{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-end py-2">
+        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#createTag">
+            <i class="bi bi-plus-lg"></i>
+            <span class="px-1">{{ trans.btn_create }}</span>
+        </button>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body table-responsive">
+            {% embed 'flash-messages.html.twig' %}{% endembed %}
+
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">{{ trans.table_row_name }}</th>
+                        <th scope="col">{{ trans.table_row_visible }}</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tag in tags %}
+                        <tr>
+                            <td>
+                                <div class="d-inline-flex align-items-center text-nowrap">
+                                    <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ tag.color }};"><span class="visually-hidden">color</span></span>
+                                    <span class="ms-2">{{ tag.name }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if tag.visible == true %}
+                                    <span class="badge text-bg-success">{{ trans.badge_yes }}</span>
+                                {% else %}
+                                    <span class="badge text-bg-danger">{{ trans.badge_no }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="float-end text-nowrap">
+                                    <a class="icon-link icon-link-hover mx-2" href="{{ tag.editLink }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal fade" id="createTag" tabindex="-1" aria-labelledby="createTagLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form name="tag_edit_form" method="post" autocomplete="off">
+
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="createTagLabel">{{ trans.form_title_create_tag }}</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <label for="tag_edit_form_name" class="col-form-label col-sm-3">{{ trans.form_label_name }}</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="tag_edit_form_name" name="tag_edit_form_name" placeholder="{{ trans.form_label_name }}" minlength="5" maxlength="180" required="required" tabindex="1">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label for="tag_edit_form_color" class="col-form-label col-sm-3">{{ trans.form_label_color }}</label>
+                            <div class="col-sm-8">
+                                <select class="form-select" id="tag_edit_form_color" name="tag_edit_form_color" required="required" tabindex="2">
+                                    <option selected value=""></option>
+                                    {% for color in colors %}
+                                        <option value="{{ color.value }}">{{ color.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <label for="tag_edit_form_color" class="col-form-label col-sm-1">
+                                <span class="badge p-2 border border-light rounded-circle" id="tag_color"><span class="visually-hidden">color</span></span>
+                            </label>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-sm-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="tag_edit_form_visible" name="tag_edit_form_visible" tabindex="3" checked>
+                                    <label class="form-check-label" for="tag_edit_form_visible">{{ trans.form_label_visible }}</label>
+                                    <div class="form-text">{{ trans.form_text_visible }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ trans.btn_close }}</button>
+                        <button type="submit" class="btn btn-primary">{{ trans.btn_save }}</button>
+                        <input type="hidden" name="{{ csrf.nameKey | raw }}" value="{{ csrf.name | raw }}">
+                        <input type="hidden" name="{{ csrf.valueKey | raw }}" value="{{ csrf.value | raw }}">
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+
+{% endblock %}
+
+{% block scripts %}
+    <script nonce="{{ nonce }}" src="{{ basePath }}/js/tags.js"></script>
+{% endblock %}

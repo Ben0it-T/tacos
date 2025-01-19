@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+
+    <link rel="shortcut icon" href="{{ basePath }}/favicon.ico" type="image/x-icon" />
+             <link rel="icon" href="{{ basePath }}/favicon.ico" type="image/x-icon" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ basePath }}/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ basePath }}/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ basePath }}/favicon-16x16.png">
+    <link rel="manifest" href="{{ basePath }}/manifest.json">
+
+    <title>Tacos | {% block title %}{% endblock %}</title>
+
+    <link href="{{ basePath }}/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ basePath }}/lib/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+    {% block css %}{% endblock %}
+    <link href="{{ basePath }}/css/theme.css" rel="stylesheet">
+</head>
+<body class="border-top border-primary" basepath="{{ basePath is empty ? "" : basePath }}" >
+    {% block navbar %}{% endblock %}
+    <div class="container-fluid">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script nonce="{{ nonce }}" src="{{ basePath }}/lib/jquery/jquery-3.7.1.min.js"></script>
+    <script nonce="{{ nonce }}" src="{{ basePath }}/lib/popper/popper.min.js"></script>
+    <script nonce="{{ nonce }}" src="{{ basePath }}/lib/bootstrap/js/bootstrap.min.js"></script>
+    <script nonce="{{ nonce }}" src="{{ basePath }}/js/functions.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,131 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{trans.view_activities }}{% endblock %}
+
+{% block navbar %}
+    {% embed 'navbar.html.twig' with {'title': trans.view_activities, 'navLinks': navLinks } %}{% endembed %}
+{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-end py-2">
+         <a class="btn btn-close" href="{{ navLinks.activities }}" role="button"></a>
+    </div>
+
+    <div class="card mb-3">
+
+        <div class="card-header fs-5 fw-bold">
+            <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ activity.color }};"><span class="visually-hidden">color</span></span>
+            <span class="ms-2">{{ activity.name }}</span>
+        </div>
+
+        <form name="activity_edit_form" method="post" autocomplete="off">
+            <div class="card-body">
+                {% embed 'flash-messages.html.twig' %}{% endembed %}
+
+                <div class="row mb-3">
+                    <label for="activity_edit_form_name" class="col-form-label col-sm-3">{{ trans.form_label_name }}</label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" id="activity_edit_form_name" name="activity_edit_form_name" value="{{ activity.name }}" placeholder="{{ trans.form_label_name }}" minlength="5" maxlength="180" required="required" tabindex="1">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label for="activity_edit_form_color" class="col-form-label col-sm-3">{{ trans.form_label_color }}</label>
+                    <div class="col-sm-8">
+                        <select class="form-select" id="activity_edit_form_color" name="activity_edit_form_color" required="required" tabindex="2">
+                            <option selected value=""></option>
+                            {% for color in colors %}
+                                <option value="{{ color.value }}" {% if activity.color == color.value %}selected{% endif %}>{{ color.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <label for="activity_edit_form_color" class="col-form-label col-sm-1">
+                        <span class="badge p-2 border border-light rounded-circle" id="activity_color" style="background-color: {{ activity.color }};"><span class="visually-hidden">color</span></span>
+                    </label>
+                </div>
+
+                <div class="row mb-3">
+                    <label for="activity_edit_form_project" class="col-form-label col-sm-3">{{ trans.form_label_project }}</label>
+                    <div class="col-sm-9">
+                        <select class="form-select" id="activity_edit_form_project" name="activity_edit_form_project" tabindex="3" disabled>
+                            <option value="{{ selectedProject is empty ? "" : selectedProject.id }}" selected>{{ selectedProject is empty ? "" : selectedProject.name }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label for="activity_edit_form_number" class="col-form-label col-sm-3">{{ trans.form_label_activity_number }}</label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" id="activity_edit_form_number" name="activity_edit_form_number" value="{{ activity.number }}" placeholder="{{ trans.form_label_activity_number }}" minlength="0" maxlength="50" tabindex="4">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label for="activity_edit_form_description" class="col-form-label col-sm-3">{{ trans.form_label_description }}</label>
+                    <div class="col-sm-9">
+                        <textarea class="form-control" id="activity_edit_form_description" name="activity_edit_form_description" rows="3" tabindex="5">{{ activity.comment }}</textarea>
+                    </div>
+                </div>
+
+
+                <div class="row mb-3">
+                    <label for="activity_edit_form_teams" class="col-form-label col-sm-3">{{ trans.form_label_add_team }}</label>
+                    <div class="col-sm-9">
+                        <select class="form-select" id="activity_edit_form_teams" name="activity_edit_form_teams" tabindex="6">
+                            <option selected value=""></option>
+                            {% for team in teams %}
+                                <option value="{{ team.id }}" {% if team.id in selectedTeamsIds %}hidden{% endif %}>{{ team.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">{{ trans.form_text_add_team }}</div>
+                    </div>
+                </div>
+                <div class="mb-3" id="activity_edit_form_selectedTeams">
+                    <div class="row mb-3">
+                        <div class="col-sm-9 offset-sm-3">
+                            {{ trans.form_label_selected_teams }}
+                        </div>
+                    </div>
+                    {% for selectedTeam in selectedTeams %}
+                        <div class="row mb-3 mx-0" id="activity_edit_form_teams_{{ selectedTeam.teamId }}">
+                            <div class="col-sm-9 offset-sm-3 border border-secondary-subtle">
+                                <div class="form py-2">
+                                    <input type="hidden" name="activity_edit_form[selectedTeams][]" value="{{ selectedTeam.teamId }}" required="required">
+                                    <span class="form-label">{{ selectedTeam.name }}</span>
+                                    <button type="button" class="btn-remove-member btn btn-light btn-sm d-inline-flex float-end" value="{{ selectedTeam.teamId }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-sm-6">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="activity_edit_form_visible" name="activity_edit_form_visible" tabindex="7" {% if activity.visible == 1 %}checked{% endif %}>
+                            <label class="form-check-label" for="activity_edit_form_visible">{{ trans.form_label_visible }}</label>
+                            <div class="form-text">{{ trans.form_text_visible }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <div class="mb-3 float-end">
+                    <button type="submit" class="btn btn-primary" tabindex="8">
+                        <i class="bi bi-floppy"></i>
+                        <span class="px-1">{{ trans.btn_save }}</span>
+                    </button>
+                </div>
+                <input type="hidden" name="{{ csrf.nameKey | raw }}" value="{{ csrf.name | raw }}">
+                <input type="hidden" name="{{ csrf.valueKey | raw }}" value="{{ csrf.value | raw }}">
+            </div>
+        </form>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script nonce="{{ nonce }}" src="{{ basePath }}/js/activities.js"></script>
+{% endblock %}

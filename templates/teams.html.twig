@@ -1,0 +1,129 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{trans.view_teams }}{% endblock %}
+
+{% block navbar %}
+    {% embed 'navbar.html.twig' with {'title': trans.view_teams, 'navLinks': navLinks } %}{% endembed %}
+{% endblock %}
+
+{% block content %}
+    {% if canCreateTeam == true %}
+    <div class="d-flex justify-content-end py-2">
+        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#createTeam">
+            <i class="bi bi-plus-lg"></i>
+            <span class="px-1">{{ trans.btn_create }}</span>
+        </button>
+    </div>
+    {% endif %}
+
+    <div class="card mb-3">
+        <div class="card-body">
+            {% embed 'flash-messages.html.twig' %}{% endembed %}
+
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">{{ trans.table_row_name }}</th>
+                        <th scope="col">{{ trans.table_row_members }}</th>
+                        <th scope="col">{{ trans.table_row_teamleaders }}</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for team in teams %}
+                    <tr>
+                        <td>
+                            <div class="d-inline-flex align-items-center">
+                                <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ team.color }};"><span class="visually-hidden">color</span></span>
+                                <span class="ms-2">{{ team.name }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge {{ team.members == 0 ? "text-bg-secondary" : "text-bg-primary" }} ">{{ team.members }}</span>
+                        </td>
+                        <td>{{ team.teamleaders }}</td>
+                        <td>
+                            <a class="icon-link icon-link-hover float-end" href="{{ team.editLink }}">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if canCreateTeam == true %}
+    <div class="modal fade" id="createTeam" tabindex="-1" aria-labelledby="createTeamLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form name="team_edit_form" method="post" autocomplete="off">
+
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="createTeamLabel">{{ trans.form_title_create_team }}</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <label for="team_edit_form_name" class="col-form-label col-sm-3">{{ trans.form_label_name }}</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="team_edit_form_name" name="team_edit_form_name" required="required" placeholder="{{ trans.form_label_name }}" minlength="5" maxlength="180" tabindex="1">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <label for="team_edit_form_color" class="col-form-label col-sm-3">{{ trans.form_label_color }}</label>
+                            <div class="col-sm-8">
+                                <select class="form-select" id="team_edit_form_color" name="team_edit_form_color" required="required" tabindex="2">
+                                    <option selected value=""></option>
+                                    {% for color in colors %}
+                                        <option value="{{ color.value }}">{{ color.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <label for="team_edit_form_color" class="col-form-label col-sm-1">
+                                <span class="badge p-2 border border-light rounded-circle" id="team_color"><span class="visually-hidden">color</span></span>
+                            </label>
+                        </div>
+                        <div class="row mb-3">
+                            <label for="team_edit_form_users" class="col-form-label col-sm-3">{{ trans.form_label_add_user }}</label>
+                            <div class="col-sm-9">
+                                <select class="form-select" id="team_edit_form_users" name="team_edit_form_users" tabindex="3">
+                                    <option selected value=""></option>
+                                    {% for user in users %}
+                                        <option value="{{ user.id }}">{{ user.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">{{ trans.form_text_add_user }}</div>
+                            </div>
+                        </div>
+                        <div class="mb-3" id="team_edit_form_members">
+                            <div class="row mb-3">
+                                <div class="col-sm-9 offset-sm-3">
+                                    {{ trans.form_label_members }}
+                                    <div class="form-text mb-3">{{ trans.form_text_members }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ trans.btn_close }}</button>
+                        <button type="submit" class="btn btn-primary">{{ trans.btn_save }}</button>
+                        <input type="hidden" name="{{ csrf.nameKey | raw }}" value="{{ csrf.name | raw }}">
+                        <input type="hidden" name="{{ csrf.valueKey | raw }}" value="{{ csrf.value | raw }}">
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block scripts %}
+    <script nonce="{{ nonce }}" src="{{ basePath }}/js/teams.js"></script>
+{% endblock %}
+
+

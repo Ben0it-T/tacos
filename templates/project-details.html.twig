@@ -1,0 +1,137 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{trans.view_projects }}{% endblock %}
+
+{% block navbar %}
+    {% embed 'navbar.html.twig' with {'title': trans.view_projects, 'navLinks': navLinks } %}{% endembed %}
+{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-end py-2">
+         <a class="btn btn-close" href="{{ navLinks.projects }}" role="button"></a>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header fs-5 fw-bold">
+            <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ project.color }};"><span class="visually-hidden">color</span></span>
+            <span class="ms-2">{{ project.name }}</span>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-borderless w-auto">
+                    <tbody>
+                        <tr>
+                            <th scope="row">{{ trans.table_row_visible }}</th>
+                            <td>
+                                {% if project.visible == true %}
+                                    <span class="badge text-bg-success">{{ trans.badge_yes }}</span>
+                                {% else %}
+                                    <span class="badge text-bg-danger">{{ trans.badge_no }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{{ trans.table_row_globalActivities }}</th>
+                            <td>
+                                {% if project.globalActivities == true %}
+                                    <span class="badge text-bg-success">{{ trans.badge_yes }}</span>
+                                {% else %}
+                                    <span class="badge text-bg-danger">{{ trans.badge_no }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{{ trans.table_row_customer }}</th>
+                            <td>{{ selectedCustomer.name }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{{ trans.card_project_number }}</th>
+                            <td>{{ project.number }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{{ trans.table_row_description }}</th>
+                            <td>{{ project.comment|nl2br }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{{ trans.table_row_creationDate }}</th>
+                            <td>{{ project.createdAt is empty ? "" : project.createdAt|date(trans.dateFormats_datetime) }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{{ trans.card_project_start }}</th>
+                            <td>{{ project.start is empty ? "" : project.start|date(trans.dateFormats_date) }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">{{ trans.card_project_end }}</th>
+                            <td>{{ project.end is empty ? "" : project.end|date(trans.dateFormats_date) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header fs-5 fw-bold">
+            {{ trans.table_row_visibility }}
+        </div>
+
+        <div class="card-body">
+            {% if selectedTeams|length > 0 %}
+            <ul class="list-unstyled ms-1">{{ trans.card_teams_visibility }}
+                {% for selectedTeam in selectedTeams %}
+                    <li>
+                        <div class="d-inline-flex align-items-center">
+                            <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ selectedTeam.color }};"><span class="visually-hidden">color</span></span>
+                            <span class="ms-2">{{ selectedTeam.name }}</span>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+                {{ trans.card_teams_visibility_all }}
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header fs-5 fw-bold">
+            {{ trans.table_row_activities }}
+
+        </div>
+
+        <div class="card-body">
+            {% if project.globalActivities == 1 and globalActivities|length > 0 %}
+            <ul class="list-unstyled ms-1">{{ trans.table_row_globalActivities }}
+                {% for globalActivity in globalActivities %}
+                    {% if globalActivity.id in allowedActivitiesIds %}
+                    <li>
+                        <div class="d-inline-flex align-items-center">
+                            <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ globalActivity.color }};"><span class="visually-hidden">color</span></span>
+                            <span class="ms-2">{{ globalActivity.name }}</span>
+                        </div>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            {% if projectActivities|length > 0 %}
+            <ul class="list-unstyled ms-1">{{ trans.table_row_project_activities }}
+                {% for projectActivity in projectActivities %}
+                    {% if projectActivity.id in allowedActivitiesIds %}
+                    <li>
+                        <div class="d-inline-flex align-items-center">
+                            <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ projectActivity.color }};"><span class="visually-hidden">color</span></span>
+                            <span class="ms-2">{{ projectActivity.name }}</span>
+                        </div>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+
+
+{% endblock %}

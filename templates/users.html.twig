@@ -1,0 +1,122 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{trans.view_users}}{% endblock %}
+
+{% block navbar %}
+    {% embed 'navbar.html.twig' with {'title': trans.view_users, 'navLinks': navLinks } %}{% endembed %}
+{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-end py-2">
+        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#createUser">
+            <i class="bi bi-plus-lg"></i>
+            <span class="px-1">{{ trans.btn_create }}</span>
+        </button>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body table-responsive">
+            {% embed 'flash-messages.html.twig' %}{% endembed %}
+
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">{{ trans.table_row_name }}</th>
+                        <th scope="col">{{ trans.table_row_username }}</th>
+                        <th scope="col">{{ trans.table_row_role }}</th>
+                        <th scope="col">{{ trans.table_row_teams }}</th>
+                        <th scope="col">{{ trans.table_row_lastlogin }}</th>
+                        <th scope="col">{{ trans.table_row_enable }}</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                        <tr>
+                            <td>{{ user.name }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>
+                                {% if user.role == trans.role_admin %}
+                                    <span class="badge text-bg-danger">{{ user.role }}</span>
+                                {% elseif user.role == trans.role_teamlead %}
+                                    <span class="badge text-bg-primary">{{ user.role }}</span>
+                                {% else %}
+                                    <span class="badge text-bg-secondary">{{ user.role }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {{ user.teams == 0 ? "text-bg-secondary" : "text-bg-primary" }} ">{{ user.teams }}</span>
+                            </td>
+                            <td>{{ user.lastLogin is empty ? "" : user.lastLogin|date(trans.dateFormats_datetime) }}</td>
+                            <td>
+                                {% if user.enable == true %}
+                                    <span class="badge text-bg-success">{{ trans.badge_yes }}</span>
+                                {% else %}
+                                    <span class="badge text-bg-danger">{{ trans.badge_no }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a class="icon-link icon-link-hover float-end" href="{{ user.editLink }}">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal fade" id="createUser" tabindex="-1" aria-labelledby="createUserLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form name="user_create_form" method="post" autocomplete="off">
+
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="createUserLabel">{{ trans.form_title_create_user }}</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <label for="user_create_form_name" class="col-form-label col-sm-3">{{ trans.form_label_name }}</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="user_create_form_name" name="user_create_form_name" required="required" placeholder="{{ trans.form_label_name }}" minlength="5" maxlength="180" tabindex="1">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <label for="user_create_form_username" class="col-form-label col-sm-3">{{ trans.form_label_username }}</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="user_create_form_username" name="user_create_form_username" required="required" autocomplete="username" placeholder="{{ trans.form_label_username }}" minlength="{{ form.loginMinLength }}" maxlength="180" tabindex="2">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <label for="user_create_form_email" class="col-form-label col-sm-3">{{ trans.form_label_email }}</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="user_create_form_email" name="user_create_form_email" required="required" placeholder="{{ trans.form_label_email }}" minlength="5" maxlength="180" tabindex="3">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <label for="user_create_form_role" class="col-form-label col-sm-3">{{ trans.form_label_role }}</label>
+                            <div class="col-sm-9">
+                                <select class="form-select" id="user_create_form_role" name="user_create_form_role" tabindex="4" required="required">
+                                    <option selected value="1">{{ trans.role_user }}</option>
+                                    <option value="2">{{ trans.role_teamlead }}</option>
+                                    <option value="3">{{ trans.role_admin }}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close" tabindex="6">{{ trans.btn_close }}</button>
+                        <button type="submit" class="btn btn-primary" tabindex="5">{{ trans.btn_save }}</button>
+                        <input type="hidden" name="{{ csrf.nameKey | raw }}" value="{{ csrf.name | raw }}">
+                        <input type="hidden" name="{{ csrf.valueKey | raw }}" value="{{ csrf.value | raw }}">
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

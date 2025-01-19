@@ -1,0 +1,218 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{trans.view_projects }}{% endblock %}
+
+{% block css %}
+    <link href="{{ basePath }}/lib/tempus-dominus/tempus-dominus.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block navbar %}
+    {% embed 'navbar.html.twig' with {'title': trans.view_projects, 'navLinks': navLinks } %}{% endembed %}
+{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-end py-2">
+         <a class="btn btn-close" href="{{ navLinks.projects }}" role="button"></a>
+    </div>
+
+    <div class="card mb-3">
+
+        <div class="card-header fs-5 fw-bold">
+            <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ project.color }};"><span class="visually-hidden">color</span></span>
+            <span class="ms-2">{{ project.name }}</span>
+        </div>
+
+        <form name="project_edit_form" method="post" autocomplete="off">
+            <div class="card-body">
+                {% embed 'flash-messages.html.twig' %}{% endembed %}
+
+                <div class="row mb-3">
+                    <label for="project_edit_form_name" class="col-form-label col-sm-3">{{ trans.form_label_name }}</label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" id="project_edit_form_name" name="project_edit_form_name" value="{{ project.name }}" placeholder="{{ trans.form_label_name }}" minlength="5" maxlength="180" required="required" tabindex="1">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label for="project_edit_form_color" class="col-form-label col-sm-3">{{ trans.form_label_color }}</label>
+                    <div class="col-sm-8">
+                        <select class="form-select" id="project_edit_form_color" name="project_edit_form_color" required="required" tabindex="2">
+                            <option selected value=""></option>
+                            {% for color in colors %}
+                                <option value="{{ color.value }}" {% if project.color == color.value %}selected{% endif %}>{{ color.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <label for="project_edit_form_color" class="col-form-label col-sm-1">
+                        <span class="badge p-2 border border-light rounded-circle" id="project_color" style="background-color: {{ project.color }};"><span class="visually-hidden">color</span></span>
+                    </label>
+                </div>
+
+                <div class="row mb-3">
+                    <label for="project_edit_form_customer" class="col-form-label col-sm-3">{{ trans.form_label_customer }}</label>
+                    <div class="col-sm-9">
+                        <select class="form-select" id="project_edit_form_customer" name="project_edit_form_customer" required="required" tabindex="3">
+                            <option selected value=""></option>
+                            {% for customer in customers %}
+                                <option value="{{ customer.id }}" {% if project.customerId == customer.id %}selected{% endif %}>{{ customer.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label for="project_edit_form_number" class="col-form-label col-sm-3">{{ trans.form_label_project_number }}</label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" id="project_edit_form_number" name="project_edit_form_number" value="{{ project.number }}" placeholder="{{ trans.form_label_project_number }}" minlength="0" maxlength="50" tabindex="4">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label for="project_edit_form_description" class="col-form-label col-sm-3">{{ trans.form_label_description }}</label>
+                    <div class="col-sm-9">
+                        <textarea class="form-control" id="project_edit_form_description" name="project_edit_form_description" rows="3" tabindex="5">{{ project.comment }}</textarea>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label for="datetimepicker1Input" class="col-form-label col-sm-3">{{ trans.form_label_project_start }}</label>
+                    <div class="col-sm-9">
+                        <div class="input-group" id="datetimepicker1" data-td-target-input="nearest" data-td-target-toggle="nearest">
+                            <input id="datetimepicker1Input" name="project_edit_form_start" type="text" class="form-control" data-td-target="#datetimepicker1" value="{{ project.start is empty ? "" : project.start|date(trans.dateFormats_date) }}" placeholder="{{ trans.dateFormats_date_placeholder }}" tabindex="6" readonly>
+                            <span class="input-group-text" data-td-target="#datetimepicker1" data-td-toggle="datetimepicker">
+                                <i class="bi bi-calendar2-week"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label for="datetimepicker2Input" class="col-form-label col-sm-3">{{ trans.form_label_project_end }}</label>
+                    <div class="col-sm-9">
+                        <div class="input-group" id="datetimepicker2" data-td-target-input="nearest" data-td-target-toggle="nearest">
+                            <input id="datetimepicker2Input" name="project_edit_form_end" type="text" class="form-control" data-td-target="#datetimepicker2" value="{{ project.end is empty ? "" : project.end|date(trans.dateFormats_date) }}" placeholder="{{ trans.dateFormats_date_placeholder }}" tabindex="7" readonly>
+                            <span class="input-group-text" data-td-target="#datetimepicker2" data-td-toggle="datetimepicker">
+                                <i class="bi bi-calendar2-week"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label for="project_edit_form_teams" class="col-form-label col-sm-3">{{ trans.form_label_add_team }}</label>
+                    <div class="col-sm-9">
+                        <select class="form-select" id="project_edit_form_teams" name="project_edit_form_teams" tabindex="8">
+                            <option selected value=""></option>
+                            {% for team in teams %}
+                                <option value="{{ team.id }}" {% if team.id in selectedTeamsIds %}hidden{% endif %}>{{ team.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">{{ trans.form_text_add_team }}</div>
+                    </div>
+                </div>
+                <div class="mb-3" id="project_edit_form_selectedTeams">
+                    <div class="row mb-3">
+                        <div class="col-sm-9 offset-sm-3">
+                            {{ trans.form_label_selected_teams }}
+                        </div>
+                    </div>
+                    {% for selectedTeam in selectedTeams %}
+                        <div class="row mb-3 mx-0" id="project_edit_form_teams_{{ selectedTeam.teamId }}">
+                            <div class="col-sm-9 offset-sm-3 border border-secondary-subtle">
+                                <div class="form py-2">
+                                    <input type="hidden" name="project_edit_form[selectedTeams][]" value="{{ selectedTeam.teamId }}" required="required">
+                                    <span class="form-label">{{ selectedTeam.name }}</span>
+                                    <button type="button" class="btn-remove-member btn btn-light btn-sm d-inline-flex float-end" value="{{ selectedTeam.teamId }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="row mb-5">
+                    <div class="col-sm-6">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="project_edit_form_visible" name="project_edit_form_visible" tabindex="9" {% if project.visible == 1 %}checked{% endif %}>
+                            <label class="form-check-label" for="project_edit_form_visible">{{ trans.form_label_visible }}</label>
+                            <div class="form-text">{{ trans.form_text_visible }}</div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="project_edit_form_globalactivities" name="project_edit_form_globalactivities" tabindex="10" {% if project.globalActivities == 1 %}checked{% endif %}>
+                            <label class="form-check-label" for="project_edit_form_globalactivities">{{ trans.form_label_global_activities }}</label>
+                            <div class="form-text">{{ trans.form_text_global_activities }}</div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="row mb-3 fs-5 fw-bold">
+                    <div class="col-sm-6">
+                        Activitités
+                    </div>
+                </div>
+
+                <div class="row mb-3" id="project_edit_form_global_activities" {% if project.globalActivities == 0 %}style="display: none;"{% endif %}>
+                    <span class="col-form-label col-sm-3">{{ trans.table_row_globalActivities }}</span>
+                    <div class="col-sm-9">
+                        {% if globalActivities|length > 0 %}
+                            {% for globalActivity in globalActivities %}
+                                <div class="form-check py-2">
+                                    <input class="form-check-input" type="checkbox" value="{{ globalActivity.id }}" name="project_edit_form[selectedActivities][]" id="project_edit_form_selectedActivities_{{ globalActivity.id }}" {% if globalActivity.id in projectActivitiesIds %}checked="checked"{% endif %}>
+                                    <label class="form-check-label" for="project_edit_form_selectedActivities_{{ globalActivity.id  }}">
+                                        <div class="d-inline-flex align-items-center">
+                                            <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ globalActivity.color }};"><span class="visually-hidden">color</span></span>
+                                            <span class="ms-2">{{ globalActivity.name }}</span>{% if globalActivity.number != "" %}<span class="ms-2 form-text">({{ globalActivity.number }})</span>{% endif %}
+                                        </div>
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <span class="col-form-label col-sm-3">{{ trans.table_row_project_activities }}</span>
+                    <div class="col-sm-9">
+                        {% if projectActivities|length > 0 %}
+                             {% for projectActivity in projectActivities %}
+                                <div class="form-check py-2">
+                                    <input class="form-check-input" type="checkbox" value="{{ projectActivity.id }}" name="project_edit_form[selectedActivities][]" id="project_edit_form_selectedActivities_{{ projectActivity.id }}" {% if projectActivity.id in projectActivitiesIds %}checked="checked"{% endif %}>
+                                    <label class="form-check-label" for="project_edit_form_selectedActivities_{{ projectActivity.id  }}">
+                                        <div class="d-inline-flex align-items-center">
+                                            <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ projectActivity.color }};"><span class="visually-hidden">color</span></span>
+                                            <span class="ms-2">{{ projectActivity.name }}</span>{% if projectActivity.number != "" %}<span class="ms-2 form-text">({{ projectActivity.number }})</span>{% endif %}
+                                        </div>
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <div class="mb-3 float-end">
+                    <button type="submit" class="btn btn-primary" tabindex="11">
+                        <i class="bi bi-floppy"></i>
+                        <span class="px-1">{{ trans.btn_save }}</span>
+                    </button>
+                </div>
+                <input type="hidden" name="{{ csrf.nameKey | raw }}" value="{{ csrf.name | raw }}">
+                <input type="hidden" name="{{ csrf.valueKey | raw }}" value="{{ csrf.value | raw }}">
+                <input type="hidden" id="dateFormats_L" value="{{ trans.dateFormats_L }}">
+                <input type="hidden" id="dateFormats_startOfTheWeek" value="{{ trans.dateFormats_startOfTheWeek }}">
+            </div>
+        </form>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script nonce="{{ nonce }}" src="{{ basePath }}/lib/tempus-dominus/tempus-dominus.min.js"></script>
+    <script nonce="{{ nonce }}" src="{{ basePath }}/js/tempus.js"></script>
+    <script nonce="{{ nonce }}" src="{{ basePath }}/js/projects.js"></script>
+{% endblock %}

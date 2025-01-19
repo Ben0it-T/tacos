@@ -1,0 +1,92 @@
+<nav class="navbar fixed-top bg-navbar" data-bs-theme="dark">
+    <div class="container-fluid">
+        <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <a class="navbar-brand d-flex p-2 flex-fill" href="{{ navLinks.current }}">{{ title }}</a>
+
+        {% if activeTimesheet.id is defined %}
+            <a class="navbar-brand d-flex align-items-center" href="{{ activeTimesheet.stopLink }}" title="{{ trans.btn_stop }}">
+                <i class="bi bi-stop-fill text-danger" style="font-size: 1.5rem;"></i>
+                <span id="currentActiveTimeSheet" start="{{ activeTimesheet.start }}" class="d-none d-sm-block" style="font-size: 1rem;">0:00</span>
+            </a>
+        {% else %}
+            <a class="navbar-brand d-flex align-items-center" href="{{ navLinks.timesheet_create }}" title="{{ trans.btn_create }}">
+                <i class="bi bi-play-fill text-success" style="font-size: 1.5rem;"></i>
+                <span class="d-none d-sm-block text-secondary" style="font-size: 1rem;">0:00</span>
+            </a>
+        {% endif %}
+
+
+        <a class="navbar-brand d-flex" href="{{ navLinks.logout }}" title="{{ trans.btn_logout }}">
+            <i class="bi bi-power" style="font-size: 1.5rem;"></i>
+        </a>
+
+        <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+            <div class="offcanvas-header">
+                <img src="{{ basePath }}/img/tacos.png" class="img-small rounded-circle mb-2" alt="tacos">
+                <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Tacos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body ps-1">
+                <ul class="navbar-nav justify-content-end flex-grow-1 pe-1">
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="#">
+                            <span class="nav-link-icon px-2 d-flex text-center">
+                                <i class="bi bi-speedometer"></i>
+                            </span>
+                            <span class="nav-link-title">Dashboard</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item {% if navLinks.current == navLinks.timesheet %}active{% endif %}">
+                        <a class="nav-link d-flex align-items-center {% if navLinks.current == navLinks.timesheet %}active{% endif %}" href="{{ navLinks.timesheet }}">
+                            <span class="nav-link-icon px-2 d-flex text-center">
+                                <i class="bi bi-person-circle"></i>
+                            </span>
+                            <span class="nav-link-title">{{ trans.view_timesheet }}</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="#">
+                            <span class="nav-link-icon px-2 d-flex text-center">
+                                <i class="bi bi-calendar-week"></i>
+                            </span>
+                            <span class="nav-link-title">Calendar</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item {% if navLinks.current == navLinks.profile %}active{% endif %}">
+                        <a class="nav-link d-flex align-items-center {% if navLinks.current == navLinks.profile %}active{% endif %}" href="{{ navLinks.profile }}">
+                            <span class="nav-link-icon px-2 d-flex text-center">
+                                <i class="bi bi-person-circle"></i>
+                            </span>
+                            <span class="nav-link-title">{{ trans.view_profile }}</span>
+                        </a>
+                    </li>
+
+                    {% if currentUser.role in [2,3] %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center show" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="true">
+                            <span class="nav-link-icon px-2 d-flex text-center">
+                                <i class="bi bi-gear-fill"></i>
+                            </span>
+                            <span class="nav-link-title">Administration</span>
+                        </a>
+                        <ul class="dropdown-menu py-0 px-2 border border-0 show">
+                            {% if navLinks.users is defined %}<li><a class="nav-link-title dropdown-item {% if navLinks.current == navLinks.users %}active{% endif %}" href="{{ navLinks.users }}">{{ trans.view_users }}</a></li>{% endif %}
+                            {% if navLinks.teams is defined %}<li><a class="nav-link-title dropdown-item {% if navLinks.current == navLinks.teams %}active{% endif %}" href="{{ navLinks.teams }}">{{ trans.view_teams }}</a></li>{% endif %}
+                            {% if navLinks.customers is defined %}<li><a class="nav-link-title dropdown-item {% if navLinks.current == navLinks.customers %}active{% endif %}" href="{{ navLinks.customers }}">{{ trans.view_customers }}</a></li>{% endif %}
+                            {% if navLinks.projects is defined %}<li><a class="nav-link-title dropdown-item {% if navLinks.current == navLinks.projects %}active{% endif %}" href="{{ navLinks.projects }}">{{ trans.view_projects }}</a></li>{% endif %}
+                            {% if navLinks.activities is defined %}<li><a class="nav-link-title dropdown-item {% if navLinks.current == navLinks.activities %}active{% endif %}" href="{{ navLinks.activities }}">{{ trans.view_activities }}</a></li>{% endif %}
+                            {% if navLinks.tags is defined %}<li><a class="nav-link-title dropdown-item {% if navLinks.current == navLinks.tags %}active{% endif %}" href="{{ navLinks.tags }}">{{ trans.view_tags }}</a></li>{% endif %}
+                        </ul>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>

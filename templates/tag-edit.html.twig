@@ -1,0 +1,74 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{trans.view_tags }}{% endblock %}
+
+{% block navbar %}
+    {% embed 'navbar.html.twig' with {'title': trans.view_tags, 'navLinks': navLinks } %}{% endembed %}
+{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-end py-2">
+         <a class="btn btn-close" href="{{ navLinks.tags }}" role="button"></a>
+    </div>
+
+    <div class="card mb-3">
+
+        <div class="card-header fs-5 fw-bold">
+            <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ tag.color }};"><span class="visually-hidden">color</span></span>
+            <span class="ms-2">{{ tag.name }}</span>
+        </div>
+
+        <form name="tag_edit_form" method="post" autocomplete="off">
+            <div class="card-body">
+                {% embed 'flash-messages.html.twig' %}{% endembed %}
+
+                <div class="row mb-3">
+                    <label for="tag_edit_form_name" class="col-form-label col-sm-3">{{ trans.form_label_name }}</label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" id="tag_edit_form_name" name="tag_edit_form_name" value="{{ tag.name }}" placeholder="{{ trans.form_label_name }}" minlength="5" maxlength="180" required="required" tabindex="1">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <label for="tag_edit_form_color" class="col-form-label col-sm-3">{{ trans.form_label_color }}</label>
+                    <div class="col-sm-8">
+                        <select class="form-select" id="tag_edit_form_color" name="tag_edit_form_color" required="required" tabindex="2">
+                            <option selected value=""></option>
+                            {% for color in colors %}
+                                <option value="{{ color.value }}" {% if tag.color == color.value %}selected{% endif %}>{{ color.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <label for="tag_edit_form_color" class="col-form-label col-sm-1">
+                        <span class="badge p-2 border border-light rounded-circle" id="tag_color" style="background-color: {{ tag.color }};"><span class="visually-hidden">color</span></span>
+                    </label>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-sm-6">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="tag_edit_form_visible" name="tag_edit_form_visible" tabindex="3" {% if tag.visible == 1 %}checked{% endif %}>
+                            <label class="form-check-label" for="tag_edit_form_visible">{{ trans.form_label_visible }}</label>
+                            <div class="form-text">{{ trans.form_text_visible }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <div class="mb-3 float-end">
+                    <button type="submit" class="btn btn-primary" tabindex="4">
+                        <i class="bi bi-floppy"></i>
+                        <span class="px-1">{{ trans.btn_save }}</span>
+                    </button>
+                </div>
+                <input type="hidden" name="{{ csrf.nameKey | raw }}" value="{{ csrf.name | raw }}">
+                <input type="hidden" name="{{ csrf.valueKey | raw }}" value="{{ csrf.value | raw }}">
+            </div>
+        </form>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script nonce="{{ nonce }}" src="{{ basePath }}/js/tags.js"></script>
+{% endblock %}
