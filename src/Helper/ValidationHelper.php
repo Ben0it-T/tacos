@@ -179,7 +179,7 @@ final class ValidationHelper
             return ($empty ? true : false);
         }
 
-        if (!preg_match("/^[a-zA-Zà-üÀ-Ü0-9\'\-\s]*$/",$string)) {
+        if (!preg_match("/^[a-zA-Zà-üÀ-Ü0-9_\'\-\s]*$/",$string)) {
             return false;
         }
 
