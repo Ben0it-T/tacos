@@ -216,7 +216,7 @@ final class ProjectService
         }
 
         // Validate number
-        if (!$this->validationHelper->validateName($name, true)) {
+        if (!$this->validationHelper->validateName($number, true)) {
             $validation = false;
             $errorMsg .= str_replace("%fieldName%", $translations['form_label_project_number'], $translations['form_error_format']) . "\n";
         }
@@ -301,7 +301,7 @@ final class ProjectService
         }
 
         // Validate number
-        if (!$this->validationHelper->validateName($name, true)) {
+        if (!$this->validationHelper->validateName($number, true)) {
             $validation = false;
             $errorMsg .= str_replace("%fieldName%", $translations['form_label_project_number'], $translations['form_error_format']) . "\n";
         }
