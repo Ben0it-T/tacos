@@ -101,7 +101,7 @@
                         <select class="form-select" id="timesheet_edit_form_activity" name="timesheet_edit_form_activity" required="required" tabindex="7">
                             <option selected value=""></option>
                             {% for activity in activities %}
-                                <option value="{{ activity.id }}" {% if timesheet.activityId == activity.id %}selected{% endif %} {% if activity.id not in projectActivitiesIds %}hidden{% endif %}>{{ activity.name }}</option>
+                                <option value="{{ activity.id }}" {% if timesheet.activityId == activity.id %}selected{% endif %} {% if activity.id not in projectActivitiesIds %}hidden disabled{% endif %}>{{ activity.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -120,7 +120,7 @@
                         <select class="form-select" id="timesheet_edit_form_tags" name="timesheet_edit_form_tags" tabindex="7">
                             <option selected value=""></option>
                             {% for tag in tags %}
-                                <option value="{{ tag.id }}" color="{{ tag.color }}" {% if tag.id in selectedTagsIds %}hidden{% endif %}>{{ tag.name }}</option>
+                                <option value="{{ tag.id }}" color="{{ tag.color }}" {% if tag.id in selectedTagsIds %}hidden disabled{% endif %}>{{ tag.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
