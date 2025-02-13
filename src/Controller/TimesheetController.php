@@ -495,7 +495,7 @@ final class TimesheetController
         foreach ($timesheetsList as $entry) {
             $line = array();
             $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['start']) . $enclosure;
-            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['end']) . $enclosure;
+            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, (is_null($entry['end']) ? "" : $entry['end'])) . $enclosure;
             $line[] = $entry['duration'];
             $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['project']->getName()) . $enclosure;
             $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['project']->getNumber()) . $enclosure;
