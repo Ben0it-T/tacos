@@ -201,6 +201,10 @@ final class ValidationHelper
             return ($empty ? true : false);
         }
 
+        if (!preg_match("/^[a-zA-Zà-üÀ-Ü0-9_\'\-\s\.]*$/",$string)) {
+            return false;
+        }
+
         if (mb_strlen($string) > 50) {
             return false;
         }
