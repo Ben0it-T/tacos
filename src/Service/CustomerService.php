@@ -187,7 +187,7 @@ final class CustomerService
         // Validate number
         if (!$this->validationHelper->validateNumber($number, true)) {
             $validation = false;
-            $errorMsg .= $translations['form_error_customer_number'] . "\n";
+            $errorMsg .= str_replace("%fieldName%", $translations['form_label_project_number'], $translations['form_error_format']) . "\n";
         }
 
         if ($validation) {
@@ -243,7 +243,7 @@ final class CustomerService
         // Validate number
         if (!$this->validationHelper->validateNumber($number, true)) {
             $validation = false;
-            $errorMsg .= $translations['form_error_customer_number'] . "\n";
+            $errorMsg .= str_replace("%fieldName%", $translations['form_label_project_number'], $translations['form_error_format']) . "\n";
         }
 
         if ($validation) {
