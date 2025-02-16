@@ -31,12 +31,12 @@
             </div>
             <div class="offcanvas-body ps-1">
                 <ul class="navbar-nav justify-content-end flex-grow-1 pe-1">
-                    <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" href="#">
+                    <li class="nav-item {% if navLinks.current == navLinks.dashboard %}active{% endif %}">
+                        <a class="nav-link d-flex align-items-center {% if navLinks.current == navLinks.dashboard %}active{% endif %}" href="{{ navLinks.dashboard }}">
                             <span class="nav-link-icon px-2 d-flex text-center">
                                 <i class="bi bi-speedometer"></i>
                             </span>
-                            <span class="nav-link-title">Dashboard</span>
+                            <span class="nav-link-title">{{ trans.view_dashboard }}</span>
                         </a>
                     </li>
 

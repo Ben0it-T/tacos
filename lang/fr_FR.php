@@ -113,6 +113,7 @@ return array(
     'status_active' => "Actif",
     'status_inactive' => "Inactif",
 
+    'table_row_active_records' => "Enregistrements actifs",
     'table_row_activities' => "Activités",
     'table_row_activity' => "Activité",
     'table_row_creationDate' => "Date de création",
@@ -140,9 +141,13 @@ return array(
     'table_row_username' => "Identifiant",
     'table_row_visible' => "Visible",
     'table_row_visibility' => "Visibilité",
+    'table_row_workingHours_today' => "Heures travaillées aujourd'hui",
+    'table_row_workingHours_week' => "Heures travaillées cette semaine",
+    'table_row_workingHours_month' => "Heures travaillées ce mois",
 
     'view_activities' => "Activités",
     'view_customers' => "Clients",
+    'view_dashboard' => "Tableau de bord",
     'view_login' => "Connexion",
     'view_password_request' => "Réinitialiser mon mot de passe",
     'view_profile' => "Mon profil",

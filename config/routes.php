@@ -30,6 +30,8 @@ $app->get( '/customers/{customerId}/details', \App\Controller\CustomersControlle
 $app->get( '/customers/{customerId}/edit', \App\Controller\CustomersController::class . ':editForm')->setName('customers_edit');
 $app->post('/customers/{customerId}/edit', \App\Controller\CustomersController::class . ':editAction')->setName('customers_edit_attempt');
 
+$app->get( '/dashboard', \App\Controller\DashboardController::class . ':index')->setName('dashboard');
+
 $app->get( '/profile', \App\Controller\ProfileController::class . ':editForm')->setName('profile');
 $app->post('/profile', \App\Controller\ProfileController::class . ':editAction')->setName('profile_attempt');
 

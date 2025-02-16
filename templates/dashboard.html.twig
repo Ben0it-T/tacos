@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{trans.view_dashboard }}{% endblock %}
+
+{% block navbar %}
+    {% embed 'navbar.html.twig' with {'title': trans.view_dashboard, 'navLinks': navLinks } %}{% endembed %}
+{% endblock %}
+
+{% block content %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-borderless w-auto">
+                    <tbody>
+                        <tr>
+                            <th scope="row"><i class="bi bi-hourglass text-bg-danger"></i> {{ trans.table_row_active_records }}</th>
+                            <td>{{ activeRecords }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><i class="bi bi-hourglass"></i> {{ trans.table_row_workingHours_today }}</th>
+                            <td>{{ workingHours.today }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><i class="bi bi-hourglass"></i> {{ trans.table_row_workingHours_week }}</th>
+                            <td>{{ workingHours.week }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><i class="bi bi-hourglass"></i> {{ trans.table_row_workingHours_month }}</th>
+                            <td>{{ workingHours.month }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

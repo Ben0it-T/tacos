@@ -189,6 +189,51 @@ final class TimesheetRepository
 
 
     /**
+     * Get number of active records by user Id
+     *
+     * @param int $userId
+     * @return int
+     */
+    public function getNbOfActiveRecordsByUserId(int $userId) {
+        $stmt = $this->pdo->prepare('SELECT count(*) as cnt FROM `tacos_timesheet` WHERE `tacos_timesheet`.`user_id` = :userId AND `tacos_timesheet`.`end` is null');
+        $stmt->execute([
+            'userId' => $userId,
+        ]);
+
+        return $stmt->fetchColumn();
+    }
+
+    /**
+     * Get working hours by user Id
+     *
+     * @param string $timePeriod
+     * @return int
+     */
+    public function getWorkingHoursByTimePeriodAndUserId (string $timePeriod, int $userId) {
+        switch ($timePeriod) {
+            case 'week':
+                $condition = "YEARWEEK(`tacos_timesheet`.`start`, 1) = YEARWEEK(CURDATE(), 1)";
+                break;
+
+            case 'month':
+                $condition = "DATE_FORMAT(`tacos_timesheet`.`start`, '%Y%m') = DATE_FORMAT(CURDATE(), '%Y%m')";
+                break;
+
+            default:
+                // today
+                $condition = "DATE(`tacos_timesheet`.`start`) = CURDATE()";
+                break;
+        }
+
+        $stmt = $this->pdo->prepare('SELECT SUM(duration) as duration FROM `tacos_timesheet` WHERE `tacos_timesheet`.`user_id` = :userId AND '.$condition.' AND `tacos_timesheet`.`end` is not null');
+        $stmt->execute([
+            'userId' => $userId,
+        ]);
+
+        return $stmt->fetchColumn();
+    }
+
+    /**
      * Stop Timesheet
      *
      * @param int $timesheet

@@ -114,6 +114,7 @@ return array(
     'status_active' => "Active",
     'status_inactive' => "Inactive",
 
+    'table_row_active_records' => "Active records",
     'table_row_activities' => "Activities",
     'table_row_activity' => "Activity",
     'table_row_creationDate' => "Creation date",
@@ -141,9 +142,14 @@ return array(
     'table_row_username' => "Username",
     'table_row_visible' => "Visible",
     'table_row_visibility' => "Visibility",
+    'table_row_workingHours_today' => "Working hours today",
+    'table_row_workingHours_week' => "Working hours this week",
+    'table_row_workingHours_month' => "Working hours this month",
+
 
     'view_activities' => "Activities",
     'view_customers' => "Customers",
+    'view_dashboard' => "Dashboard",
     'view_login' => "Log in",
     'view_password_request' => "Reset your password",
     'view_profile' => "My profile",

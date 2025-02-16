@@ -52,6 +52,7 @@ final class PermissionMiddleware implements MiddlewareInterface
 
         $userRoutes = array(
             'logout',
+            'dashboard',
             'profile', 'profile_attempt',
             'timesheet', 'timesheet_create', 'timesheet_create_attempt', 'timesheet_edit', 'timesheet_edit_attempt', 'timesheet_stop',
             'timesheet_export',
@@ -122,6 +123,7 @@ final class PermissionMiddleware implements MiddlewareInterface
         // Built links
         $navbarRoutes = array(
             'logout',
+            'dashboard',
             'profile',
             'timesheet',
             'timesheet_create',

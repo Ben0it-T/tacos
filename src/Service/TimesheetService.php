@@ -91,6 +91,35 @@ final class TimesheetService
         return $this->timesheetRepository->findAllTimesheetByUserIdBetween($userId, $date1, $date2);
     }
 
+    /**
+     * Find all active timesheets by user Id
+     *
+     * @param int $userId
+     * @return array of Timesheet
+     */
+    public function findAllActiveTimesheetByUserId(int $userId) {
+        return $this->timesheetRepository->findAllActiveTimesheetByUserId($userId);
+    }
+
+    /**
+     * Get number of active records
+     *
+     * @param int $userId
+     * @return int
+     */
+    public function getNbOfActiveRecordsByUserId(int $userId) {
+        return $this->timesheetRepository->getNbOfActiveRecordsByUserId($userId);
+    }
+
+    /**
+     * Get working hours by user Id
+     *
+     * @param string $timePeriod
+     * @return int
+     */
+    public function getWorkingHoursByTimePeriodAndUserId (string $timePeriod, int $userId) {
+        return $this->timesheetRepository->getWorkingHoursByTimePeriodAndUserId($timePeriod, $userId);
+    }
 
     /**
      * Convert time to H:i
