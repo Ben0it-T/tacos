@@ -20,7 +20,7 @@
                     <span class="input-group-text" data-td-target="#pickerDateFilter" data-td-toggle="datetimepicker">
                         <i class="bi bi-calendar2-week"></i>
                     </span>
-                    <input id="timesheet_date" type="text" class="form-control" data-td-target="#pickerDateFilter" value="{{ daterange.start|date(trans.dateFormats_date) }} - {{ daterange.end|date(trans.dateFormats_date) }}" placeholder="{{ trans.dateFormats_date_placeholder }}" tabindex="1" required="required" readonly>
+                    <input id="timesheet_date" type="text" class="form-control" data-td-target="#pickerDateFilter" value="{{ daterange.start|date(trans.dateFormats_date) }} - {{ daterange.end|date(trans.dateFormats_date) }}" placeholder="{{ trans.dateFormats_date_placeholder }}" size="22" tabindex="1" required="required" readonly>
                     <button id="btnSubmit" class="btn btn-outline-secondary" type="button"><i class="bi bi-search"></i></button>
                 </div>
                 <input type="hidden" id="date" name="date" value="{{ daterange.start }} - {{ daterange.end }}">
