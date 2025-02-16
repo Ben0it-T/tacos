@@ -1,10 +1,34 @@
+html {
+    font-size: 12pt;
+}
+
 body {
     background-color: #f6f8fb;
     padding-top: 70px;
+    font-size: 1rem;
+}
+
+.btn {
+    font-size: 0.9rem;
+}
+.table {
+    font-size: 0.875rem;
+}
+
+.form-label, .col-form-label, .form-check-label {
+    font-size: 0.875rem;
+}
+
+.form-control, .form-select {
+    font-size: 0.875rem;
 }
 
 input.form-control::placeholder {
-    opacity: .5;
+    opacity: 0.5;
+}
+
+.tempus-dominus-widget {
+    font-size: 0.875rem;
 }
 
 .bg-navbar {
