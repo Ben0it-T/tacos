@@ -103,6 +103,7 @@ final class TimesheetController
                 'activity' => $this->activityService->findActivity($timesheet->getActivityId()),
                 'description' => $timesheet->getComment(),
                 'tags' => $this->tagService->findAllTagsByTimesheetId($timesheet->getId()),
+                'deleteLink' => $routeParser->urlFor('timesheet_delete', array('timesheetId' => $timesheet->getId())),
                 'editLink' => $routeParser->urlFor('timesheet_edit', array('timesheetId' => $timesheet->getId())),
                 'stopLink' => $routeParser->urlFor('timesheet_stop', array('timesheetId' => $timesheet->getId())),
             );
@@ -388,7 +389,7 @@ final class TimesheetController
 
 
         // redirect
-        $url = $routeParser->urlFor('timesheets');
+        $url = $routeParser->urlFor('timesheet');
         return $response->withStatus(302)->withHeader('Location', $url);
     }
 
@@ -420,9 +421,74 @@ final class TimesheetController
         }
 
         // redirect
-        $url = $routeParser->urlFor('timesheets');
+        $url = $routeParser->urlFor('timesheet');
         return $response->withStatus(302)->withHeader('Location', $url);
     }
+
+    public function deleteForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $twig  = $this->container->get(Twig::class);
+        $flash = $this->container->get('flash');
+        $translations = $this->container->get('translations');
+
+        $routeContext = RouteContext::fromRequest($request);
+        $routeParser = $routeContext->getRouteParser();
+
+        $session = $request->getAttribute('session');
+        $currentUser = $this->userService->findUser($session['auth']['userId']);
+
+        $timesheet = $this->timesheetService->findTimesheetByIdAndUserId(intval($args['timesheetId']), $currentUser->getId());
+
+        if ($timesheet) {
+            $viewData = array();
+            $viewData['timesheet'] = array(
+                'id' => $timesheet->getId(),
+                'start' => $timesheet->getStart(),
+                'end' => $timesheet->getEnd(),
+                'duration' => $this->timesheetService->timeToString($timesheet->getDuration()),
+                'project' => $this->projectService->findProject($timesheet->getProjectId()),
+                'activity' => $this->activityService->findActivity($timesheet->getActivityId()),
+                'description' => $timesheet->getComment(),
+                'tags' => $this->tagService->findAllTagsByTimesheetId($timesheet->getId()),
+            );
+
+            return $twig->render($response, 'timesheet-delete.html.twig', $viewData);
+        }
+
+        // redirect
+        $url = $routeParser->urlFor('timesheet');
+        return $response->withStatus(302)->withHeader('Location', $url);
+    }
+
+    public function deleteAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $flash = $this->container->get('flash');
+        $translations = $this->container->get('translations');
+
+        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+
+        $session = $request->getAttribute('session');
+        $currentUser = $this->userService->findUser($session['auth']['userId']);
+
+        $timesheet = $this->timesheetService->findTimesheetByIdAndUserId(intval($args['timesheetId']), $currentUser->getId());
+
+        if ($timesheet) {
+            $errors = $this->timesheetService->deleteTimesheet($timesheet);
+            if (empty($errors)) {
+                $flash->addMessage('success', $translations['form_success_delete_record']);
+            }
+            else {
+                $flash->addMessage('error', $errors);
+            }
+
+        }
+
+        // redirect
+        $url = $routeParser->urlFor('timesheet');
+        return $response->withStatus(302)->withHeader('Location', $url);
+    }
+
+
 
     public function stopAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {

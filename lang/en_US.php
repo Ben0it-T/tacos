@@ -6,7 +6,9 @@ return array(
     'badge_no' => "No",
     'badge_yes' => "Yes",
 
+    'btn_cancel' => "Cancel",
     'btn_close' => "Close",
+    'btn_confirm' => "Confirm",
     'btn_create' => "Create",
     'btn_export' => "Export",
     'btn_login' => "Log in",
@@ -30,6 +32,7 @@ return array(
 
     'form_error_credentials'  => "Invalid credentials.",
     'form_error_customer_number' => "Customer number should be between 0 and 50 characters.",
+    'form_error_delete_record' => "Unable to delete record",
     'form_error_email' => "Invalid email.",
     'form_error_empty_fields' => "The field '%fieldName%' must be filled.",
     'form_error_format' => "Field '%fieldName%' not filled in expected format.",
@@ -92,6 +95,7 @@ return array(
     'form_title_create_team' => "Create new team",
     'form_title_create_timesheet_record' => "Create new record",
     'form_title_create_user' => "Create new user",
+    'form_title_delete_timesheet_record' => "Delete timesheet record",
     'form_title_edit_timesheet_record' => "Edit timesheet record",
     'form_title_login' => "Login",
     'form_title_password_reset' => "Reset your password",
@@ -101,6 +105,7 @@ return array(
     'form_success_create_project' => "Project created.",
     'form_success_create_team' => "Team created.",
     'form_success_create_user' => "User created.",
+    'form_success_delete_record' => "Record deleted.",
     'form_success_update' => "Saved changes.",
 
     'email_footer' => "This is an auto generated e-mail. Please do not reply, the address will not be read.",

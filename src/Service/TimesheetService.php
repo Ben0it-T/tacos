@@ -316,8 +316,6 @@ final class TimesheetService
      * Stop Timesheet
      *
      * @param Timesheet $timesheet
-     * @param array $data
-     * @return string $errorMsg
      */
     public function stopTimesheet($timesheet) {
         $timesheetStart = date("Y-m-d", strtotime($timesheet->getStart()));
@@ -327,7 +325,25 @@ final class TimesheetService
         }
         $this->timesheetRepository->stopTimesheet($timesheet);
         $this->logger->info("TimesheetService - Timesheet '" . $timesheet->getId() . "' stopped.");
+    }
 
+    /**
+     * Delete Timesheet
+     *
+     * @param Timesheet $timesheet
+     * @return string $errorMsg
+     */
+    public function deleteTimesheet($timesheet) {
+        $translations = $this->container->get('translations');
+        $errorMsg = "";
+        if ($this->timesheetRepository->deleteTimesheet($timesheet)) {
+            $this->logger->info("TimesheetService - Timesheet '" . $timesheet->getId() . "' deleted.");
+        }
+        else {
+            $errorMsg = $translations['form_error_delete_record'];
+        }
+
+        return $errorMsg;
     }
 
 }

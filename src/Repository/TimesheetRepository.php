@@ -306,7 +306,6 @@ final class TimesheetRepository
      * Update Timesheet
      *
      * @param Timesheet $timesheet
-     * @param array $data
      * @return bool
      */
     public function updateTimesheet(Timesheet $timesheet) {
@@ -328,6 +327,26 @@ final class TimesheetRepository
             return false;
         }
     }
+
+    /**
+     * Delete Timesheet
+     *
+     * @param Timesheet $timesheet
+     * @return string $errorMsg
+     */
+    public function deleteTimesheet($timesheet) {
+        try {
+            $stmt = $this->pdo->prepare('DELETE FROM `tacos_timesheet` WHERE `tacos_timesheet`.`id` = :id');
+            $res = $stmt->execute([
+                'id' => $timesheet->getId()
+            ]);
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+
 
     /**
      * Insert Tags

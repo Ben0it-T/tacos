@@ -54,7 +54,9 @@ final class PermissionMiddleware implements MiddlewareInterface
             'logout',
             'dashboard',
             'profile', 'profile_attempt',
-            'timesheet', 'timesheet_create', 'timesheet_create_attempt', 'timesheet_edit', 'timesheet_edit_attempt', 'timesheet_stop',
+            'timesheet', 'timesheet_create', 'timesheet_create_attempt',
+            'timesheet_edit', 'timesheet_edit_attempt', 'timesheet_delete', 'timesheet_delete_attempt',
+            'timesheet_stop',
             'timesheet_export',
             'xhr',
         );

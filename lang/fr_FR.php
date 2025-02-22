@@ -5,7 +5,9 @@ return array(
     'badge_no' => "Non",
     'badge_yes' => "Oui",
 
+    'btn_cancel' => "Annuler",
     'btn_close' => "Fermer",
+    'btn_confirm' => "Confirmer",
     'btn_create' => "Créer",
     'btn_export' => "Exporter",
     'btn_login' => "Connexion",
@@ -29,6 +31,7 @@ return array(
 
     'form_error_credentials' => "Identifiants invalides.",
     'form_error_customer_number' => "Le numéro de client doit être compris entre 0 et 50 caractères.",
+    'form_error_delete_record' => "Impossible de supprimer l'enregistrement",
     'form_error_email' => "Email invalide.",
     'form_error_empty_fields' => "Le champ '%fieldName%' doit être renseigné.",
     'form_error_format' => "Le champ '%fieldName%' n'est pas renseigné au format attendu.",
@@ -91,6 +94,7 @@ return array(
     'form_title_create_team' => "Créer une nouvelle équipe",
     'form_title_create_timesheet_record' => "Créer un nouvel enregistrement",
     'form_title_create_user' => "Créer un nouvel utilisateur",
+    'form_title_delete_timesheet_record' => "Supprimer l'enregistrement",
     'form_title_edit_timesheet_record' => "Modifier l'enregistrement",
     'form_title_login' => "Connexion",
     'form_title_password_reset' => "Réinitialiser mon mot de passe",
@@ -100,6 +104,7 @@ return array(
     'form_success_create_project' => "Projet créé.",
     'form_success_create_team' => "Equipe créée.",
     'form_success_create_user' => "Utilisateur créé.",
+    'form_success_delete_record' => "Enregistrement supprimé.",
     'form_success_update' => "Modifications enregistrées.",
 
     'email_footer' => "Ceci est un message généré automatiquement. Merci de ne pas répondre; l’adresse ne sera pas lue.",

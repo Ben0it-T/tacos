@@ -1,0 +1,98 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{trans.view_timesheet}}{% endblock %}
+
+{% block css %}
+    <link href="{{ basePath }}/css/container-max-width.css" rel="stylesheet">
+{% endblock %}
+
+{% block navbar %}
+    {% embed 'navbar.html.twig' with {'title': trans.view_timesheet, 'navLinks': navLinks } %}{% endembed %}
+{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-end py-2">
+        <a class="btn btn-close" href="{{ navLinks.timesheet }}" role="button"></a>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header fs-5 fw-bold">
+            {{ trans.form_title_delete_timesheet_record }}
+        </div>
+
+        <form name="timesheet_delete_form" method="post" autocomplete="off">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-borderless w-auto">
+                        <tbody>
+                            <tr>
+                                <th scope="row">{{ trans.table_row_project }}</th>
+                                <td>
+                                    <div class="d-inline-flex align-items-center text-nowrap">
+                                        <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ timesheet.project.color }};"><span class="visually-hidden">color</span></span>
+                                        <span class="ms-1">{{ timesheet.project.name }}</span>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th scope="row">{{ trans.table_row_activity }}</th>
+                                <td>
+                                    <div class="d-inline-flex align-items-center text-nowrap">
+                                        <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ timesheet.activity.color }};"><span class="visually-hidden">color</span></span>
+                                        <span class="ms-1">{{ timesheet.activity.name }}</span>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th scope="row">{{ trans.table_row_date_begin }}</th>
+                                <td>{{ timesheet.start is empty ? "" : timesheet.start|date(trans.dateFormats_datetime) }}</td>
+                            </tr>
+
+                            <tr>
+                                <th scope="row">{{ trans.table_row_date_end }}</th>
+                                <td>{{ timesheet.end is empty ? "" : timesheet.end|date(trans.dateFormats_datetime) }}</td>
+                            </tr>
+
+                            <tr>
+                                <th scope="row">{{ trans.table_row_date_duration }}</th>
+                                <td>{{ timesheet.duration }}</td>
+                            </tr>
+
+                            <tr>
+                                <th scope="row">{{ trans.table_row_description }}</th>
+                                <td>{{ timesheet.description|nl2br }}</td>
+                            </tr>
+
+                            <tr>
+                                <th scope="row">{{ trans.table_row_tags }}</th>
+                                <td>
+                                    {% if timesheet.tags|length > 0 %}
+                                        {% for tag in timesheet.tags %}
+                                            <span class="badge me-2" style="background-color: {{ tag.color }};">{{ tag.name }}</span>
+                                        {% endfor %}
+                                    {% endif %}
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <div class="mb-3 float-end">
+                    <a class="btn btn-secondary" href="{{ navLinks.timesheet }}" role="button" tabindex="1">{{ trans.btn_cancel }}</a>
+                    <button type="submit" class="btn btn-primary" tabindex="2">
+                        <i class="bi bi-trash3"></i>
+                        <span class="px-1">{{ trans.btn_confirm }}</span>
+                    </button>
+                </div>
+
+                <input type="hidden" name="{{ csrf.nameKey | raw }}" value="{{ csrf.name | raw }}">
+                <input type="hidden" name="{{ csrf.valueKey | raw }}" value="{{ csrf.value | raw }}">
+            </div>
+        </form>
+    </div>
+{% endblock %}

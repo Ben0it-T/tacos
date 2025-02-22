@@ -49,6 +49,8 @@ $app->post('/tags/{tagId}/edit', \App\Controller\TagsController::class . ':editA
 $app->get( '/timesheet', \App\Controller\TimesheetController::class . ':index')->setName('timesheet');
 $app->get( '/timesheet/create', \App\Controller\TimesheetController::class . ':createForm')->setName('timesheet_create');
 $app->post('/timesheet/create', \App\Controller\TimesheetController::class . ':createAction')->setName('timesheet_create_attempt');
+$app->get( '/timesheet/{timesheetId}/delete', \App\Controller\TimesheetController::class . ':deleteForm')->setName('timesheet_delete');
+$app->post('/timesheet/{timesheetId}/delete', \App\Controller\TimesheetController::class . ':deleteAction')->setName('timesheet_delete_attempt');
 $app->get( '/timesheet/{timesheetId}/edit', \App\Controller\TimesheetController::class . ':editForm')->setName('timesheet_edit');
 $app->post('/timesheet/{timesheetId}/edit', \App\Controller\TimesheetController::class . ':editAction')->setName('timesheet_edit_attempt');
 $app->get( '/timesheet/{timesheetId}/stop', \App\Controller\TimesheetController::class . ':stopAction')->setName('timesheet_stop');
