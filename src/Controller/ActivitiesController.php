@@ -100,7 +100,7 @@ final class ActivitiesController
                 'name' => $activity->getName(),
                 'color' => $activity->getColor(),
                 'number' => (is_null($activity->getNumber()) ? "" : $activity->getNumber()),
-                'project' => (is_null($activity->getProjectId()) ? "" : $this->projectService->findProject($activity->getProjectId())->getName()),
+                'project' => (is_null($activity->getProjectId()) ? "" : $this->projectService->findProject($activity->getProjectId())),
                 'description' => $activity->getComment(),
                 'teams' => $this->activityService->getNbOfTeamsForActivity($activity->getId()),
                 'visible' => $activity->getVisible(),

@@ -2,6 +2,10 @@
 
 {% block title %}{{trans.view_projects }}{% endblock %}
 
+{% block css %}
+    <link href="{{ basePath }}/css/container-max-width.css" rel="stylesheet">
+{% endblock %}
+
 {% block navbar %}
     {% embed 'navbar.html.twig' with {'title': trans.view_projects, 'navLinks': navLinks } %}{% endembed %}
 {% endblock %}
@@ -13,8 +17,8 @@
 
     <div class="card mb-3">
         <div class="card-header fs-5 fw-bold">
-            <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ project.color }};"><span class="visually-hidden">color</span></span>
-            <span class="ms-2">{{ project.name }}</span>
+            <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ project.color }};"><span class="visually-hidden">color</span></span>
+            <span class="ms-1">{{ project.name }}</span>
         </div>
 
         <div class="card-body">
@@ -43,7 +47,12 @@
                         </tr>
                         <tr>
                             <th scope="row">{{ trans.table_row_customer }}</th>
-                            <td>{{ selectedCustomer.name }}</td>
+                            <td>
+                                <div class="d-inline-flex align-items-center text-nowrap">
+                                    <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ selectedCustomer.color }};"><span class="visually-hidden">color</span></span>
+                                    <span class="ms-1">{{ selectedCustomer.name }}</span>
+                                </div>
+                            </td>
                         </tr>
                         <tr>
                             <th scope="row">{{ trans.card_project_number }}</th>
@@ -82,8 +91,8 @@
                 {% for selectedTeam in selectedTeams %}
                     <li>
                         <div class="d-inline-flex align-items-center">
-                            <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ selectedTeam.color }};"><span class="visually-hidden">color</span></span>
-                            <span class="ms-2">{{ selectedTeam.name }}</span>
+                            <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ selectedTeam.color }};"><span class="visually-hidden">color</span></span>
+                            <span class="ms-1">{{ selectedTeam.name }}</span>
                         </div>
                     </li>
                 {% endfor %}
@@ -107,8 +116,8 @@
                     {% if globalActivity.id in allowedActivitiesIds %}
                     <li>
                         <div class="d-inline-flex align-items-center">
-                            <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ globalActivity.color }};"><span class="visually-hidden">color</span></span>
-                            <span class="ms-2">{{ globalActivity.name }}</span>
+                            <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ globalActivity.color }};"><span class="visually-hidden">color</span></span>
+                            <span class="ms-1">{{ globalActivity.name }}</span>
                         </div>
                     </li>
                     {% endif %}
@@ -122,8 +131,8 @@
                     {% if projectActivity.id in allowedActivitiesIds %}
                     <li>
                         <div class="d-inline-flex align-items-center">
-                            <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ projectActivity.color }};"><span class="visually-hidden">color</span></span>
-                            <span class="ms-2">{{ projectActivity.name }}</span>
+                            <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ projectActivity.color }};"><span class="visually-hidden">color</span></span>
+                            <span class="ms-1">{{ projectActivity.name }}</span>
                         </div>
                     </li>
                     {% endif %}

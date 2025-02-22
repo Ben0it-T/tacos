@@ -102,7 +102,7 @@ final class ProjectsController
             $projectsList[] = array(
                 'name' => $project->getName(),
                 'color' => $project->getColor(),
-                'customer' => $this->customerService->findCustomer($project->getCustomerId())->getName(),
+                'customer' => $this->customerService->findCustomer($project->getCustomerId()),
                 'description' => $project->getComment(),
                 'teams' => $this->projectService->getNbOfTeamsForProject($project->getId()),
                 'visible' => $project->getVisible(),

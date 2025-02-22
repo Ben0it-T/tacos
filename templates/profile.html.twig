@@ -2,6 +2,10 @@
 
 {% block title %}{{trans.view_profile}}{% endblock %}
 
+{% block css %}
+    <link href="{{ basePath }}/css/container-max-width.css" rel="stylesheet">
+{% endblock %}
+
 {% block navbar %}
     {% embed 'navbar.html.twig' with {'title': trans.view_profile, 'navLinks': navLinks } %}{% endembed %}
 {% endblock %}
@@ -44,8 +48,8 @@
                                 {% for team in user.teams %}
                                     <li>
                                         <div class="d-inline-flex align-items-center">
-                                            <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ team.teamColor }};"><span class="visually-hidden">color</span></span>
-                                            <span class="ms-2">{{ team.teamName }}</span>
+                                            <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ team.teamColor }};"><span class="visually-hidden">color</span></span>
+                                            <span class="ms-1">{{ team.teamName }}</span>
                                             {% if team.teamlead == 1 %}
                                                 <i class="bi bi-award ms-3"></i>
                                             {% endif %}

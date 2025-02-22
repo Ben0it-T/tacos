@@ -2,6 +2,10 @@
 
 {% block title %}{{trans.view_customers }}{% endblock %}
 
+{% block css %}
+    <link href="{{ basePath }}/css/container-max-width.css" rel="stylesheet">
+{% endblock %}
+
 {% block navbar %}
     {% embed 'navbar.html.twig' with {'title': trans.view_customers, 'navLinks': navLinks } %}{% endembed %}
 {% endblock %}
@@ -14,8 +18,8 @@
     <div class="card mb-3">
 
         <div class="card-header fs-5 fw-bold">
-            <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ customer.color }};"><span class="visually-hidden">color</span></span>
-            <span class="ms-2">{{ customer.name }}</span>
+            <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ customer.color }};"><span class="visually-hidden">color</span></span>
+            <span class="ms-1">{{ customer.name }}</span>
         </div>
 
         <form name="customer_edit_form" method="post" autocomplete="off">

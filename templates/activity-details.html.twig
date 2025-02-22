@@ -2,6 +2,10 @@
 
 {% block title %}{{trans.view_activities }}{% endblock %}
 
+{% block css %}
+    <link href="{{ basePath }}/css/container-max-width.css" rel="stylesheet">
+{% endblock %}
+
 {% block navbar %}
     {% embed 'navbar.html.twig' with {'title': trans.view_activities, 'navLinks': navLinks } %}{% endembed %}
 {% endblock %}
@@ -13,8 +17,8 @@
 
     <div class="card mb-3">
         <div class="card-header fs-5 fw-bold">
-            <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ activity.color }};"><span class="visually-hidden">color</span></span>
-            <span class="ms-2">{{ activity.name }}</span>
+            <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ activity.color }};"><span class="visually-hidden">color</span></span>
+            <span class="ms-1">{{ activity.name }}</span>
         </div>
 
         <div class="card-body">
@@ -33,7 +37,14 @@
                         </tr>
                         <tr>
                             <th scope="row">{{ trans.table_row_project }}</th>
-                            <td>{{ selectedProject is empty ? "" :  selectedProject.name }}</td>
+                            <td>
+                                {% if selectedProject.name is defined %}
+                                    <div class="d-inline-flex align-items-center text-nowrap">
+                                        <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ selectedProject.color }};"><span class="visually-hidden">color</span></span>
+                                        <span class="ms-1">{{ selectedProject.name }}</span>
+                                    </div>
+                                {% endif %}
+                            </td>
                         </tr>
                         <tr>
                             <th scope="row">{{ trans.card_activity_number }}</th>
@@ -64,8 +75,8 @@
                 {% for selectedTeam in selectedTeams %}
                     <li>
                         <div class="d-inline-flex align-items-center">
-                            <span class="badge p-2 border border-light rounded-circle" style="background-color: {{ selectedTeam.color }};"><span class="visually-hidden">color</span></span>
-                            <span class="ms-2">{{ selectedTeam.name }}</span>
+                            <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ selectedTeam.color }};"><span class="visually-hidden">color</span></span>
+                            <span class="ms-1">{{ selectedTeam.name }}</span>
                         </div>
                     </li>
                 {% endfor %}
