@@ -28,9 +28,9 @@
                             <th scope="row">{{ trans.form_label_status }}</th>
                             <td>
                                 {% if user.status == true %}
-                                    <span class="badge text-bg-success">{{ trans.badge_yes }}</span>
+                                    <span class="badge text-bg-success">{{ trans.status_active }}</span>
                                 {% else %}
-                                    <span class="badge text-bg-danger">{{ trans.badge_no }}</span>
+                                    <span class="badge text-bg-danger">{{ trans.status_inactive }}</span>
                                 {% endif %}
                             </td>
                         </tr>
