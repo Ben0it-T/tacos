@@ -31,19 +31,19 @@
 
                     <div class="col-sm-5">
                         <div class="input-group" id="pickerStartDate" data-td-target-input="nearest" data-td-target-toggle="nearest">
-                            <input id="timesheet_edit_form_start_date" name="timesheet_edit_form_start_date" type="text" class="form-control" data-td-target="#pickerStartDate" value="{{ timesheet.start is empty ? "" : timesheet.start|date(trans.dateFormats_date) }}" placeholder="{{ trans.dateFormats_date_placeholder }}" tabindex="1" required="required" readonly>
                             <span class="input-group-text" data-td-target="#pickerStartDate" data-td-toggle="datetimepicker">
                                 <i class="bi bi-calendar2-week"></i>
                             </span>
+                            <input id="timesheet_edit_form_start_date" name="timesheet_edit_form_start_date" type="text" class="form-control" data-td-target="#pickerStartDate" value="{{ timesheet.start is empty ? "" : timesheet.start|date(trans.dateFormats_date) }}" placeholder="{{ trans.dateFormats_date_placeholder }}" tabindex="1" required="required" readonly>
                         </div>
                     </div>
 
                     <div class="col-sm-5">
                         <div class="input-group" id="pickerStartTime" data-td-target-input="nearest" data-td-target-toggle="nearest">
-                            <input id="timesheet_edit_form_start_time" name="timesheet_edit_form_start_time" type="text" class="form-control" data-td-target="#pickerStartTime" value="{{ timesheet.start is empty ? "" : timesheet.start|date(trans.dateFormats_time) }}" placeholder="{{ trans.dateFormats_time_placeholder }}" tabindex="2" required="required" readonly>
                             <span class="input-group-text" data-td-target="#pickerStartTime" data-td-toggle="datetimepicker">
                                 <i class="bi bi-clock"></i>
                             </span>
+                            <input id="timesheet_edit_form_start_time" name="timesheet_edit_form_start_time" type="text" class="form-control" data-td-target="#pickerStartTime" value="{{ timesheet.start is empty ? "" : timesheet.start|date(trans.dateFormats_time) }}" placeholder="{{ trans.dateFormats_time_placeholder }}" tabindex="2" required="required" readonly>
                         </div>
                     </div>
                 </div>
@@ -55,19 +55,19 @@
 
                     <div class="col-sm-5">
                         <div class="input-group" id="pickerDuration" data-td-target-input="nearest" data-td-target-toggle="nearest">
-                            <input id="timesheet_edit_form_duration" name="timesheet_edit_form_duration" type="text" class="form-control" data-td-target="#pickerDuration" value="{{ durationTmp }}" placeholder="{{ trans.dateFormats_time_placeholder }}" tabindex="3" readonly>
                             <span class="input-group-text" data-td-target="#pickerDuration" data-td-toggle="datetimepicker">
                                 <i class="bi bi-hourglass"></i>
                             </span>
+                            <input id="timesheet_edit_form_duration" name="timesheet_edit_form_duration" type="text" class="form-control" data-td-target="#pickerDuration" value="{{ durationTmp }}" placeholder="{{ trans.dateFormats_time_placeholder }}" tabindex="3" readonly>
                         </div>
                     </div>
 
                     <div class="col-sm-5">
                         <div class="input-group" id="pickerEndTime" data-td-target-input="nearest" data-td-target-toggle="nearest">
-                            <input id="timesheet_edit_form_end_time" name="timesheet_edit_form_end_time" type="text" class="form-control" data-td-target="#pickerEndTime" value="{{ timesheet.end is empty ? "" : timesheet.end|date(trans.dateFormats_time) }}" placeholder="{{ trans.dateFormats_time_placeholder }}" tabindex="4" readonly>
                             <span class="input-group-text" data-td-target="#pickerEndTime" data-td-toggle="datetimepicker">
                                 <i class="bi bi-clock"></i>
                             </span>
+                            <input id="timesheet_edit_form_end_time" name="timesheet_edit_form_end_time" type="text" class="form-control" data-td-target="#pickerEndTime" value="{{ timesheet.end is empty ? "" : timesheet.end|date(trans.dateFormats_time) }}" placeholder="{{ trans.dateFormats_time_placeholder }}" tabindex="4" readonly>
                         </div>
                     </div>
                 </div>
