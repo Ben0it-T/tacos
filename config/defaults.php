@@ -85,7 +85,7 @@ $settings['auth'] = [
 
 // Theme
 $settings['theme'] = [
-    'colorChoices' => 'Blue|#0079bf,Green|#70b500,Orange|#ff9f1a,Red|#eb5a46,Yellow|#f2d600,Purple|#c377e0,Pink|#ff78cb,Sky|#00c2e0,Lime|#51e898,Light Gray|#c4c9cc,Business Blue|#42548E',
+    'colorChoices' => 'Blue|#0079bf,Green|#70b500,Orange|#ff9f1a,Red|#eb5a46,Yellow|#f2d600,Purple|#c377e0,Pink|#ff78cb,Sky|#00c2e0,Lime|#51e898,Light Gray|#c4c9cc,Business Blue|#42548e,White|#ffffff',
 ];
 
 return $settings;
