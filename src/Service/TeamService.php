@@ -154,7 +154,7 @@ final class TeamService
         $errorMsg = "";
 
         $name = $this->validationHelper->sanitizeName($data['team_edit_form_name']);
-        $color = $this->validationHelper->sanitizeColor($data['team_edit_form_color']);
+        $color = isset($data['team_edit_form_color']) ? $this->validationHelper->sanitizeColor($data['team_edit_form_color']) : "#ffffff";
         $members = isset($data['team_edit_form']['members']) ? $data['team_edit_form']['members'] : array();
         foreach ($members as $key => $member) {
             $members[$key]['user'] = intval($member['user']);
@@ -205,7 +205,7 @@ final class TeamService
         $errorMsg = "";
 
         $name = $this->validationHelper->sanitizeName($data['team_edit_form_name']);
-        $color = $this->validationHelper->sanitizeColor($data['team_edit_form_color']);
+        $color = isset($data['team_edit_form_color']) ? $this->validationHelper->sanitizeColor($data['team_edit_form_color']) : "#ffffff";
         $members = isset($data['team_edit_form']['members']) ? $data['team_edit_form']['members'] : array();
         foreach ($members as $key => $member) {
             $members[$key]['user'] = intval($member['user']);

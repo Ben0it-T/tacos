@@ -73,19 +73,21 @@
                             </div>
                         </div>
                         <div class="row mb-3">
-                            <label for="team_edit_form_color" class="col-form-label col-sm-3">{{ trans.form_label_color }}</label>
-                            <div class="col-sm-8">
-                                <select class="form-select" id="team_edit_form_color" name="team_edit_form_color" required="required" tabindex="2">
-                                    <option selected value=""></option>
+                        <label for="team_edit_form_color" class="col-form-label col-sm-3">{{ trans.form_label_color }}</label>
+                        <div class="col-sm-9">
+                            <div class="dropdown">
+                                <input type="color" class="form-control form-control-color" id="team_edit_form_color" name="team_edit_form_color" data-bs-toggle="dropdown" value="#ffffff">
+                                <div class="dropdown-menu" id="team_edit_form_colorselector">
                                     {% for color in colors %}
-                                        <option value="{{ color.value }}">{{ color.name }}</option>
+                                        <span class="btn btn-select-color m-1 p-2 border" style="background-color:{{ color.value }};" id="team_edit_form_color_entry" data-color="{{ color.value }}"></span>
+                                        {% if loop.index is divisible by(6) %}
+                                            <br>
+                                        {% endif %}
                                     {% endfor %}
-                                </select>
+                                </div>
                             </div>
-                            <label for="team_edit_form_color" class="col-form-label col-sm-1">
-                                <span class="badge p-2 border border-light rounded-circle" id="team_color"><span class="visually-hidden">color</span></span>
-                            </label>
                         </div>
+                    </div>
                         <div class="row mb-3">
                             <label for="team_edit_form_users" class="col-form-label col-sm-3">{{ trans.form_label_add_user }}</label>
                             <div class="col-sm-9">

@@ -1,8 +1,9 @@
 
 $( document ).ready(function() {
-    $("#team_edit_form_color").change(function(){
-        let color = ($("#team_edit_form_color").val() === "") ? "#ffffff" : $("#team_edit_form_color").val();
-        $("#team_color").css("background-color", color);
+
+    $("#team_edit_form_colorselector").on('click', '.btn-select-color', function(event){
+        let color = $(event.currentTarget).data("color");
+        $("#team_edit_form_color").val(color);
     });
 
     $("#team_edit_form_users").change(function(){
