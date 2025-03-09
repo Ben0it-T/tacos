@@ -183,7 +183,7 @@ final class ActivityService
         $errorMsg = "";
 
         $name = $this->validationHelper->sanitizeString($data['activity_edit_form_name']);
-        $color = $this->validationHelper->sanitizeColor($data['activity_edit_form_color']);
+        $color = isset($data['activity_edit_form_color']) ? $this->validationHelper->sanitizeColor($data['activity_edit_form_color']) : "#ffffff";
         $projectId = intval($data['activity_edit_form_project']);
         $number = $this->validationHelper->sanitizeString($data['activity_edit_form_number']);
         $comment = $this->validationHelper->sanitizeString($data['activity_edit_form_description']);
@@ -246,7 +246,7 @@ final class ActivityService
         $errorMsg = "";
 
         $name = $this->validationHelper->sanitizeString($data['activity_edit_form_name']);
-        $color = $this->validationHelper->sanitizeColor($data['activity_edit_form_color']);
+        $color = isset($data['activity_edit_form_color']) ? $this->validationHelper->sanitizeColor($data['activity_edit_form_color']) : "#ffffff";
         $number = $this->validationHelper->sanitizeString($data['activity_edit_form_number']);
         $comment = $this->validationHelper->sanitizeString($data['activity_edit_form_description']);
         $selectedTeams = isset($data['activity_edit_form']['selectedTeams']) ? $data['activity_edit_form']['selectedTeams'] : array();

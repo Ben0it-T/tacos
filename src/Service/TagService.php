@@ -74,7 +74,7 @@ final class TagService
         $errorMsg = "";
 
         $name = $this->validationHelper->sanitizeString($data['tag_edit_form_name']);
-        $color = $this->validationHelper->sanitizeColor($data['tag_edit_form_color']);
+        $color = isset($data['tag_edit_form_color']) ? $this->validationHelper->sanitizeColor($data['tag_edit_form_color']) : "#ffffff";
         $visible = isset($data['tag_edit_form_visible']) ? 1 : 0;
 
         // Validate name
@@ -118,7 +118,7 @@ final class TagService
         $errorMsg = "";
 
         $name = $this->validationHelper->sanitizeString($data['tag_edit_form_name']);
-        $color = $this->validationHelper->sanitizeColor($data['tag_edit_form_color']);
+        $color = isset($data['tag_edit_form_color']) ? $this->validationHelper->sanitizeColor($data['tag_edit_form_color']) : "#ffffff";
         $visible = isset($data['tag_edit_form_visible']) ? 1 : 0;
 
         // Validate name

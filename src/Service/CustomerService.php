@@ -166,7 +166,7 @@ final class CustomerService
         $errorMsg = "";
 
         $name = $this->validationHelper->sanitizeName($data['customer_edit_form_name']);
-        $color = $this->validationHelper->sanitizeColor($data['customer_edit_form_color']);
+        $color = isset($data['customer_edit_form_color']) ? $this->validationHelper->sanitizeColor($data['customer_edit_form_color']) : "#ffffff";
         $number = $this->validationHelper->sanitizeString($data['customer_edit_form_number']);
         $comment = $this->validationHelper->sanitizeString($data['customer_edit_form_description']);
         $selectedTeams = isset($data['customer_edit_form']['selectedTeams']) ? $data['customer_edit_form']['selectedTeams'] : array();
@@ -222,7 +222,7 @@ final class CustomerService
         $errorMsg = "";
 
         $name = $this->validationHelper->sanitizeName($data['customer_edit_form_name']);
-        $color = $this->validationHelper->sanitizeColor($data['customer_edit_form_color']);
+        $color = isset($data['customer_edit_form_color']) ? $this->validationHelper->sanitizeColor($data['customer_edit_form_color']) : "#ffffff";
         $number = $this->validationHelper->sanitizeString($data['customer_edit_form_number']);
         $comment = $this->validationHelper->sanitizeString($data['customer_edit_form_description']);
         $selectedTeams = isset($data['customer_edit_form']['selectedTeams']) ? $data['customer_edit_form']['selectedTeams'] : array();

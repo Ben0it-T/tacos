@@ -185,7 +185,7 @@ final class ProjectService
         $dateFormat = $translations['dateFormats_date'];
 
         $name = $this->validationHelper->sanitizeString($data['project_edit_form_name']);
-        $color = $this->validationHelper->sanitizeColor($data['project_edit_form_color']);
+        $color = isset($data['project_edit_form_color']) ? $this->validationHelper->sanitizeColor($data['project_edit_form_color']) : "#ffffff";
         $customerId = intval($data['project_edit_form_customer']);
         $number = $this->validationHelper->sanitizeString($data['project_edit_form_number']);
         $comment = $this->validationHelper->sanitizeString($data['project_edit_form_description']);
@@ -269,7 +269,7 @@ final class ProjectService
         $dateFormat = $translations['dateFormats_date'];
 
         $name = $this->validationHelper->sanitizeString($data['project_edit_form_name']);
-        $color = $this->validationHelper->sanitizeColor($data['project_edit_form_color']);
+        $color = isset($data['project_edit_form_color']) ? $this->validationHelper->sanitizeColor($data['project_edit_form_color']) : "#ffffff";
         $customerId = intval($data['project_edit_form_customer']);
         $number = $this->validationHelper->sanitizeString($data['project_edit_form_number']);
         $comment = $this->validationHelper->sanitizeString($data['project_edit_form_description']);

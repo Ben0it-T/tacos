@@ -36,17 +36,19 @@
 
                 <div class="row mb-3">
                     <label for="project_edit_form_color" class="col-form-label col-sm-3">{{ trans.form_label_color }}</label>
-                    <div class="col-sm-8">
-                        <select class="form-select" id="project_edit_form_color" name="project_edit_form_color" required="required" tabindex="2">
-                            <option selected value=""></option>
-                            {% for color in colors %}
-                                <option value="{{ color.value }}" {% if project.color == color.value %}selected{% endif %}>{{ color.name }}</option>
-                            {% endfor %}
-                        </select>
+                    <div class="col-sm-9">
+                        <div class="dropdown">
+                            <input type="color" class="form-control form-control-color form-control-color-select" id="project_edit_form_color" name="project_edit_form_color" data-bs-toggle="dropdown" value="{{ project.color }}">
+                            <div class="dropdown-menu" id="project_edit_form_colorselector">
+                                {% for color in colors %}
+                                    <span class="btn btn-select-color m-1 p-2 border" style="background-color:{{ color.value }};" id="team_edit_form_color_entry" data-color="{{ color.value }}"></span>
+                                    {% if loop.index is divisible by(6) %}
+                                        <br>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
                     </div>
-                    <label for="project_edit_form_color" class="col-form-label col-sm-1">
-                        <span class="badge p-2 border border-light rounded-circle" id="project_color" style="background-color: {{ project.color }};"><span class="visually-hidden">color</span></span>
-                    </label>
                 </div>
 
                 <div class="row mb-3">
