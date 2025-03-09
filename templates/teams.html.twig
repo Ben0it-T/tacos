@@ -76,7 +76,7 @@
                         <label for="team_edit_form_color" class="col-form-label col-sm-3">{{ trans.form_label_color }}</label>
                         <div class="col-sm-9">
                             <div class="dropdown">
-                                <input type="color" class="form-control form-control-color" id="team_edit_form_color" name="team_edit_form_color" data-bs-toggle="dropdown" value="#ffffff">
+                                <input type="color" class="form-control form-control-color form-control-color-select" id="team_edit_form_color" name="team_edit_form_color" data-bs-toggle="dropdown" value="#ffffff">
                                 <div class="dropdown-menu" id="team_edit_form_colorselector">
                                     {% for color in colors %}
                                         <span class="btn btn-select-color m-1 p-2 border" style="background-color:{{ color.value }};" id="team_edit_form_color_entry" data-color="{{ color.value }}"></span>
