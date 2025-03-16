@@ -50,7 +50,7 @@ final class LoginController
 
         if( !empty($data['_login']) && !empty($data['_password'])) {
             if ($this->auth->authUser($data['_login'], $data['_password'])) {
-                $url = $routeParser->urlFor('timesheet');
+                $url = $routeParser->urlFor('timesheets');
                 return $response->withStatus(302)->withHeader('Location', $url);
             }
         }

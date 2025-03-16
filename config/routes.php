@@ -46,15 +46,15 @@ $app->post('/tags', \App\Controller\TagsController::class . ':createAction')->se
 $app->get( '/tags/{tagId}/edit', \App\Controller\TagsController::class . ':editForm')->setName('tags_edit');
 $app->post('/tags/{tagId}/edit', \App\Controller\TagsController::class . ':editAction')->setName('tags_edit_attempt');
 
-$app->get( '/timesheet', \App\Controller\TimesheetController::class . ':index')->setName('timesheet');
-$app->get( '/timesheet/create', \App\Controller\TimesheetController::class . ':createForm')->setName('timesheet_create');
-$app->post('/timesheet/create', \App\Controller\TimesheetController::class . ':createAction')->setName('timesheet_create_attempt');
-$app->get( '/timesheet/{timesheetId}/delete', \App\Controller\TimesheetController::class . ':deleteForm')->setName('timesheet_delete');
-$app->post('/timesheet/{timesheetId}/delete', \App\Controller\TimesheetController::class . ':deleteAction')->setName('timesheet_delete_attempt');
-$app->get( '/timesheet/{timesheetId}/edit', \App\Controller\TimesheetController::class . ':editForm')->setName('timesheet_edit');
-$app->post('/timesheet/{timesheetId}/edit', \App\Controller\TimesheetController::class . ':editAction')->setName('timesheet_edit_attempt');
-$app->get( '/timesheet/{timesheetId}/stop', \App\Controller\TimesheetController::class . ':stopAction')->setName('timesheet_stop');
-$app->get( '/timesheet/export', \App\Controller\TimesheetController::class . ':exportTimesheets')->setName('timesheet_export');
+$app->get( '/timesheets', \App\Controller\TimesheetController::class . ':index')->setName('timesheets');
+$app->get( '/timesheets/create', \App\Controller\TimesheetController::class . ':createForm')->setName('timesheets_create');
+$app->post('/timesheets/create', \App\Controller\TimesheetController::class . ':createAction')->setName('timesheets_create_attempt');
+$app->get( '/timesheets/{timesheetId}/delete', \App\Controller\TimesheetController::class . ':deleteForm')->setName('timesheets_delete');
+$app->post('/timesheets/{timesheetId}/delete', \App\Controller\TimesheetController::class . ':deleteAction')->setName('timesheets_delete_attempt');
+$app->get( '/timesheets/{timesheetId}/edit', \App\Controller\TimesheetController::class . ':editForm')->setName('timesheets_edit');
+$app->post('/timesheets/{timesheetId}/edit', \App\Controller\TimesheetController::class . ':editAction')->setName('timesheets_edit_attempt');
+$app->get( '/timesheets/{timesheetId}/stop', \App\Controller\TimesheetController::class . ':stopAction')->setName('timesheets_stop');
+$app->get( '/timesheets/export', \App\Controller\TimesheetController::class . ':exportTimesheets')->setName('timesheets_export');
 
 $app->get( '/teams', \App\Controller\TeamsController::class . ':index')->setName('teams');
 $app->post('/teams', \App\Controller\TeamsController::class . ':createAction')->setName('teams_create');
@@ -69,5 +69,5 @@ $app->post('/users/{username}/edit', \App\Controller\UsersController::class . ':
 $app->get('/xhr/{action}/[{key}]', \App\Controller\XhrController::class . ':xhrAction')->setName('xhr');
 
 // Redirect
-$app->redirect('/', $app->getRouteCollector()->getRouteParser()->urlFor('timesheet'), 301)->setName('redirect');
+$app->redirect('/', $app->getRouteCollector()->getRouteParser()->urlFor('timesheets'), 301)->setName('redirect');
 

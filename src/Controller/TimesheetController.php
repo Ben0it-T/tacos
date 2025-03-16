@@ -103,9 +103,9 @@ final class TimesheetController
                 'activity' => $this->activityService->findActivity($timesheet->getActivityId()),
                 'description' => $timesheet->getComment(),
                 'tags' => $this->tagService->findAllTagsByTimesheetId($timesheet->getId()),
-                'deleteLink' => $routeParser->urlFor('timesheet_delete', array('timesheetId' => $timesheet->getId())),
-                'editLink' => $routeParser->urlFor('timesheet_edit', array('timesheetId' => $timesheet->getId())),
-                'stopLink' => $routeParser->urlFor('timesheet_stop', array('timesheetId' => $timesheet->getId())),
+                'deleteLink' => $routeParser->urlFor('timesheets_delete', array('timesheetId' => $timesheet->getId())),
+                'editLink' => $routeParser->urlFor('timesheets_edit', array('timesheetId' => $timesheet->getId())),
+                'stopLink' => $routeParser->urlFor('timesheets_stop', array('timesheetId' => $timesheet->getId())),
             );
             $duration += $timesheet->getDuration();
         }
@@ -254,7 +254,7 @@ final class TimesheetController
         }
 
         // redirect
-        $url = $routeParser->urlFor('timesheet');
+        $url = $routeParser->urlFor('timesheets');
         return $response->withStatus(302)->withHeader('Location', $url);
     }
 
@@ -389,7 +389,7 @@ final class TimesheetController
 
 
         // redirect
-        $url = $routeParser->urlFor('timesheet');
+        $url = $routeParser->urlFor('timesheets');
         return $response->withStatus(302)->withHeader('Location', $url);
     }
 
@@ -416,12 +416,12 @@ final class TimesheetController
             }
 
             // redirect
-            $url = $routeParser->urlFor('timesheet_edit', array('timesheetId' => $timesheet->getId()));
+            $url = $routeParser->urlFor('timesheets_edit', array('timesheetId' => $timesheet->getId()));
             return $response->withStatus(302)->withHeader('Location', $url);
         }
 
         // redirect
-        $url = $routeParser->urlFor('timesheet');
+        $url = $routeParser->urlFor('timesheets');
         return $response->withStatus(302)->withHeader('Location', $url);
     }
 
@@ -456,7 +456,7 @@ final class TimesheetController
         }
 
         // redirect
-        $url = $routeParser->urlFor('timesheet');
+        $url = $routeParser->urlFor('timesheets');
         return $response->withStatus(302)->withHeader('Location', $url);
     }
 
@@ -484,7 +484,7 @@ final class TimesheetController
         }
 
         // redirect
-        $url = $routeParser->urlFor('timesheet');
+        $url = $routeParser->urlFor('timesheets');
         return $response->withStatus(302)->withHeader('Location', $url);
     }
 
@@ -514,7 +514,7 @@ final class TimesheetController
         }
 
         // redirect
-        $url = $routeParser->urlFor('timesheet');
+        $url = $routeParser->urlFor('timesheets');
         return $response->withStatus(302)->withHeader('Location', $url);
     }
 

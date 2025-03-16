@@ -12,7 +12,7 @@
                 <span id="currentActiveTimeSheet" start="{{ activeTimesheet.start }}" class="d-none d-sm-block" style="font-size: 1rem;">0:00</span>
             </a>
         {% else %}
-            <a class="navbar-brand d-flex align-items-center" href="{{ navLinks.timesheet_create }}" title="{{ trans.btn_create }}">
+            <a class="navbar-brand d-flex align-items-center" href="{{ navLinks.timesheets_create }}" title="{{ trans.btn_create }}">
                 <i class="bi bi-play-fill text-success" style="font-size: 1.5rem;"></i>
                 <span class="d-none d-sm-block text-secondary" style="font-size: 1rem;">0:00</span>
             </a>
@@ -40,8 +40,8 @@
                         </a>
                     </li>
 
-                    <li class="nav-item {% if navLinks.current == navLinks.timesheet %}active{% endif %}">
-                        <a class="nav-link d-flex align-items-center {% if navLinks.current == navLinks.timesheet %}active{% endif %}" href="{{ navLinks.timesheet }}">
+                    <li class="nav-item {% if navLinks.current == navLinks.timesheets %}active{% endif %}">
+                        <a class="nav-link d-flex align-items-center {% if navLinks.current == navLinks.timesheets %}active{% endif %}" href="{{ navLinks.timesheets }}">
                             <span class="nav-link-icon px-2 d-flex text-center">
                                 <i class="bi bi-clock"></i>
                             </span>

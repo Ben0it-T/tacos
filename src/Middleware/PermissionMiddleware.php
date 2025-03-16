@@ -54,10 +54,10 @@ final class PermissionMiddleware implements MiddlewareInterface
             'logout',
             'dashboard',
             'profile', 'profile_attempt',
-            'timesheet', 'timesheet_create', 'timesheet_create_attempt',
-            'timesheet_edit', 'timesheet_edit_attempt', 'timesheet_delete', 'timesheet_delete_attempt',
-            'timesheet_stop',
-            'timesheet_export',
+            'timesheets', 'timesheets_create', 'timesheets_create_attempt',
+            'timesheets_edit', 'timesheets_edit_attempt', 'timesheets_delete', 'timesheets_delete_attempt',
+            'timesheets_stop',
+            'timesheets_export',
             'xhr',
         );
 
@@ -127,9 +127,9 @@ final class PermissionMiddleware implements MiddlewareInterface
             'logout',
             'dashboard',
             'profile',
-            'timesheet',
-            'timesheet_create',
-            'timesheet_export',
+            'timesheets',
+            'timesheets_create',
+            'timesheets_export',
 
             'users',
             'teams',
@@ -157,7 +157,7 @@ final class PermissionMiddleware implements MiddlewareInterface
                 $activeTimesheet = array(
                     'id' => $activeTs->getId(),
                     'start' => strtotime($activeTs->getStart()),
-                    'stopLink' => $routeParser->urlFor('timesheet_stop', array('timesheetId' => $activeTs->getId())),
+                    'stopLink' => $routeParser->urlFor('timesheets_stop', array('timesheetId' => $activeTs->getId())),
                 );
             }
         }
