@@ -132,7 +132,7 @@ final class TimesheetController
         $viewData['flashMsgSuccess'] = $flash->getFirstMessage('success');
         $viewData['flashMsgError'] = $flash->getFirstMessage('error');
 
-        return $twig->render($response, 'timesheet.html.twig', $viewData);
+        return $twig->render($response, 'timesheets.html.twig', $viewData);
     }
 
     public function createForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
