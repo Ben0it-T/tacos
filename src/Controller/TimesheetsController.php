@@ -22,7 +22,7 @@ use Slim\Views\Twig;
 use App\Repository\UserRepository;
 use PDO;
 
-final class TimesheetController
+final class TimesheetsController
 {
     private $container;
     private $activityService;
