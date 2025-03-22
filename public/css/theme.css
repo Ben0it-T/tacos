@@ -119,3 +119,13 @@ input.form-control::placeholder {
   background-size: 16px 12px;
 }
 
+.search-dropdown {
+    width: 300px;
+}
+@media (min-width: 576px) {
+    .search-dropdown {
+        width: 500px;
+    }
+}
+
+

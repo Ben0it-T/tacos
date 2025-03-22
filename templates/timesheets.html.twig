@@ -13,20 +13,34 @@
 {% block content %}
 
     <div class="d-flex justify-content-between py-2">
-        <div>
-            <form name="timesheet_date_filter" method="GET" class="d-flex">
-                <label for="timesheet_date" class="form-label visually-hidden">{{ trans.form_label_date }}</label>
-                <div class="input-group" id="pickerDateFilter" data-td-target-input="nearest" data-td-target-toggle="nearest">
-                    <span class="input-group-text" data-td-target="#pickerDateFilter" data-td-toggle="datetimepicker">
-                        <i class="bi bi-calendar2-week"></i>
-                    </span>
-                    <input id="timesheet_date" type="text" class="form-control" data-td-target="#pickerDateFilter" value="{{ daterange.start|date(trans.dateFormats_date) }} - {{ daterange.end|date(trans.dateFormats_date) }}" placeholder="{{ trans.dateFormats_date_placeholder }}" size="22" tabindex="1" required="required" readonly>
-                    <button id="btnSubmit" class="btn btn-outline-secondary" type="button"><i class="bi bi-search"></i></button>
-                </div>
-                <input type="hidden" id="date" name="date" value="{{ daterange.start }} - {{ daterange.end }}">
-                <input type="hidden" id="dateFormats_L" value="{{ trans.dateFormats_L }}">
-                <input type="hidden" id="dateFormats_startOfTheWeek" value="{{ trans.dateFormats_startOfTheWeek }}">
-            </form>
+        <div class="dropdown">
+            <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="false" aria-expanded="false">
+                <i class="bi bi-funnel-fill"></i><span class="caret"></span>
+            </button>
+            <div class="dropdown-menu search-dropdown shadow ms-3 p-3">
+                <form name="timesheet_date_filter" method="GET">
+                    <div class="row mb-3">
+                        <label for="timesheet_date" class="col-sm-3 col-form-label">{{ trans.form_label_date }}</label>
+                        <div class="col-sm-9">
+                            <div class="input-group" id="pickerDateFilter" data-td-target-input="nearest" data-td-target-toggle="nearest">
+                                <span class="input-group-text" data-td-target="#pickerDateFilter" data-td-toggle="datetimepicker">
+                                    <i class="bi bi-calendar2-week"></i>
+                                </span>
+                                <input id="timesheet_date" type="text" class="form-control" data-td-target="#pickerDateFilter" value="{{ daterange.start|date(trans.dateFormats_date) }} - {{ daterange.end|date(trans.dateFormats_date) }}" placeholder="{{ trans.dateFormats_date_placeholder }}" size="22" tabindex="1" required="required" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-12 text-end">
+                            <button id="btnSubmit" class="btn btn-outline-secondary" type="button"><i class="bi bi-search"></i></button>
+                            <input type="hidden" id="date" name="date" value="{{ daterange.start }} - {{ daterange.end }}">
+                            <input type="hidden" id="dateFormats_L" value="{{ trans.dateFormats_L }}">
+                            <input type="hidden" id="dateFormats_startOfTheWeek" value="{{ trans.dateFormats_startOfTheWeek }}">
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <div class="d-flex">
