@@ -106,7 +106,6 @@
     <div class="card mb-3">
         <div class="card-header fs-5 fw-bold">
             {{ trans.table_row_activities }}
-
         </div>
 
         <div class="card-body">
@@ -118,6 +117,7 @@
                         <div class="d-inline-flex align-items-center">
                             <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ globalActivity.color }};"><span class="visually-hidden">color</span></span>
                             <span class="ms-1">{{ globalActivity.name }}</span>
+                            {% if globalActivity.number is not empty %}<span class="ms-1 form-text">({{ globalActivity.number}})</span>{% endif %}
                         </div>
                     </li>
                     {% endif %}
@@ -133,6 +133,7 @@
                         <div class="d-inline-flex align-items-center">
                             <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ projectActivity.color }};"><span class="visually-hidden">color</span></span>
                             <span class="ms-1">{{ projectActivity.name }}</span>
+                            {% if projectActivity.number is not empty %}<span class="ms-1 form-text">({{ projectActivity.number}})</span>{% endif %}
                         </div>
                     </li>
                     {% endif %}
