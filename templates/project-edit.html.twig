@@ -161,7 +161,7 @@
 
                 <div class="row mb-3" id="project_edit_form_global_activities" {% if project.globalActivities == 0 %}style="display: none;"{% endif %}>
                     <span class="col-form-label col-sm-3">{{ trans.table_row_globalActivities }}</span>
-                    <div class="col-sm-9">
+                    <div class="col-sm-9 overflow-y-auto mh-150px">
                         {% if globalActivities|length > 0 %}
                             {% for globalActivity in globalActivities %}
                                 <div class="form-check py-2">
@@ -180,7 +180,7 @@
 
                 <div class="row mb-3">
                     <span class="col-form-label col-sm-3">{{ trans.table_row_project_activities }}</span>
-                    <div class="col-sm-9">
+                    <div class="col-sm-9 overflow-y-auto mh-150px">
                         {% if projectActivities|length > 0 %}
                              {% for projectActivity in projectActivities %}
                                 <div class="form-check py-2">

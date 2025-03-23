@@ -128,4 +128,6 @@ input.form-control::placeholder {
     }
 }
 
-
+.mh-150px {
+    max-height: 150px;
+}
