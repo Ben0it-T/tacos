@@ -610,6 +610,9 @@ final class TimesheetsController
 
         $dateStart = $session['timesheet']['dateStart'];
         $dateEnd = $session['timesheet']['dateEnd'];
+        $selectedProjects = $session['timesheet']['projects'];
+        $selectedActivities = $session['timesheet']['activities'];
+        $selectedTags = $session['timesheet']['tags'];
 
         // Set
         $delimiter = ";";
@@ -618,7 +621,8 @@ final class TimesheetsController
         $record_seperator = "\r\n";
 
         // Get timesheets
-        $timesheets = $this->timesheetService->findAllTimesheetByUserIdBetween($currentUser->getId(), $dateStart, $dateEnd);
+        //$timesheets = $this->timesheetService->findAllTimesheetByUserIdBetween($currentUser->getId(), $dateStart, $dateEnd);
+        $timesheets = $this->timesheetService->findAllTimesheetByUserIdAndFilters($currentUser->getId(), $dateStart, $dateEnd, $selectedProjects, $selectedActivities, $selectedTags);
 
         $timesheetsList = $arrayName = array();
         $duration = 0;
