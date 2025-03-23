@@ -167,6 +167,90 @@ final class TimesheetRepository
     }
 
     /**
+     * Find all Timesheets by user and Filters
+     *
+     * @param int $userId
+     * @param $date1
+     * @param $date2
+     * @param $projectIds
+     * @param $activityIds
+     * @param $tagIds
+     * @return array of Timesheet
+     */
+    public function findAllTimesheetByUserIdAndFilters(int $userId, $date1, $date2, $projectIds, $activityIds, $tagIds) {
+        $params = array(
+            'userId' => $userId,
+            'date1' => $date1,
+            'date2' => $date2,
+        );
+        $in_params = array();
+
+        $inProjectIds = "";
+        if (count($projectIds) > 0) {
+            $in = "";
+            $i = 0;
+            foreach ($projectIds as $item) {
+                $key = ":projectId".$i++;
+                $in .= "$key,";
+                $in_params[$key] = $item;
+            }
+            $in = rtrim($in,",");
+            $inProjectIds = "AND `tacos_timesheet`.`project_id` IN ($in) ";
+        }
+
+        $inActivityIds = "";
+        if (count($activityIds) > 0) {
+            $in = "";
+            $i = 0;
+            foreach ($activityIds as $item) {
+                $key = ":activityId".$i++;
+                $in .= "$key,";
+                $in_params[$key] = $item;
+            }
+            $in = rtrim($in,",");
+            $inActivityIds = "AND `tacos_timesheet`.`activity_id` IN ($in) ";
+        }
+
+        $inTags = "";
+        if (count($tagIds) > 0) {
+            $in = "";
+            $i = 0;
+            foreach ($tagIds as $item) {
+                $key = ":tagId".$i++;
+                $in .= "$key,";
+                $in_params[$key] = $item;
+            }
+            $in = rtrim($in,",");
+            $inTags = "AND `tacos_timesheet_tags`.`tag_id` IN ($in) ";
+        }
+
+        $sql  = "SELECT `tacos_timesheet`.* FROM `tacos_timesheet` ";
+        if (count($tagIds) > 0) {
+            $sql .= 'INNER JOIN `tacos_timesheet_tags` ON `tacos_timesheet_tags`.`timesheet_id` = `tacos_timesheet`.`id` ';
+        }
+        $sql .= "WHERE `tacos_timesheet`.`user_id` = :userId ";
+        $sql .= "AND (DATE(`tacos_timesheet`.`start`) BETWEEN :date1 AND :date2) ";
+        $sql .= $inProjectIds;
+        $sql .= $inActivityIds;
+        $sql .= $inTags;
+        if (count($tagIds) > 0) {
+            $sql .= "GROUP BY `tacos_timesheet`.`id` ";
+        }
+        $sql .= "ORDER BY `tacos_timesheet`.`start` DESC, `tacos_timesheet`.`id` DESC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array_merge($params,$in_params));
+        $rows = $stmt->fetchAll();
+
+        $timesheet = array();
+        foreach ($rows as $row) {
+            $timesheet[$row['id']] = $this->buildEntity($row);
+        }
+
+        return $timesheet;
+    }
+
+    /**
      * Find all active timesheets by user Id
      *
      * @param int $userId
