@@ -55,6 +55,8 @@ return array(
     'form_label_customer_number' => "Customer number",
     'form_label_date' => "Date",
     'form_label_description' => "Description",
+    'form_label_element' => "element",
+    'form_label_elements' => "elements",
     'form_label_email' => "Email",
     'form_label_global_activities' => "Allow global activities",
     'form_label_login' => "Username",

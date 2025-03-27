@@ -54,6 +54,8 @@ return array(
     'form_label_customer_number' => "Numéro de client",
     'form_label_date' => "Date",
     'form_label_description' => "Description",
+    'form_label_element' => "élément",
+    'form_label_elements' => "éléments",
     'form_label_email' => "Email",
     'form_label_global_activities' => "Autoriser les activités globales",
     'form_label_login' => "Identifiant",
