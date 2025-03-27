@@ -45,6 +45,7 @@ return array(
     'form_error_username_length' => "Username should be between %minLength% and 180 characters.",
     'form_error_username_or_email'  => "Invalid username or email address.",
 
+    'form_label_activities' => "Activities",
     'form_label_activity' => "Activity",
     'form_label_activity_number' => "Activity number",
     'form_label_add_team' => "Add team",
@@ -67,6 +68,7 @@ return array(
     'form_label_project_end' => "Project end",
     'form_label_project_number' => "Project number",
     'form_label_project_start' => "Project start",
+    'form_label_projects' => "Projects",
     'form_label_role' => "Role",
     'form_label_selected_teams' => "Selected teams",
     'form_label_status' => "Status",

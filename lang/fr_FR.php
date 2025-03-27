@@ -44,6 +44,7 @@ return array(
     'form_error_username_length' => "Le nom d'utilisateur doit être compris entre %minLength% et 180 caractères.",
     'form_error_username_or_email'  => "Nom d'utilisateur ou adresse e-mail invalide.",
 
+    'form_label_activities' => "Activités",
     'form_label_activity' => "Activité",
     'form_label_activity_number' => "Numéro d'activité",
     'form_label_add_team' => "Ajouter une équipe",
@@ -66,6 +67,7 @@ return array(
     'form_label_project_end' => "Fin du projet",
     'form_label_project_number' => "Numéro de projet",
     'form_label_project_start' => "Début du projet",
+    'form_label_projects' => "Projets",
     'form_label_role' => "Rôle",
     'form_label_selected_teams' => "Equipes sélectionnées",
     'form_label_status' => "Statut",
