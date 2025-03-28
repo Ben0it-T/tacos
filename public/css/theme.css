@@ -132,3 +132,8 @@ input.form-control::placeholder {
     max-height: 150px;
     position: relative;
 }
+
+.mh-250px {
+    max-height: 250px;
+    position: relative;
+}
