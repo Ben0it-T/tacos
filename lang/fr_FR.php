@@ -128,6 +128,7 @@ return array(
     'table_row_creationDate' => "Date de création",
     'table_row_color' => "Couleur",
     'table_row_customer' => "Client",
+    'table_row_customer_number' => "Numéro de client",
     'table_row_date' => "Date",
     'table_row_date_begin' => "Début",
     'table_row_date_duration' => "Durée",
