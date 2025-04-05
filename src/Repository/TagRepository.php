@@ -91,6 +91,21 @@ final class TagRepository
     }
 
     /**
+     * Find All Tag ids by timesheet id
+     *
+     * @param int $timesheetId
+     * @return array of Tag ids
+     */
+    public function findAllTagIdsByTimesheetId(int $timesheetId) {
+        $stmt = $this->pdo->prepare('SELECT `tacos_tags`.`id` FROM `tacos_tags` LEFT JOIN `tacos_timesheet_tags` ON `tacos_timesheet_tags`.`tag_id` = `tacos_tags`.`id` WHERE `tacos_timesheet_tags`.`timesheet_id` = :timesheetId');
+        $stmt->execute([
+            'timesheetId' => $timesheetId,
+        ]);
+        $rows = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        return $rows;
+    }
+
+    /**
      * Check if name exists
      *
      * @param string $name

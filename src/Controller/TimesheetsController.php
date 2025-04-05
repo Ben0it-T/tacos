@@ -142,6 +142,7 @@ final class TimesheetsController
                 'tags' => $this->tagService->findAllTagsByTimesheetId($timesheet->getId()),
                 'deleteLink' => $routeParser->urlFor('timesheets_delete', array('timesheetId' => $timesheet->getId())),
                 'editLink' => $routeParser->urlFor('timesheets_edit', array('timesheetId' => $timesheet->getId())),
+                'restartLink' => $routeParser->urlFor('timesheets_restart', array('timesheetId' => $timesheet->getId())),
                 'stopLink' => $routeParser->urlFor('timesheets_stop', array('timesheetId' => $timesheet->getId())),
             );
             $duration += $timesheet->getDuration();
@@ -503,6 +504,29 @@ final class TimesheetsController
             // redirect
             $url = $routeParser->urlFor('timesheets_edit', array('timesheetId' => $timesheet->getId()));
             return $response->withStatus(302)->withHeader('Location', $url);
+        }
+
+        // redirect
+        $url = $routeParser->urlFor('timesheets');
+        return $response->withStatus(302)->withHeader('Location', $url);
+    }
+
+    public function restartAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $flash = $this->container->get('flash');
+        $translations = $this->container->get('translations');
+
+        $session = $request->getAttribute('session');
+        $currentUser = $this->userService->findUser($session['auth']['userId']);
+        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+
+        $session = $request->getAttribute('session');
+        $currentUser = $this->userService->findUser($session['auth']['userId']);
+
+        $timesheet = $this->timesheetService->findTimesheetByIdAndUserId(intval($args['timesheetId']), $currentUser->getId());
+        if ($timesheet) {
+            $this->timesheetService->restartTimesheet($timesheet);
+            $flash->addMessage('success', $translations['form_success_create_activity']);
         }
 
         // redirect

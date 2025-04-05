@@ -6,6 +6,7 @@ namespace App\Service;
 use App\Entity\Timesheet;
 use App\Helper\ValidationHelper;
 use App\Repository\ActivityRepository;
+use App\Repository\TagRepository;
 use App\Repository\TimesheetRepository;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -14,13 +15,15 @@ final class TimesheetService
 {
     private $container;
     private $activityRepository;
+    private $tagRepository;
     private $timesheetRepository;
     private $validationHelper;
     private $logger;
 
-    public function __construct(ContainerInterface $container, ActivityRepository $activityRepository, TimesheetRepository $timesheetRepository, ValidationHelper $validationHelper, LoggerInterface $logger) {
+    public function __construct(ContainerInterface $container, ActivityRepository $activityRepository, TagRepository $tagRepository, TimesheetRepository $timesheetRepository, ValidationHelper $validationHelper, LoggerInterface $logger) {
         $this->container = $container;
         $this->activityRepository = $activityRepository;
+        $this->tagRepository = $tagRepository;
         $this->timesheetRepository = $timesheetRepository;
         $this->validationHelper = $validationHelper;
         $this->logger = $logger;
@@ -325,6 +328,42 @@ final class TimesheetService
         }
 
         return $errorMsg;
+    }
+
+    /**
+     * Restart Timesheet
+     *
+     * @param Timesheet $timesheet
+     */
+    public function restartTimesheet($timesheet) {
+        $start = new \DateTimeImmutable();
+        $ts = new Timesheet();
+        $ts->setUserId($timesheet->getUserId());
+        $ts->setActivityId($timesheet->getActivityId());
+        $ts->setProjectId($timesheet->getProjectId());
+        $ts->setStart(date_format($start,"Y-m-d H:i"));
+        $ts->setEnd(NULL);
+        $ts->setDuration(NULL);
+        $ts->setComment($timesheet->getComment());
+        $ts->setModifiedAt(date("Y-m-d H:i:s"));
+
+        // Stop active timesheets
+        $activeTimesheets = $this->timesheetRepository->findAllActiveTimesheetByUserId($timesheet->getUserId());
+        foreach ($activeTimesheets as $activeTimesheet) {
+            $activeTimesheetStart = date("Y-m-d", strtotime($activeTimesheet->getStart()));
+            $activeTimesheetEnd = $activeTimesheetStart < date_format($start,"Y-m-d") ? $activeTimesheetStart." 23:59:00" : date_format($start,"Y-m-d H:i");
+            $activeTimesheet->setEnd($activeTimesheetEnd);
+            $this->timesheetRepository->stopTimesheet($activeTimesheet);
+        }
+
+        $lastInsertId = $this->timesheetRepository->insert($ts);
+        $this->logger->info("TimesheetService - Timesheet '" . $lastInsertId . "' created.");
+
+        $tagIds = $this->tagRepository->findAllTagIdsByTimesheetId($timesheet->getId());
+        if (count($tagIds) > 0) {
+            $this->timesheetRepository->insertTags(intval($lastInsertId), $tagIds);
+            $this->logger->info("TimesheetService - Timesheet '" . $lastInsertId . "': tags created.");
+        }
     }
 
     /**
