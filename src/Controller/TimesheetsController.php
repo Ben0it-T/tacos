@@ -131,7 +131,17 @@ final class TimesheetsController
 
         $timesheetsList = $arrayName = array();
         $duration = 0;
+        $timesheetRestart = $this->container->get('settings')['timesheet']['restart'];
         foreach ($timesheets as $timesheet) {
+            // Restart timesheet
+            $canRestart = false;
+            if ($timesheetRestart['active']) {
+                $interval = date_diff(date_create("now"), date_create($timesheet->getStart()));
+                if ($interval->format('%a') <= $timesheetRestart['interval']) {
+                    $canRestart = true;
+                }
+            }
+
             $timesheetsList[] = array(
                 'start' => $timesheet->getStart(),
                 'end' => $timesheet->getEnd(),
@@ -142,7 +152,7 @@ final class TimesheetsController
                 'tags' => $this->tagService->findAllTagsByTimesheetId($timesheet->getId()),
                 'deleteLink' => $routeParser->urlFor('timesheets_delete', array('timesheetId' => $timesheet->getId())),
                 'editLink' => $routeParser->urlFor('timesheets_edit', array('timesheetId' => $timesheet->getId())),
-                'restartLink' => $routeParser->urlFor('timesheets_restart', array('timesheetId' => $timesheet->getId())),
+                'restartLink' => $canRestart ? $routeParser->urlFor('timesheets_restart', array('timesheetId' => $timesheet->getId())) : '',
                 'stopLink' => $routeParser->urlFor('timesheets_stop', array('timesheetId' => $timesheet->getId())),
             );
             $duration += $timesheet->getDuration();

@@ -161,7 +161,7 @@
                                     <a class="icon-link icon-link-hover mx-2" href="{{ timesheet.stopLink }}">
                                         <i class="bi bi-stop-circle text-danger"></i>
                                     </a>
-                                    {% else %}
+                                    {% elseif timesheet.restartLink is not empty %}
                                     <a class="icon-link icon-link-hover mx-2" href="{{ timesheet.restartLink }}">
                                         <i class="bi bi-arrow-repeat text-secondary"></i>
                                     </a>
