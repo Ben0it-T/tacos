@@ -90,10 +90,21 @@ $settings['theme'] = [
 
 // Timesheet
 $settings['timesheet'] = [
-    'restart' => array(
+    'restart' => [
         'active' => true,
         'interval' => 3,
-    ),
+    ],
+    'rounding' => [
+        'active' => true,
+        'start' => [
+            'mode' => 'floor',
+            'minutes' => 5,
+        ],
+        'end' => [
+            'mode' => 'ceil',
+            'minutes' => 5,
+        ],
+    ],
 ];
 
 return $settings;

@@ -10,6 +10,8 @@ use App\Service\TagService;
 use App\Service\TimesheetService;
 use App\Service\UserService;
 
+use App\Helper\RoundingHelper;
+
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -31,8 +33,9 @@ final class TimesheetsController
     private $tagService;
     private $timesheetService;
     private $userService;
+    private $roundingHelper;
 
-    public function __construct(ContainerInterface $container, ActivityService $activityService, CustomerService $customerService, ProjectService $projectService, TagService $tagService, TimesheetService $timesheetService, UserService $userService)
+    public function __construct(ContainerInterface $container, ActivityService $activityService, CustomerService $customerService, ProjectService $projectService, TagService $tagService, TimesheetService $timesheetService, UserService $userService, RoundingHelper $roundingHelper)
     {
         $this->container = $container;
         $this->activityService = $activityService;
@@ -41,6 +44,7 @@ final class TimesheetsController
         $this->tagService = $tagService;
         $this->timesheetService = $timesheetService;
         $this->userService = $userService;
+        $this->roundingHelper = $roundingHelper;
     }
 
     public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -312,14 +316,18 @@ final class TimesheetsController
         // Get tags
         $tags = $this->tagService->findAllVisibleTags();
 
+        // Start date
+        $rounding = $this->container->get('settings')['timesheet']['rounding'];
+        $start = new \DateTime("now");
+        if ($rounding['active']) $start = $this->roundingHelper->roundDateTime($start, $rounding['start']['minutes'], $rounding['start']['mode']);
+
         $viewData = array();
         $viewData['colors'] = $colorsList;
         $viewData['customers'] = $customersList;
         $viewData['projects'] = $projectsList;
         $viewData['activities'] = $activitiesList;
         $viewData['tags'] = $tags;
-
-        $viewData['startDate'] = date("Y-m-d H:i");
+        $viewData['startDate'] = date_format($start,"Y-m-d H:i");
         $viewData['endDate'] = date("Y-m-d H:i", mktime(23, 59, 59, intval(date("n")), intval(date("j")), intval(date("Y"))));
 
         $viewData['flashMsgSuccess'] = $flash->getFirstMessage('success');

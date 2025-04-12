@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Timesheet;
+use App\Helper\RoundingHelper;
 use App\Helper\ValidationHelper;
 use App\Repository\ActivityRepository;
 use App\Repository\TagRepository;
@@ -17,14 +18,16 @@ final class TimesheetService
     private $activityRepository;
     private $tagRepository;
     private $timesheetRepository;
+    private $roundingHelper;
     private $validationHelper;
     private $logger;
 
-    public function __construct(ContainerInterface $container, ActivityRepository $activityRepository, TagRepository $tagRepository, TimesheetRepository $timesheetRepository, ValidationHelper $validationHelper, LoggerInterface $logger) {
+    public function __construct(ContainerInterface $container, ActivityRepository $activityRepository, TagRepository $tagRepository, TimesheetRepository $timesheetRepository, RoundingHelper $roundingHelper, ValidationHelper $validationHelper, LoggerInterface $logger) {
         $this->container = $container;
         $this->activityRepository = $activityRepository;
         $this->tagRepository = $tagRepository;
         $this->timesheetRepository = $timesheetRepository;
+        $this->roundingHelper = $roundingHelper;
         $this->validationHelper = $validationHelper;
         $this->logger = $logger;
     }
@@ -163,15 +166,31 @@ final class TimesheetService
         $validation = true;
         $errorMsg = "";
         $dateFormat = $translations['dateFormats_datetime'];
+        $rounding = $this->container->get('settings')['timesheet']['rounding'];
 
         $userId = intval($data['userId']);
         $activityId = intval($data['timesheet_edit_form_activity']);
         $projectId = intval($data['timesheet_edit_form_project']);
         $startDate = $this->validationHelper->sanitizeString($data['timesheet_edit_form_start_date']);
+
         $startTime = $this->validationHelper->sanitizeString($data['timesheet_edit_form_start_time']);
-        $start = (!empty($startDate) && !empty($startTime)) ? date_create_from_format($dateFormat,$startDate." ".$startTime) : "";
+        $start = NULL;
+        if (!empty($startDate) && !empty($startTime)) {
+            $start = date_create_from_format($dateFormat,$startDate." ".$startTime);
+            if ($rounding['active']) $start = $this->roundingHelper->roundDateTime($start, $rounding['start']['minutes'], $rounding['start']['mode']);
+        }
+
         $endTime = $this->validationHelper->sanitizeString($data['timesheet_edit_form_end_time']);
-        $end = (!empty($startDate) && !empty($endTime)) ? date_create_from_format($dateFormat,$startDate." ".$endTime) : NULL;
+        $end = NULL;
+        if (!empty($startDate) && !empty($endTime)) {
+            $end = date_create_from_format($dateFormat,$startDate." ".$endTime);
+            if ($rounding['active']) $end = $this->roundingHelper->roundDateTime($end, $rounding['end']['minutes'], $rounding['end']['mode']);
+            $max = date_create_from_format($dateFormat,$startDate." 23:59");
+            if ($end > $max) {
+                $end = $max;
+            }
+        }
+
         $duration = (!empty($start) && !empty($end)) ? (date_format($end,"U") - date_format($start,"U"))/60 : NULL;
         $comment = $this->validationHelper->sanitizeString($data['timesheet_edit_form_description']);
         $selectedTags = isset($data['timesheet_edit_form']['selectedTags']) ? $data['timesheet_edit_form']['selectedTags'] : array();
@@ -263,14 +282,28 @@ final class TimesheetService
         $validation = true;
         $errorMsg = "";
         $dateFormat = $translations['dateFormats_datetime'];
+        $rounding = $this->container->get('settings')['timesheet']['rounding'];
 
         $activityId = intval($data['timesheet_edit_form_activity']);
         $projectId = intval($data['timesheet_edit_form_project']);
         $startDate = $this->validationHelper->sanitizeString($data['timesheet_edit_form_start_date']);
         $startTime = $this->validationHelper->sanitizeString($data['timesheet_edit_form_start_time']);
-        $start = (!empty($startDate) && !empty($startTime)) ? date_create_from_format($dateFormat,$startDate." ".$startTime) : "";
+        $start = NULL;
+        if (!empty($startDate) && !empty($startTime)) {
+            $start = date_create_from_format($dateFormat,$startDate." ".$startTime);
+            if ($rounding['active']) $start = $this->roundingHelper->roundDateTime($start, $rounding['start']['minutes'], $rounding['start']['mode']);
+        }
         $endTime = $this->validationHelper->sanitizeString($data['timesheet_edit_form_end_time']);
-        $end = (!empty($startDate) && !empty($endTime)) ? date_create_from_format($dateFormat,$startDate." ".$endTime) : NULL;
+        $end = NULL;
+        if (!empty($startDate) && !empty($endTime)) {
+            $end = date_create_from_format($dateFormat,$startDate." ".$endTime);
+            if ($rounding['active']) $end = $this->roundingHelper->roundDateTime($end, $rounding['end']['minutes'], $rounding['end']['mode']);
+            $max = date_create_from_format($dateFormat,$startDate." 23:59");
+            if ($end > $max) {
+                $end = $max;
+            }
+        }
+
         $duration = (!empty($start) && !empty($end)) ? (date_format($end,"U") - date_format($start,"U"))/60 : NULL;
         $comment = $this->validationHelper->sanitizeString($data['timesheet_edit_form_description']);
         $selectedTags = isset($data['timesheet_edit_form']['selectedTags']) ? $data['timesheet_edit_form']['selectedTags'] : array();
@@ -336,7 +369,9 @@ final class TimesheetService
      * @param Timesheet $timesheet
      */
     public function restartTimesheet($timesheet) {
-        $start = new \DateTimeImmutable();
+        $rounding = $this->container->get('settings')['timesheet']['rounding'];
+        $start = new \DateTime("now");
+        if ($rounding['active']) $start = $this->roundingHelper->roundDateTime($start, $rounding['start']['minutes'], $rounding['start']['mode']);
         $ts = new Timesheet();
         $ts->setUserId($timesheet->getUserId());
         $ts->setActivityId($timesheet->getActivityId());
@@ -372,11 +407,15 @@ final class TimesheetService
      * @param Timesheet $timesheet
      */
     public function stopTimesheet($timesheet) {
-        $timesheetStart = date("Y-m-d", strtotime($timesheet->getStart()));
-        $timesheetEnd = date("Y-m-d", strtotime($timesheet->getEnd()));
-        if ($timesheetStart < $timesheetEnd) {
-            $timesheet->setEnd($timesheetStart." 23:59:00");
+        $rounding = $this->container->get('settings')['timesheet']['rounding'];
+        $end = date_create($timesheet->getEnd());
+        if ($rounding['active']) $end = $this->roundingHelper->roundDateTime($end, $rounding['end']['minutes'], $rounding['end']['mode']);
+        $max = date_create(date("Y-m-d", strtotime($timesheet->getStart())) . " 23:59:00");
+        if ($end > $max) {
+            $end = $max;
         }
+
+        $timesheet->setEnd(date_format($end, "Y-m-d H:i"));
         $this->timesheetRepository->stopTimesheet($timesheet);
         $this->logger->info("TimesheetService - Timesheet '" . $timesheet->getId() . "' stopped.");
     }

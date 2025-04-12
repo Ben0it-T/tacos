@@ -55,6 +55,14 @@ return function (array $settings): array {
     $settings['session']['path'] = dirname(__DIR__) . '/var/sessions';
     $settings['session']['lifetime'] = $lifetime;
 
+    // Timesheet
+    // rounding mode : ceil, floor, closest, none
+    $settings['timesheet']['rounding']['start']['mode'] = 'floor';
+    $settings['timesheet']['rounding']['start']['minutes'] = 5;
+    $settings['timesheet']['rounding']['end']['mode'] = 'ceil';
+    $settings['timesheet']['rounding']['end']['minutes'] = 5;
+
+
     // ...
 
     return $settings;
