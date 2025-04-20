@@ -137,6 +137,29 @@ final class UserRepository
         return $users;
     }
 
+    /**
+     * Find all enabled Users in Teams
+     *
+     * @param array list of teamsIds
+     * @return array of Users
+     */
+    public function findAllEnabledUsersInTeams($teamsIds) {
+        $users = array();
+        if (count($teamsIds) > 0) {
+            $in = str_repeat('?,', count($teamsIds) - 1) . '?';
+            // distinct users ?
+            $stmt = $this->pdo->prepare("SELECT `tacos_users`.* FROM `tacos_users_teams` LEFT JOIN `tacos_users` ON `tacos_users`.`id` = `tacos_users_teams`.`user_id` WHERE `tacos_users_teams`.`team_id` IN ($in) AND `tacos_users`.`enabled` = 1 GROUP BY `tacos_users`.`id` ORDER BY `tacos_users`.`name`");
+            $stmt->execute($teamsIds);
+            $rows = $stmt->fetchAll();
+
+            foreach ($rows as $row) {
+                $users[$row['id']] = $this->buildEntity($row);
+            }
+        }
+
+        return $users;
+    }
+
 
 
     /**

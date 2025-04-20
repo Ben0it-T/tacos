@@ -64,6 +64,16 @@ final class UserService
         return $this->userRepository->findAllEnabled();
     }
 
+    /**
+     * Find all enabled Users in Teams
+     *
+     * @param array list of teamsIds
+     * @return array of Users
+     */
+    public function findAllEnabledUsersInTeams($teamsIds) {
+        return $this->userRepository->findAllEnabledUsersInTeams($teamsIds);
+    }
+
 
 
     /**

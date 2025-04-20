@@ -7,6 +7,7 @@ use App\Service\ActivityService;
 use App\Service\CustomerService;
 use App\Service\ProjectService;
 use App\Service\TagService;
+use App\Service\TeamService;
 use App\Service\TimesheetService;
 use App\Service\UserService;
 
@@ -31,17 +32,19 @@ final class TimesheetsController
     private $customerService;
     private $projectService;
     private $tagService;
+    private $teamService;
     private $timesheetService;
     private $userService;
     private $roundingHelper;
 
-    public function __construct(ContainerInterface $container, ActivityService $activityService, CustomerService $customerService, ProjectService $projectService, TagService $tagService, TimesheetService $timesheetService, UserService $userService, RoundingHelper $roundingHelper)
+    public function __construct(ContainerInterface $container, ActivityService $activityService, CustomerService $customerService, ProjectService $projectService, TagService $tagService, TeamService $teamService, TimesheetService $timesheetService, UserService $userService, RoundingHelper $roundingHelper)
     {
         $this->container = $container;
         $this->activityService = $activityService;
         $this->customerService = $customerService;
         $this->projectService = $projectService;
         $this->tagService = $tagService;
+        $this->teamService = $teamService;
         $this->timesheetService = $timesheetService;
         $this->userService = $userService;
         $this->roundingHelper = $roundingHelper;
@@ -233,6 +236,217 @@ final class TimesheetsController
         $viewData['flashMsgError'] = $flash->getFirstMessage('error');
 
         return $twig->render($response, 'timesheets.html.twig', $viewData);
+    }
+
+    public function indexTeams(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $twig  = $this->container->get(Twig::class);
+        $flash = $this->container->get('flash');
+        $translations = $this->container->get('translations');
+
+        $routeContext = RouteContext::fromRequest($request);
+        $routeParser = $routeContext->getRouteParser();
+
+        $session = $request->getAttribute('session');
+        $currentUser = $this->userService->findUser($session['auth']['userId']);
+
+        // Filters
+        $data = $request->getQueryParams();
+        // Date
+        if (isset($data['date']) && !empty($data['date'])) {
+            list($date1, $date2) = explode(" - ", $data['date']);
+
+            $dateStart = date_create($date1);
+            if ($dateStart instanceof \DateTime) {
+                $dateStart = date_format($dateStart,"Y-m-d");
+            }
+            else {
+                $dateStart = date("Y-m-d");
+            }
+
+            $dateEnd= date_create($date2);
+            if ($dateEnd instanceof \DateTime) {
+                $dateEnd = date_format($dateEnd,"Y-m-d");
+            }
+            else {
+                $dateEnd = $dateStart;
+            }
+        }
+        else if (isset($session['teamsTimesheets']['dateStart'])) {
+            $dateStart = $session['teamsTimesheets']['dateStart'];
+            $dateEnd = $session['teamsTimesheets']['dateEnd'];
+        }
+        // Users
+        $selectedUsers = array();
+        if (isset($data['users'])) {
+            if (($key = array_search("", $data['users'])) !== false) {
+                unset($data['users'][$key]);
+            }
+            $selectedUsers = $data['users'];
+        }
+        else if (isset($session['teamsTimesheets']['users'])) {
+            $selectedUsers = $session['teamsTimesheets']['users'];
+        }
+        // Projects
+        $selectedProjects = array();
+        if (isset($data['projects'])) {
+            if (($key = array_search("", $data['projects'])) !== false) {
+                unset($data['projects'][$key]);
+            }
+            $selectedProjects = $data['projects'];
+        }
+        else if (isset($session['teamsTimesheets']['projects'])) {
+            $selectedProjects = $session['teamsTimesheets']['projects'];
+        }
+        // Activities
+        $selectedActivities = array();
+        if (isset($data['activities'])) {
+            if (($key = array_search("", $data['activities'])) !== false) {
+                unset($data['activities'][$key]);
+            }
+            $selectedActivities = $data['activities'];
+        }
+        else if (isset($session['teamsTimesheets']['activities'])) {
+            $selectedActivities = $session['teamsTimesheets']['activities'];
+        }
+        // Tags
+        $selectedTags = array();
+        if (isset($data['tags'])) {
+            if (($key = array_search("", $data['tags'])) !== false) {
+                unset($data['tags'][$key]);
+            }
+            $selectedTags = $data['tags'];
+        }
+        else if (isset($session['teamsTimesheets']['tags'])) {
+            $selectedTags = $session['teamsTimesheets']['tags'];
+        }
+
+
+        $startOfTheWeek = $translations['dateFormats_startOfTheWeek'];
+        $day = (date('w')+(7-$startOfTheWeek))%7;
+        $dateStart = isset($dateStart) ? $dateStart : date("Y-m-d", strtotime('-'.$day.' days'));
+        $dateEnd = isset($dateEnd) ? $dateEnd : date("Y-m-d", strtotime('+'.(6-$day).' days'));
+        $_SESSION['teamsTimesheets']['dateStart'] = $dateStart;
+        $_SESSION['teamsTimesheets']['dateEnd'] = $dateEnd;
+        $_SESSION['teamsTimesheets']['users'] = $selectedUsers;
+        $_SESSION['teamsTimesheets']['projects'] = $selectedProjects;
+        $_SESSION['teamsTimesheets']['activities'] = $selectedActivities;
+        $_SESSION['teamsTimesheets']['tags'] = $selectedTags;
+
+        // Get Teams
+        $teams = $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
+        $teamsIds = array();
+        if (count($teams) > 0) {
+            foreach ($teams as $team) {
+                $teamsIds[] = $team->getId();
+            }
+        }
+
+        // Get users in teams
+        $users = $this->userService->findAllEnabledUsersInTeams($teamsIds);
+        $usersIds = array();
+        $usersList = array();
+        if (count($users) > 0) {
+            foreach ($users as $usr) {
+                $usersIds[] = $usr->getId();
+                $usersList[] = array(
+                    'id' => $usr->getId(),
+                    'name' => $usr->getName(),
+                );
+            }
+        }
+        $selectedUsersIds = empty($selectedUsers) ? $usersIds : $selectedUsers;
+
+        // Get timesheets
+        $timesheets = $this->timesheetService->findAllTimesheetsByUsersIdAndFilters($selectedUsersIds, $dateStart, $dateEnd, $selectedProjects, $selectedActivities, $selectedTags);
+        $timesheetsList = array();
+        $duration = 0;
+        foreach ($timesheets as $timesheet) {
+            $timesheetsList[] = array(
+                'start' => $timesheet->getStart(),
+                'end' => $timesheet->getEnd(),
+                'duration' => $this->timesheetService->timeToString($timesheet->getDuration()),
+                'user' => $this->userService->findUser($timesheet->getUserId()),
+                'project' => $this->projectService->findProject($timesheet->getProjectId()),
+                'activity' => $this->activityService->findActivity($timesheet->getActivityId()),
+                'description' => $timesheet->getComment(),
+                'tags' => $this->tagService->findAllTagsByTimesheetId($timesheet->getId()),
+            );
+            $duration += $timesheet->getDuration();
+        }
+
+
+        // Get colors
+        $colorChoices = $this->container->get('settings')['theme']['colorChoices'];
+        $colorsList = array();
+        foreach (explode(',',$colorChoices) as $key => $value) {
+            list($colorName, $colorValue) = explode('|', $value);
+            //$colorsList[$colorName] = $colorValue;
+            $colorsList[$key] = array(
+                'name' => $colorName,
+                'value' => $colorValue,
+            );
+        }
+
+        // Get projects
+        $projectsNotInTeam = $this->projectService->findAllVisibleProjectsNotInTeam();
+        if ($currentUser->getRole() === 3) {
+            $projectsInTeams = $this->projectService->findAllVisibleProjectsHaveTeams();
+        }
+        else {
+            $projectsInTeams = $this->projectService->findAllVisibleProjectsByUserId($currentUser->getId());
+        }
+        $projects = array_merge($projectsNotInTeam, $projectsInTeams);
+        $projectsList = array();
+        foreach ($projects as $entry) {
+            $projectsList[] = array(
+                'id' => $entry->getId(),
+                'name' => $entry->getName(),
+            );
+        }
+        usort($projectsList, fn($a, $b) => $a['name'] <=> $b['name']);
+
+        // Get activities
+        $activitiesNotInTeam = $this->activityService->findAllVisibleActivitiesNotInTeam();
+        if ($currentUser->getRole() === 3) {
+            $activitiesInTeams = $this->activityService->findAllVisibleActivitiesHaveTeams();
+        }
+        else {
+            $activitiesInTeams = $this->activityService->findAllVisibleActivitiesByUserId($currentUser->getId());
+        }
+        $activities = array_merge($activitiesNotInTeam, $activitiesInTeams);
+        $activitiesList = array();
+        foreach ($activities as $entry) {
+            $activitiesList[] = array(
+                'id' => $entry->getId(),
+                'name' => $entry->getName(),
+            );
+        }
+        usort($activitiesList, fn($a, $b) => $a['name'] <=> $b['name']);
+
+        // Get tags
+        $tags = $this->tagService->findAllVisibleTags();
+
+        $viewData = array();
+        $viewData['daterange']['start'] = $dateStart;
+        $viewData['daterange']['end'] = $dateEnd;
+        $viewData['selectedUsers'] = $selectedUsers;
+        $viewData['selectedProjects'] = $selectedProjects;
+        $viewData['selectedActivities'] = $selectedActivities;
+        $viewData['selectedTags'] = $selectedTags;
+
+        $viewData['colors'] = $colorsList;
+        $viewData['users'] = $usersList;
+        $viewData['projects'] = $projectsList;
+        $viewData['activities'] = $activitiesList;
+        $viewData['tags'] = $tags;
+        $viewData['timesheets'] = $timesheetsList;
+        $viewData['duration'] = $duration > 0 ? $this->timesheetService->timeToString($duration) : "";
+
+        $viewData['flashMsgSuccess'] = $flash->getFirstMessage('success');
+        $viewData['flashMsgError'] = $flash->getFirstMessage('error');
+
+        return $twig->render($response, 'teams-timesheets.html.twig', $viewData);
     }
 
     public function createForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface

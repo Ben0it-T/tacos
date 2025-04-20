@@ -49,6 +49,17 @@
                         </a>
                     </li>
 
+                    {% if currentUser.role in [2,3] %}
+                        <li class="nav-item {% if navLinks.current == navLinks.timesheets_teams %}active{% endif %}">
+                            <a class="nav-link d-flex align-items-center {% if navLinks.current == navLinks.timesheets_teams %}active{% endif %}" href="{{ navLinks.timesheets_teams }}">
+                                <span class="nav-link-icon px-2 d-flex text-center">
+                                    <i class="bi bi-people"></i>
+                                </span>
+                                <span class="nav-link-title">{{ trans.view_teams_timesheets }}</span>
+                            </a>
+                        </li>
+                    {% endif %}
+
                     <li class="nav-item">
                         <a class="nav-link d-flex align-items-center" href="#">
                             <span class="nav-link-icon px-2 d-flex text-center">

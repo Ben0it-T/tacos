@@ -113,6 +113,21 @@ final class TimesheetService
     }
 
     /**
+     * Find all Timesheets by users and Filters
+     *
+     * @param array $usersIds
+     * @param $date1
+     * @param $date2
+     * @param $projectIds
+     * @param $activityIds
+     * @param $tagIds
+     * @return array of Timesheet
+     */
+    public function findAllTimesheetsByUsersIdAndFilters(array $usersIds, $date1, $date2, $projectIds = array(), $activityIds = array(), $tagIds = array()) {
+        return $this->timesheetRepository->findAllTimesheetsByUsersIdAndFilters($usersIds, $date1, $date2, $projectIds, $activityIds, $tagIds);
+    }
+
+    /**
      * Find all active timesheets by user Id
      *
      * @param int $userId
