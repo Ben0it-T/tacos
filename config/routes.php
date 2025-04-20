@@ -61,6 +61,7 @@ $app->get( '/teams', \App\Controller\TeamsController::class . ':index')->setName
 $app->post('/teams', \App\Controller\TeamsController::class . ':createAction')->setName('teams_create');
 $app->get( '/teams/{teamId}/edit', \App\Controller\TeamsController::class . ':editForm')->setName('teams_edit');
 $app->post('/teams/{teamId}/edit', \App\Controller\TeamsController::class . ':editAction')->setName('teams_edit_attempt');
+$app->get( '/teams/timesheets', \App\Controller\TimesheetsController::class . ':indexTeams')->setName('timesheets_teams');
 
 $app->get( '/users', \App\Controller\UsersController::class . ':index')->setName('users');
 $app->post('/users', \App\Controller\UsersController::class . ':createAction')->setName('users_create');
