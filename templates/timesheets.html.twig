@@ -15,7 +15,7 @@
     <div class="d-flex justify-content-between py-2">
         <div class="dropdown">
             <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown" data-bs-auto-close="false" aria-expanded="false">
-                <i class="bi bi-funnel-fill"></i><span class="caret"></span>
+                <i class="bi bi-funnel-fill bi bi-funnel-fill {% if (selectedProjects|length >= 1) or (selectedActivities|length >= 1) or (selectedTags|length >= 1) %}text-primary{% endif %}"></i><span class="caret"></span>
             </button>
             <div class="dropdown-menu search-dropdown shadow ms-3 p-3">
                 <form name="timesheet_date_filter" method="GET">
