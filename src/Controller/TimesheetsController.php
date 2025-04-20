@@ -84,9 +84,9 @@ final class TimesheetsController
                 $dateEnd = $dateStart;
             }
         }
-        else if (isset($session['timesheet']['dateStart'])) {
-            $dateStart = $session['timesheet']['dateStart'];
-            $dateEnd = $session['timesheet']['dateEnd'];
+        else if (isset($session['timesheets']['dateStart'])) {
+            $dateStart = $session['timesheets']['dateStart'];
+            $dateEnd = $session['timesheets']['dateEnd'];
         }
         // Projects
         $selectedProjects = array();
@@ -96,8 +96,8 @@ final class TimesheetsController
             }
             $selectedProjects = $data['projects'];
         }
-        else if (isset($session['timesheet']['projects'])) {
-            $selectedProjects = $session['timesheet']['projects'];
+        else if (isset($session['timesheets']['projects'])) {
+            $selectedProjects = $session['timesheets']['projects'];
         }
         // Activities
         $selectedActivities = array();
@@ -107,8 +107,8 @@ final class TimesheetsController
             }
             $selectedActivities = $data['activities'];
         }
-        else if (isset($session['timesheet']['activities'])) {
-            $selectedActivities = $session['timesheet']['activities'];
+        else if (isset($session['timesheets']['activities'])) {
+            $selectedActivities = $session['timesheets']['activities'];
         }
         // Tags
         $selectedTags = array();
@@ -118,8 +118,8 @@ final class TimesheetsController
             }
             $selectedTags = $data['tags'];
         }
-        else if (isset($session['timesheet']['tags'])) {
-            $selectedTags = $session['timesheet']['tags'];
+        else if (isset($session['timesheets']['tags'])) {
+            $selectedTags = $session['timesheets']['tags'];
         }
 
 
@@ -127,16 +127,16 @@ final class TimesheetsController
         $day = (date('w')+(7-$startOfTheWeek))%7;
         $dateStart = isset($dateStart) ? $dateStart : date("Y-m-d", strtotime('-'.$day.' days'));
         $dateEnd = isset($dateEnd) ? $dateEnd : date("Y-m-d", strtotime('+'.(6-$day).' days'));
-        $_SESSION['timesheet']['dateStart'] = $dateStart;
-        $_SESSION['timesheet']['dateEnd'] = $dateEnd;
-        $_SESSION['timesheet']['projects'] = $selectedProjects;
-        $_SESSION['timesheet']['activities'] = $selectedActivities;
-        $_SESSION['timesheet']['tags'] = $selectedTags;
+        $_SESSION['timesheets']['dateStart'] = $dateStart;
+        $_SESSION['timesheets']['dateEnd'] = $dateEnd;
+        $_SESSION['timesheets']['projects'] = $selectedProjects;
+        $_SESSION['timesheets']['activities'] = $selectedActivities;
+        $_SESSION['timesheets']['tags'] = $selectedTags;
 
         // Get timesheets
         $timesheets = $this->timesheetService->findAllTimesheetByUserIdAndFilters($currentUser->getId(), $dateStart, $dateEnd, $selectedProjects, $selectedActivities, $selectedTags);
 
-        $timesheetsList = $arrayName = array();
+        $timesheetsList = array();
         $duration = 0;
         $timesheetRestart = $this->container->get('settings')['timesheet']['restart'];
         foreach ($timesheets as $timesheet) {
@@ -864,11 +864,11 @@ final class TimesheetsController
         $session = $request->getAttribute('session');
         $currentUser = $this->userService->findUser($session['auth']['userId']);
 
-        $dateStart = $session['timesheet']['dateStart'];
-        $dateEnd = $session['timesheet']['dateEnd'];
-        $selectedProjects = $session['timesheet']['projects'];
-        $selectedActivities = $session['timesheet']['activities'];
-        $selectedTags = $session['timesheet']['tags'];
+        $dateStart = $session['timesheets']['dateStart'];
+        $dateEnd = $session['timesheets']['dateEnd'];
+        $selectedProjects = $session['timesheets']['projects'];
+        $selectedActivities = $session['timesheets']['activities'];
+        $selectedTags = $session['timesheets']['tags'];
 
         // Set
         $delimiter = ";";
