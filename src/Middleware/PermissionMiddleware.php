@@ -67,7 +67,7 @@ final class PermissionMiddleware implements MiddlewareInterface
             'projects', 'projects_create', 'projects_details', 'projects_edit', 'projects_edit_attempt',
             'tags', 'tags_create', 'tags_edit', 'tags_edit_attempt',
             'teams', 'teams_edit', 'teams_edit_attempt',
-            'timesheets_teams',
+            'timesheets_teams', 'timesheets_teams_export',
         ));
 
         $adminRoutes = array_merge($teamLeadRoutes, array(
@@ -132,6 +132,7 @@ final class PermissionMiddleware implements MiddlewareInterface
             'timesheets_create',
             'timesheets_export',
             'timesheets_teams',
+            'timesheets_teams_export',
             'users',
             'teams',
             'customers',

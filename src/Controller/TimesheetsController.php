@@ -829,8 +829,6 @@ final class TimesheetsController
         return $response->withStatus(302)->withHeader('Location', $url);
     }
 
-
-
     public function stopAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $flash = $this->container->get('flash');
@@ -912,6 +910,108 @@ final class TimesheetsController
             $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['project']->getNumber()) . $enclosure;
             $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['activity']->getName()) . $enclosure;
             $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['activity']->getNumber()) . $enclosure;
+            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['description']) . $enclosure;
+
+            $tags = array();
+            if ($entry['tags']) {
+                foreach ($entry['tags'] as $tag) {
+                    $tags[] = $tag->getName();
+                }
+            }
+            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, implode("|", $tags)) . $enclosure;
+
+            $response->getBody()->write(implode($delimiter, $line) . $record_seperator);
+        }
+
+        // Output
+        $fileName = "tacos-".date("Y-m-d").".csv";
+        return $response
+            ->withHeader('Content-Type', 'application/octet-stream')
+            ->withHeader('Content-Disposition', "attachment; filename=$fileName")
+            ->withAddedHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->withHeader('Cache-Control', 'post-check=0, pre-check=0')
+            ->withHeader('Pragma', 'no-cache');
+    }
+
+    public function exportTeamsTimesheets(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $session = $request->getAttribute('session');
+        $currentUser = $this->userService->findUser($session['auth']['userId']);
+
+        $dateStart = $session['teamsTimesheets']['dateStart'];
+        $dateEnd = $session['teamsTimesheets']['dateEnd'];
+        $selectedUsers = $session['teamsTimesheets']['users'];
+        $selectedProjects = $session['teamsTimesheets']['projects'];
+        $selectedActivities = $session['teamsTimesheets']['activities'];
+        $selectedTags = $session['teamsTimesheets']['tags'];
+
+        // Get Teams
+        $teams = $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
+        $teamsIds = array();
+        if (count($teams) > 0) {
+            foreach ($teams as $team) {
+                $teamsIds[] = $team->getId();
+            }
+        }
+
+        // Get users in teams
+        $users = $this->userService->findAllEnabledUsersInTeams($teamsIds);
+        $usersIds = array();
+        $usersList = array();
+        if (count($users) > 0) {
+            foreach ($users as $usr) {
+                $usersIds[] = $usr->getId();
+                $usersList[] = array(
+                    'id' => $usr->getId(),
+                    'name' => $usr->getName(),
+                );
+            }
+        }
+        $selectedUsersIds = empty($selectedUsers) ? $usersIds : $selectedUsers;
+
+        // Set
+        $delimiter = ";";
+        $enclosure = '"';
+        $escape_char = "\\";
+        $record_seperator = "\r\n";
+
+        // Get timesheets
+        $timesheets = $this->timesheetService->findAllTimesheetsByUsersIdAndFilters($selectedUsersIds, $dateStart, $dateEnd, $selectedProjects, $selectedActivities, $selectedTags);
+
+        $timesheetsList = array();
+        $duration = 0;
+        foreach ($timesheets as $timesheet) {
+            $timesheetsList[] = array(
+                'start' => $timesheet->getStart(),
+                'end' => $timesheet->getEnd(),
+                'duration' => $this->timesheetService->timeToString($timesheet->getDuration()),
+                'user' => $this->userService->findUser($timesheet->getUserId()),
+                'project' => $this->projectService->findProject($timesheet->getProjectId()),
+                'activity' => $this->activityService->findActivity($timesheet->getActivityId()),
+                'description' => $timesheet->getComment(),
+                'tags' => $this->tagService->findAllTagsByTimesheetId($timesheet->getId()),
+            );
+            $duration += $timesheet->getDuration();
+        }
+
+        $headers = ['Start', 'End', 'Duration', 'Project', 'Project Number', 'Activity', 'Activity Number', 'User', 'Description', 'Tags'];
+
+        // Add BOM
+        $response->getBody()->write($bom =( chr(0xEF) . chr(0xBB) . chr(0xBF) ));
+
+        // Create header
+        $response->getBody()->write(implode($delimiter, $headers) . $record_seperator);
+
+        foreach ($timesheetsList as $entry) {
+            $line = array();
+            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['start']) . $enclosure;
+            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, (is_null($entry['end']) ? "" : $entry['end'])) . $enclosure;
+            $line[] = $entry['duration'];
+            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['project']->getName()) . $enclosure;
+            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['project']->getNumber()) . $enclosure;
+            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['activity']->getName()) . $enclosure;
+            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['activity']->getNumber()) . $enclosure;
+            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['user']->getName()) . $enclosure;
             $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['description']) . $enclosure;
 
             $tags = array();
