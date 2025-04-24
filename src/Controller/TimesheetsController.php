@@ -250,7 +250,89 @@ final class TimesheetsController
         $session = $request->getAttribute('session');
         $currentUser = $this->userService->findUser($session['auth']['userId']);
 
-        // Filters
+        // Get Teams
+        $teams = $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
+        $teamsIds = array();
+        if (count($teams) > 0) {
+            foreach ($teams as $team) {
+                $teamsIds[] = $team->getId();
+            }
+        }
+
+        // Get users in teams
+        $users = $this->userService->findAllEnabledUsersInTeams($teamsIds);
+        $usersIds = array();
+        $usersList = array();
+        if (count($users) > 0) {
+            foreach ($users as $usr) {
+                $usersIds[] = $usr->getId();
+                $usersList[] = array(
+                    'id' => $usr->getId(),
+                    'name' => $usr->getName(),
+                );
+            }
+        }
+
+        // Get colors
+        $colorChoices = $this->container->get('settings')['theme']['colorChoices'];
+        $colorsList = array();
+        foreach (explode(',',$colorChoices) as $key => $value) {
+            list($colorName, $colorValue) = explode('|', $value);
+            //$colorsList[$colorName] = $colorValue;
+            $colorsList[$key] = array(
+                'name' => $colorName,
+                'value' => $colorValue,
+            );
+        }
+
+        // Get projects
+        $projectsNotInTeam = $this->projectService->findAllVisibleProjectsNotInTeam();
+        if ($currentUser->getRole() === 3) {
+            $projectsInTeams = $this->projectService->findAllVisibleProjectsHaveTeams();
+        }
+        else {
+            $projectsInTeams = $this->projectService->findAllVisibleProjectsByUserId($currentUser->getId());
+        }
+        $projects = array_merge($projectsNotInTeam, $projectsInTeams);
+        $projectsIds = array();
+        $projectsList = array();
+        foreach ($projects as $entry) {
+            $projectsIds[] = $entry->getId();
+            $projectsList[] = array(
+                'id' => $entry->getId(),
+                'name' => $entry->getName(),
+            );
+        }
+        usort($projectsList, fn($a, $b) => $a['name'] <=> $b['name']);
+
+        // Get activities
+        $activitiesNotInTeam = $this->activityService->findAllVisibleActivitiesNotInTeam();
+        if ($currentUser->getRole() === 3) {
+            $activitiesInTeams = $this->activityService->findAllVisibleActivitiesHaveTeams();
+        }
+        else {
+            $activitiesInTeams = $this->activityService->findAllVisibleActivitiesByUserId($currentUser->getId());
+        }
+        $activities = array_merge($activitiesNotInTeam, $activitiesInTeams);
+        $activitiesIds = array();
+        $activitiesList = array();
+        foreach ($activities as $entry) {
+            $activitiesIds[] = $entry->getId();
+            $activitiesList[] = array(
+                'id' => $entry->getId(),
+                'name' => $entry->getName(),
+            );
+        }
+        usort($activitiesList, fn($a, $b) => $a['name'] <=> $b['name']);
+
+        // Get tags
+        $tags = $this->tagService->findAllVisibleTags();
+        $tagsIds = array();
+        foreach ($tags as $entry) {
+            $tagsIds[] = $entry->getId();
+        }
+
+        // Get filters
         $data = $request->getQueryParams();
         // Date
         if (isset($data['date']) && !empty($data['date'])) {
@@ -322,40 +404,48 @@ final class TimesheetsController
         }
 
 
+        // Start date and end date
         $startOfTheWeek = $translations['dateFormats_startOfTheWeek'];
         $day = (date('w')+(7-$startOfTheWeek))%7;
         $dateStart = isset($dateStart) ? $dateStart : date("Y-m-d", strtotime('-'.$day.' days'));
         $dateEnd = isset($dateEnd) ? $dateEnd : date("Y-m-d", strtotime('+'.(6-$day).' days'));
+
+        // Check selected Users
+        for ($i=0; $i < count($selectedUsers) ; $i++) {
+            if (!in_array($selectedUsers[$i], $usersIds)) {
+                unset($selectedUsers[$i]);
+            }
+        }
+        $selectedUsersIds = empty($selectedUsers) ? $usersIds : $selectedUsers;
+
+        // Check selected Projects
+        for ($i=0; $i < count($selectedProjects) ; $i++) {
+            if (!in_array($selectedProjects[$i], $projectsIds)) {
+                unset($selectedProjects[$i]);
+            }
+        }
+
+        // Check selected Activities
+        for ($i=0; $i < count($selectedActivities) ; $i++) {
+            if (!in_array($selectedActivities[$i], $activitiesIds)) {
+                unset($selectedActivities[$i]);
+            }
+        }
+
+        // Check selected Tags
+        for ($i=0; $i < count($selectedTags) ; $i++) {
+            if (!in_array($selectedTags[$i], $tagsIds)) {
+                unset($selectedTags[$i]);
+            }
+        }
+
+        // Store filters
         $_SESSION['teamsTimesheets']['dateStart'] = $dateStart;
         $_SESSION['teamsTimesheets']['dateEnd'] = $dateEnd;
         $_SESSION['teamsTimesheets']['users'] = $selectedUsers;
         $_SESSION['teamsTimesheets']['projects'] = $selectedProjects;
         $_SESSION['teamsTimesheets']['activities'] = $selectedActivities;
         $_SESSION['teamsTimesheets']['tags'] = $selectedTags;
-
-        // Get Teams
-        $teams = $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
-        $teamsIds = array();
-        if (count($teams) > 0) {
-            foreach ($teams as $team) {
-                $teamsIds[] = $team->getId();
-            }
-        }
-
-        // Get users in teams
-        $users = $this->userService->findAllEnabledUsersInTeams($teamsIds);
-        $usersIds = array();
-        $usersList = array();
-        if (count($users) > 0) {
-            foreach ($users as $usr) {
-                $usersIds[] = $usr->getId();
-                $usersList[] = array(
-                    'id' => $usr->getId(),
-                    'name' => $usr->getName(),
-                );
-            }
-        }
-        $selectedUsersIds = empty($selectedUsers) ? $usersIds : $selectedUsers;
 
         // Get timesheets
         $timesheets = $this->timesheetService->findAllTimesheetsByUsersIdAndFilters($selectedUsersIds, $dateStart, $dateEnd, $selectedProjects, $selectedActivities, $selectedTags);
@@ -374,58 +464,6 @@ final class TimesheetsController
             );
             $duration += $timesheet->getDuration();
         }
-
-
-        // Get colors
-        $colorChoices = $this->container->get('settings')['theme']['colorChoices'];
-        $colorsList = array();
-        foreach (explode(',',$colorChoices) as $key => $value) {
-            list($colorName, $colorValue) = explode('|', $value);
-            //$colorsList[$colorName] = $colorValue;
-            $colorsList[$key] = array(
-                'name' => $colorName,
-                'value' => $colorValue,
-            );
-        }
-
-        // Get projects
-        $projectsNotInTeam = $this->projectService->findAllVisibleProjectsNotInTeam();
-        if ($currentUser->getRole() === 3) {
-            $projectsInTeams = $this->projectService->findAllVisibleProjectsHaveTeams();
-        }
-        else {
-            $projectsInTeams = $this->projectService->findAllVisibleProjectsByUserId($currentUser->getId());
-        }
-        $projects = array_merge($projectsNotInTeam, $projectsInTeams);
-        $projectsList = array();
-        foreach ($projects as $entry) {
-            $projectsList[] = array(
-                'id' => $entry->getId(),
-                'name' => $entry->getName(),
-            );
-        }
-        usort($projectsList, fn($a, $b) => $a['name'] <=> $b['name']);
-
-        // Get activities
-        $activitiesNotInTeam = $this->activityService->findAllVisibleActivitiesNotInTeam();
-        if ($currentUser->getRole() === 3) {
-            $activitiesInTeams = $this->activityService->findAllVisibleActivitiesHaveTeams();
-        }
-        else {
-            $activitiesInTeams = $this->activityService->findAllVisibleActivitiesByUserId($currentUser->getId());
-        }
-        $activities = array_merge($activitiesNotInTeam, $activitiesInTeams);
-        $activitiesList = array();
-        foreach ($activities as $entry) {
-            $activitiesList[] = array(
-                'id' => $entry->getId(),
-                'name' => $entry->getName(),
-            );
-        }
-        usort($activitiesList, fn($a, $b) => $a['name'] <=> $b['name']);
-
-        // Get tags
-        $tags = $this->tagService->findAllVisibleTags();
 
         $viewData = array();
         $viewData['daterange']['start'] = $dateStart;
