@@ -132,9 +132,9 @@
                     {% for timesheet in timesheets %}
                         <tr>
                             <td>{{ timesheet.start is empty ? "" : timesheet.start|date(trans.dateFormats_date) }}</td>
-                            <td>{{ timesheet.start is empty ? "" : timesheet.start|date(trans.dateFormats_time) }}</td>
-                            <td>{{ timesheet.end is empty ? "--:--" : timesheet.end|date(trans.dateFormats_time) }}</td>
-                            <td>{% if timesheet.duration is empty %}<i data-since="{{ timesheet.start }}"></i>{% else %}{{ timesheet.duration }}{% endif %}</td>
+                            <td class="text-end text-nowrap">{{ timesheet.start is empty ? "" : timesheet.start|date(trans.dateFormats_time) }}</td>
+                            <td class="text-end text-nowrap">{{ timesheet.end is empty ? "--:--" : timesheet.end|date(trans.dateFormats_time) }}</td>
+                            <td class="text-end text-nowrap">{% if timesheet.duration is empty %}<i data-since="{{ timesheet.start }}"></i>{% else %}{{ timesheet.duration }}{% endif %}</td>
                             <td>
                                 <div class="d-inline-flex align-items-center text-nowrap">
                                     <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ timesheet.project.color }};"><span class="visually-hidden">color</span></span>
