@@ -23,10 +23,25 @@ function setDuration() {
 
         $("#currentActiveTimeSheet").text(minus + timeToString(Math.abs(diff)));
     }
+
+    if ($("[data-since]").length) {
+        let nowTS = new Date();
+        nowTS.setSeconds(0);
+        nowTS.setMilliseconds(0);
+        $("[data-since]").each( function () {
+            let startTS = new Date($(this).attr("data-since"));
+            startTS.setSeconds(0);
+            startTS.setMilliseconds(0);
+            let diff = (nowTS.getTime() - startTS.getTime()) / 1000;
+            let minus = (diff < 0) ? "- " : "";
+
+            $(this).text(minus + timeToString(Math.abs(diff)));
+        });
+    }
 }
 
 $( document ).ready(function() {
-    if ($("#currentActiveTimeSheet").length) {
+    if ($("#currentActiveTimeSheet").length || $("[data-since]").length) {
         setDuration();
         setInterval(function () {
             setDuration();
