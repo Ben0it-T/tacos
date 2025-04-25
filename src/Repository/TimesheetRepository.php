@@ -389,14 +389,22 @@ final class TimesheetRepository
      * @param string $timePeriod
      * @return int
      */
-    public function getWorkingHoursByTimePeriodAndUserId (string $timePeriod, int $userId) {
+    public function getWorkingHoursByTimePeriodAndUserId(string $timePeriod, int $userId) {
         switch ($timePeriod) {
             case 'week':
                 $condition = "YEARWEEK(`tacos_timesheet`.`start`, 1) = YEARWEEK(CURDATE(), 1)";
                 break;
 
+            case 'lastweek':
+                $condition = "YEARWEEK(`tacos_timesheet`.`start`, 1) = YEARWEEK(CURDATE(), 1) - 1";
+                break;
+
             case 'month':
                 $condition = "DATE_FORMAT(`tacos_timesheet`.`start`, '%Y%m') = DATE_FORMAT(CURDATE(), '%Y%m')";
+                break;
+
+             case 'lastmonth':
+                $condition = "DATE_FORMAT(`tacos_timesheet`.`start`, '%Y%m') = DATE_FORMAT(CURDATE() - INTERVAL 1 MONTH, '%Y%m')";
                 break;
 
             default:

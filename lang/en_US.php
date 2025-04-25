@@ -155,7 +155,9 @@ return array(
     'table_row_visibility' => "Visibility",
     'table_row_workingHours_today' => "Working hours today",
     'table_row_workingHours_week' => "Working hours this week",
+    'table_row_workingHours_lastweek' => "Working hours last week",
     'table_row_workingHours_month' => "Working hours this month",
+    'table_row_workingHours_lastmonth' => "Working hours last month",
 
 
     'view_activities' => "Activities",

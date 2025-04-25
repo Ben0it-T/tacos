@@ -46,7 +46,9 @@ final class DashboardController
         $workingHours = array(
             'today' => $this->timesheetService->timeToString(intval($this->timesheetService->getWorkingHoursByTimePeriodAndUserId('today', $currentUser->getId()))),
             'week' => $this->timesheetService->timeToString(intval($this->timesheetService->getWorkingHoursByTimePeriodAndUserId('week', $currentUser->getId()))),
+            'lastweek' => $this->timesheetService->timeToString(intval($this->timesheetService->getWorkingHoursByTimePeriodAndUserId('lastweek', $currentUser->getId()))),
             'month' => $this->timesheetService->timeToString(intval($this->timesheetService->getWorkingHoursByTimePeriodAndUserId('month', $currentUser->getId()))),
+            'lastmonth' => $this->timesheetService->timeToString(intval($this->timesheetService->getWorkingHoursByTimePeriodAndUserId('lastmonth', $currentUser->getId()))),
         );
 
         $viewData = array();

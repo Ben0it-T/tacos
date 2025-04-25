@@ -154,7 +154,9 @@ return array(
     'table_row_visibility' => "Visibilité",
     'table_row_workingHours_today' => "Heures travaillées aujourd'hui",
     'table_row_workingHours_week' => "Heures travaillées cette semaine",
+    'table_row_workingHours_lastweek' => "Heures travaillées la semaine dernière",
     'table_row_workingHours_month' => "Heures travaillées ce mois",
+    'table_row_workingHours_lastmonth' => "Heures travaillées le mois dernier",
 
     'view_activities' => "Activités",
     'view_customers' => "Clients",
