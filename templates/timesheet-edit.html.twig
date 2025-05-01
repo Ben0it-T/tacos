@@ -12,6 +12,8 @@
 {% endblock %}
 
 {% block content %}
+    {% embed 'toast-messages.html.twig' %}{% endembed %}
+
     <div class="d-flex justify-content-end py-2">
          <a class="btn btn-close" href="{{ navLinks.timesheets }}" role="button"></a>
     </div>
@@ -23,7 +25,7 @@
 
         <form name="timesheet_edit_form" method="post" autocomplete="off">
             <div class="card-body">
-                {% embed 'flash-messages.html.twig' %}{% endembed %}
+
                 <div class="row mb-3">
                     <div class="col-sm-2">
                         <label for="timesheet_edit_form_start_date" class="col-form-label">{{ trans.form_label_timesheet_start }}</label>

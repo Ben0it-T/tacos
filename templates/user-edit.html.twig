@@ -11,6 +11,8 @@
 {% endblock %}
 
 {% block content %}
+    {% embed 'toast-messages.html.twig' %}{% endembed %}
+
     <div class="d-flex justify-content-end py-2">
          <a class="btn btn-close" href="{{ navLinks.users }}" role="button"></a>
     </div>
@@ -83,7 +85,6 @@
     <div class="card mb-3">
         <form name="user_edit_form" method="post" autocomplete="off">
             <div class="card-body">
-                {% embed 'flash-messages.html.twig' %}{% endembed %}
 
                 <div class="row mb-3">
                     <label for="user_edit_form_name" class="col-form-label col-sm-3">{{ trans.form_label_name}}</label>

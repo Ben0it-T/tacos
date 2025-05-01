@@ -7,6 +7,8 @@
 {% endblock %}
 
 {% block content %}
+    {% embed 'toast-messages.html.twig' %}{% endembed %}
+
     {% if userRole in [2, 3] %}
     <div class="d-flex justify-content-end py-2">
         <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#createActivity">
@@ -18,7 +20,6 @@
 
     <div class="card mb-3">
         <div class="card-body table-responsive">
-            {% embed 'flash-messages.html.twig' %}{% endembed %}
 
             <table class="table table-hover">
                 <thead>

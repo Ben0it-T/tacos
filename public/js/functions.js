@@ -51,4 +51,9 @@ $( document ).ready(function() {
     $("#flash-message").fadeTo(3000, 500).slideUp(500, function(){
         $("#flash-message").slideUp(500);
     });
+
+    $("#toast-message").fadeTo(3000, 500).fadeOut(500, function(){
+        $("#toast-message").fadeOut(500);
+    });
+
 });
