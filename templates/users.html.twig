@@ -57,9 +57,14 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <a class="icon-link icon-link-hover float-end" href="{{ user.editLink }}">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
+                                <div class="float-end text-nowrap">
+                                    <a class="icon-link icon-link-hover mx-2" href="{{ user.viewLink }}">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a class="icon-link icon-link-hover mx-2" href="{{ user.editLink }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     {% endfor %}

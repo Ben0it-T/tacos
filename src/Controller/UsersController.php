@@ -48,6 +48,7 @@ final class UsersController
                 'lastLogin' => $user->getLastLogin(),
                 'enable' => $user->getEnabled() ? true : false,
                 'editLink' => $routeParser->urlFor('users_edit', array('username' => $user->getUsername())),
+                'viewLink' => $routeParser->urlFor('users_details', array('username' => $user->getUsername())),
             );
         }
 
@@ -79,6 +80,41 @@ final class UsersController
         }
         else {
             $flash->addMessage('error', $errors);
+        }
+
+        // redirect
+        $url = $routeParser->urlFor('users');
+        return $response->withStatus(302)->withHeader('Location', $url);
+    }
+
+    public function userDetails(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $twig  = $this->container->get(Twig::class);
+        $translations = $this->container->get('translations');
+
+        $routeContext = RouteContext::fromRequest($request);
+        $routeParser = $routeContext->getRouteParser();
+
+        $user = $this->userService->findUserByUsername($args['username']);
+        if ($user) {
+            $role = $this->userService->findRole($user->getRole());
+            $roles = $this->userService->findAllRoles();
+            $teams = $this->userService->getTeamsForUser($user->getId());
+
+            $viewData = array();
+            $viewData['user'] = array(
+                'name' => $user->getName(),
+                'username' => $user->getUsername(),
+                'email' => $user->getEmail(),
+                'role' => $translations[strtolower($role->getName())],
+                'roleId' => $user->getRole(),
+                'lastLogin' => $user->getLastLogin(),
+                'registrationDate' => $user->getRegistrationDate(),
+                'status' => $user->getEnabled(),
+                'teams' => $teams,
+            );
+
+            return $twig->render($response, 'user-details.html.twig', $viewData);
         }
 
         // redirect

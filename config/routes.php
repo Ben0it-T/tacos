@@ -66,6 +66,7 @@ $app->get( '/teams/timesheets/export', \App\Controller\TimesheetsController::cla
 
 $app->get( '/users', \App\Controller\UsersController::class . ':index')->setName('users');
 $app->post('/users', \App\Controller\UsersController::class . ':createAction')->setName('users_create');
+$app->get( '/users/{username}/details', \App\Controller\UsersController::class . ':userDetails')->setName('users_details');
 $app->get( '/users/{username}/edit', \App\Controller\UsersController::class . ':editForm')->setName('users_edit');
 $app->post('/users/{username}/edit', \App\Controller\UsersController::class . ':editAction')->setName('users_edit_attempt');
 

@@ -73,7 +73,7 @@ final class PermissionMiddleware implements MiddlewareInterface
         $adminRoutes = array_merge($teamLeadRoutes, array(
             'customers_create', 'customers_edit', 'customers_edit_attempt',
             'teams_create',
-            'users', 'users_create', 'users_edit', 'users_edit_attempt',
+            'users', 'users_create', 'users_details', 'users_edit', 'users_edit_attempt',
         ));
 
         $session = $request->getAttribute('session');
