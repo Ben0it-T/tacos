@@ -66,7 +66,7 @@ final class PermissionMiddleware implements MiddlewareInterface
             'customers', 'customers_details',
             'projects', 'projects_create', 'projects_details', 'projects_edit', 'projects_edit_attempt',
             'tags', 'tags_create', 'tags_edit', 'tags_edit_attempt',
-            'teams', 'teams_edit', 'teams_edit_attempt',
+            'teams', 'teams_details', 'teams_edit', 'teams_edit_attempt',
             'timesheets_teams', 'timesheets_teams_export',
         ));
 

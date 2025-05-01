@@ -58,6 +58,7 @@ final class TeamsController
                 'members' => $this->teamService->getNbOfTeamMembers($team->getId()),
                 'teamleaders' => $teamleadersList ? implode(", ", $teamleadersList) : "",
                 'editLink' => $routeParser->urlFor('teams_edit', array('teamId' => $team->getId())),
+                'viewLink' => $routeParser->urlFor('teams_details', array('teamId' => $team->getId())),
             );
         }
 
@@ -112,6 +113,40 @@ final class TeamsController
         // redirect
         $url = $routeParser->urlFor('teams');
         return $response->withStatus(302)->withHeader('Location', $url);
+    }
+
+    public function teamsDetails(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $twig  = $this->container->get(Twig::class);
+        $translations = $this->container->get('translations');
+
+        $routeContext = RouteContext::fromRequest($request);
+        $routeParser = $routeContext->getRouteParser();
+
+        $session = $request->getAttribute('session');
+        $currentUser = $this->userService->findUser($session['auth']['userId']);
+
+        $team = ($currentUser->getRole() === 3) ? $this->teamService->findTeam(intval($args['teamId'])) : $this->teamService->findTeamByIdAndTeamleader(intval($args['teamId']), $currentUser->getId());
+        if ($team) {
+            $teamMembers = $this->teamService->getTeamMembers($team->getId());
+            $teamleaders = $this->teamService->getTeamTeamleaders($team->getId());
+            $teamleadersList = array();
+            foreach ($teamleaders as $teamleader) {
+                $teamleadersList[] = $teamleader['name'];
+            }
+
+            $viewData = array();
+            $viewData['team'] = $team;
+            $viewData['teamMembers'] = $teamMembers;
+            $viewData['teamleaders'] = $teamleadersList ? implode(", ", $teamleadersList) : "";
+
+            return $twig->render($response, 'team-details.html.twig', $viewData);
+        }
+
+        // redirect
+        $url = $routeParser->urlFor('teams');
+        return $response->withStatus(302)->withHeader('Location', $url);
+
     }
 
     public function editForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface

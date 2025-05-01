@@ -44,9 +44,14 @@
                         </td>
                         <td>{{ team.teamleaders }}</td>
                         <td>
-                            <a class="icon-link icon-link-hover float-end" href="{{ team.editLink }}">
-                                <i class="bi bi-pencil"></i>
-                            </a>
+                            <div class="float-end text-nowrap">
+                                <a class="icon-link icon-link-hover mx-2" href="{{ team.viewLink }}">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a class="icon-link icon-link-hover mx-2" href="{{ team.editLink }}">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}

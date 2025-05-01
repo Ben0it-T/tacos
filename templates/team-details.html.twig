@@ -1,0 +1,55 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{trans.view_teams }}{% endblock %}
+
+{% block css %}
+    <link href="{{ basePath }}/css/container-max-width.css" rel="stylesheet">
+{% endblock %}
+
+{% block navbar %}
+    {% embed 'navbar.html.twig' with {'title': trans.view_teams, 'navLinks': navLinks } %}{% endembed %}
+{% endblock %}
+
+
+{% block content %}
+    <div class="d-flex justify-content-end py-2">
+         <a class="btn btn-close" href="{{ navLinks.teams }}" role="button"></a>
+    </div>
+
+    <div class="card mb-3">
+
+        <div class="card-header fs-5 fw-bold">
+            <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ team.color }};"><span class="visually-hidden">color</span></span>
+            <span class="ms-1">{{ team.name }}</span>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-borderless w-auto">
+                    <tbody>
+                        <tr>
+                            <th scope="row">{{ trans.card_teamleaders }}</th>
+                            <td>{{ teamleaders is empty ? trans.card_none : teamleaders }}</td>
+                        </tr>
+
+                        <tr>
+                            <th scope="row">{{ trans.form_label_members }}</th>
+                            <td>
+                                {% if teamMembers is empty %}
+                                    {{ trans.card_none }}
+                                {% else %}
+
+                                    <ul class="list-unstyled">
+                                    {% for member in teamMembers %}
+                                        <li>{% if member.teamlead == 1 %}<i class="bi bi-award text-primary"></i>{% else %}<i class="bi bi-person"></i>{% endif %}<span class="ms-1">{{ member.name }}</span></li>
+                                    {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
