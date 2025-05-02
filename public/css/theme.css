@@ -137,3 +137,8 @@ input.form-control::placeholder {
     max-height: 250px;
     position: relative;
 }
+
+.toast {
+    z-index: 1090;
+    top: 35px;
+}

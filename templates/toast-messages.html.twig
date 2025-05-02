@@ -1,17 +1,19 @@
 
 {% if flashMsgError is not null %}
-<div class="toast show align-items-center text-bg-danger border-0 position-fixed start-50 translate-middle-x" style="z-index: 1090;top: 75px;" role="alert">
+<div class="toast show align-items-center text-bg-danger border-0 position-fixed start-50 translate-middle-x" role="alert">
     <div class="d-flex">
         <div class="toast-body">
+            <i class="bi bi-exclamation-lg"></i>
             {{ flashMsgError|nl2br }}
         </div>
         <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
     </div>
 </div>
 {% elseif flashMsgSuccess is not null %}
-<div class="toast fade show align-items-center text-bg-success border-0 position-fixed start-50 translate-middle-x" style="z-index: 1090;top: 75px;" role="alert" id="toast-message">
+<div class="toast fade show align-items-center text-bg-success border-0 position-fixed start-50 translate-middle-x" role="alert" id="toast-message">
     <div class="d-flex">
         <div class="toast-body">
+            <i class="bi bi-check-lg"></i>
             {{ flashMsgSuccess|nl2br }}
         </div>
         <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
