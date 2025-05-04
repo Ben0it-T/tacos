@@ -8,12 +8,12 @@
 
         {% if activeTimesheet.id is defined %}
             <a class="navbar-brand d-flex align-items-center" href="{{ activeTimesheet.stopLink }}" title="{{ trans.btn_stop }}">
-                <i class="bi bi-stop-fill text-danger" style="font-size: 1.5rem;"></i>
+                <i class="bi bi-stop-fill animate-icon text-danger" style="font-size: 1.5rem;"></i>
                 <span id="currentActiveTimeSheet" start="{{ activeTimesheet.start }}" class="d-none d-sm-block" style="font-size: 1rem;">0:00</span>
             </a>
         {% else %}
             <a class="navbar-brand d-flex align-items-center" href="{{ navLinks.timesheets_create }}" title="{{ trans.btn_create }}">
-                <i class="bi bi-play-fill text-success" style="font-size: 1.5rem;"></i>
+                <i class="bi bi-play-fill animate-icon text-success" style="font-size: 1.5rem;"></i>
                 <span class="d-none d-sm-block text-secondary" style="font-size: 1rem;">0:00</span>
             </a>
         {% endif %}

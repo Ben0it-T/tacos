@@ -48,6 +48,17 @@ $( document ).ready(function() {
         }, 5000);
     }
 
+    var animateIcon = function() {
+        $(".animate-icon").animate({
+                opacity: 0.7
+            }, 1000, 'linear', function() {
+                $(".animate-icon").fadeTo(1000, 1);
+                animateIcon();
+            }
+        );
+    }
+    animateIcon();
+
     $("#flash-message").fadeTo(3000, 500).slideUp(500, function(){
         $("#flash-message").slideUp(500);
     });
