@@ -58,6 +58,11 @@ return array(
     'form_label_element' => "element",
     'form_label_elements' => "elements",
     'form_label_email' => "Email",
+    'form_label_format' => "Format",
+    'form_label_format_time' => "Time (hh:mm)",
+    'form_label_format_minutes' => "Minutes",
+    'form_label_format_pcent' => "% of column total (%)",
+    'form_label_format_number' => "% of column total (number)",
     'form_label_global_activities' => "Allow global activities",
     'form_label_login' => "Username",
     'form_label_members' => "Members",
@@ -71,6 +76,7 @@ return array(
     'form_label_project_number' => "Project number",
     'form_label_project_start' => "Project start",
     'form_label_projects' => "Projects",
+    'form_label_report' => "Report",
     'form_label_role' => "Role",
     'form_label_selected_teams' => "Selected teams",
     'form_label_status' => "Status",
@@ -159,7 +165,6 @@ return array(
     'table_row_workingHours_month' => "Working hours this month",
     'table_row_workingHours_lastmonth' => "Working hours last month",
 
-
     'view_activities' => "Activities",
     'view_customers' => "Customers",
     'view_dashboard' => "Dashboard",
@@ -167,6 +172,7 @@ return array(
     'view_password_request' => "Reset your password",
     'view_profile' => "My profile",
     'view_projects' => "Projects",
+    'view_reports' => "Reports",
     'view_tags' => "Tags",
     'view_teams' => "Teams",
     'view_teams_timesheets' => "All times",
@@ -176,6 +182,7 @@ return array(
 
     'dateFormats_datetime' => "Y-m-d H:i",
     'dateFormats_date' => "Y-m-d",
+    'dateFormats_date_light' => "m-d",
     'dateFormats_date_placeholder' => "YYYY-MM-DD",
     'dateFormats_time' => "H:i",
     'dateFormats_time_placeholder' => "hh:mm",

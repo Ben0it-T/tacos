@@ -41,6 +41,8 @@ $app->get( '/projects/{projectId}/details', \App\Controller\ProjectsController::
 $app->get( '/projects/{projectId}/edit', \App\Controller\ProjectsController::class . ':editForm')->setName('projects_edit');
 $app->post('/projects/{projectId}/edit', \App\Controller\ProjectsController::class . ':editAction')->setName('projects_edit_attempt');
 
+$app->get( '/reports', \App\Controller\ReportsController::class . ':index')->setName('reports');
+
 $app->get( '/tags', \App\Controller\TagsController::class . ':index')->setName('tags');
 $app->post('/tags', \App\Controller\TagsController::class . ':createAction')->setName('tags_create');
 $app->get( '/tags/{tagId}/edit', \App\Controller\TagsController::class . ':editForm')->setName('tags_edit');

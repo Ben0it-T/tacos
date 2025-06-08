@@ -422,6 +422,119 @@ final class TimesheetRepository
     }
 
     /**
+     * Get report data
+     *
+     * @param int $userId
+     * @param $date1
+     * @param $date2
+     * @param int $report
+     * @return array
+     */
+    public function getReportData(int $userId, $date1, $date2, int $report) {
+
+        switch ($report) {
+            case 1:
+                // project.name
+                $field = "`tacos_projects`.`name`";
+                $group = "`tacos_projects`.`id`";
+                $join  = "LEFT JOIN `tacos_projects` ON `tacos_projects`.`id` = `tacos_timesheet`.`project_id` ";
+                break;
+
+            case 2:
+                // project.number
+                $field = "`tacos_projects`.`number`";
+                $group = "`tacos_projects`.`number`";
+                $join  = "LEFT JOIN `tacos_projects` ON `tacos_projects`.`id` = `tacos_timesheet`.`project_id` ";
+                break;
+
+            case 3:
+                // activities.id
+                $field = "`tacos_activities`.`name`";
+                $group = "`tacos_activities`.`id`";
+                $join  = "LEFT JOIN `tacos_activities` ON `tacos_activities`.`id` = `tacos_timesheet`.`activity_id` ";
+                break;
+
+            case 4:
+                // activities.number
+                $field = "`tacos_activities`.`number`";
+                $group = "`tacos_activities`.`number`";
+                $join  = "LEFT JOIN `tacos_activities` ON `tacos_activities`.`id` = `tacos_timesheet`.`activity_id` ";
+                break;
+
+            case 5:
+                // customers.id
+                $field = "`tacos_customers`.`name` ";
+                $group = "`tacos_customers`.`id`";
+                $join  = "LEFT JOIN `tacos_projects` ON `tacos_projects`.`id` = `tacos_timesheet`.`project_id` ";
+                $join .= "LEFT JOIN `tacos_customers` ON `tacos_customers`.`id` = `tacos_projects`.`customer_id` ";
+                break;
+
+            case 6:
+                // customers.number
+                $field = "`tacos_customers`.`number` ";
+                $group = "`tacos_customers`.`number`";
+                $join  = "LEFT JOIN `tacos_projects` ON `tacos_projects`.`id` = `tacos_timesheet`.`project_id` ";
+                $join .= "LEFT JOIN `tacos_customers` ON `tacos_customers`.`id` = `tacos_projects`.`customer_id` ";
+                break;
+
+            default:
+                // project.name
+                $field = "`tacos_projects`.`name`";
+                $group = "`tacos_projects`.`id`";
+                $join  = "LEFT JOIN `tacos_projects` ON `tacos_projects`.`id` = `tacos_timesheet`.`project_id` ";
+
+        }
+
+        $params = array(
+            'userId' => $userId,
+            'date1' => $date1,
+            'date2' => $date2,
+        );
+
+        // Data
+        $sql  = "SELECT " . $field . " as `name`, DATE_FORMAT(`tacos_timesheet`.`start`, '%Y-%m-%d') as `date`, SUM(`tacos_timesheet`.duration) as `duration` ";
+        $sql .= "FROM `tacos_timesheet` ";
+        $sql .= $join;
+        $sql .= "WHERE `tacos_timesheet`.`user_id` = :userId AND (DATE(`tacos_timesheet`.`start`) BETWEEN :date1 AND :date2) ";
+        $sql .= "GROUP BY " . $group . ", `date` ";
+        $sql .= "ORDER BY `date` ASC , `name` ASC ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $res['data'] = $stmt->fetchAll();
+
+        // Sum of Rows (fields)
+        $sql  = "SELECT " . $field . " as `name`, SUM(`tacos_timesheet`.duration) as `duration` ";
+        $sql .= "FROM `tacos_timesheet` ";
+        $sql .= $join;
+        $sql .= "WHERE `tacos_timesheet`.`user_id` = :userId AND (DATE(`tacos_timesheet`.`start`) BETWEEN :date1 AND :date2) ";
+        $sql .= "GROUP BY " . $group . " ";
+        $sql .= "ORDER BY `name` ASC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $res['sumRows'] = $stmt->fetchAll();
+
+        // Sum of Cols (dates)
+        $sql  = "SELECT DATE_FORMAT(`tacos_timesheet`.`start`, '%Y-%m-%d') as `date`, SUM(`tacos_timesheet`.duration) as `duration` ";
+        $sql .= "FROM `tacos_timesheet` ";
+        $sql .= "WHERE `tacos_timesheet`.`user_id` = :userId AND (DATE(`tacos_timesheet`.`start`) BETWEEN :date1 AND :date2) ";
+        $sql .= "GROUP BY `date` ";
+        $sql .= "ORDER BY `date` ASC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $res['sumCols'] = $stmt->fetchAll();
+
+        // Total
+        $sql  = "SELECT SUM(`tacos_timesheet`.duration) as `duration` ";
+        $sql .= "FROM `tacos_timesheet` ";
+        $sql .= "WHERE `tacos_timesheet`.`user_id` = :userId AND (DATE(`tacos_timesheet`.`start`) BETWEEN :date1 AND :date2) ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $res['total'] = $stmt->fetchColumn();
+
+        return $res;
+    }
+
+    /**
      * Stop Timesheet
      *
      * @param int $timesheet

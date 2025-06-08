@@ -168,6 +168,170 @@ final class TimesheetService
         return !is_null($time) ? sprintf('%s%02d:%02d', ($time < 0 ? "- ":""),floor(abs($time)/60), abs($time)%60) : "";
     }
 
+    /**
+     * Get report
+     *
+     * @param int $userId
+     * @param $date1
+     * @param $date2
+     * @param int $report
+     * @param int $format
+     * @return array
+     */
+    public function getReportData(int $userId, $date1, $date2, int $report, int $format = 1) {
+        $res = $this->timesheetRepository->getReportData($userId, $date1, $date2, $report);
+
+        // Format
+        $outputFormat = array(
+            1 => 'time',
+            2 => 'minutes',
+            3 => 'pcent',
+            4 => 'number',
+        );
+        $format = $outputFormat[$format];
+
+        if (count($res['data']) > 0) {
+
+            $chart = array();    // array(name => pcent)
+            $totalRow = array(); // total (sum) of the columns in a row
+            foreach ($res['sumRows'] as $entry) {
+                $chart[$entry['name']] = number_format(intval($entry['duration']) / intval($res['total']) * 100, 1);
+                switch ($format) {
+                    case 'time':
+                        $totalRow[$entry['name']] = $this->timeToString(intval($entry['duration']));
+                        break;
+
+                    case 'pcent':
+                        $totalRow[$entry['name']] = number_format(intval($entry['duration']) / intval($res['total']) * 100, 1);
+                        break;
+
+                    case 'number':
+                        $totalRow[$entry['name']] = number_format(intval($entry['duration']) / intval($res['total']), 2);
+                        break;
+
+                    default:
+                        // minutes
+                        $totalRow[$entry['name']] = $entry['duration'];
+                        break;
+                }
+            }
+            arsort($chart);
+
+            // sum of the columns
+            $sumCols = array();
+            foreach ($res['sumCols'] as $entry) {
+                $sumCols[$entry['date']] = $entry['duration'];
+            }
+
+            // Grand total
+            switch ($format) {
+                case 'time':
+                    $total = $this->timeToString(intval($res['total']));
+                    break;
+
+                case 'pcent':
+                    $total = number_format(100, 1);
+                    break;
+
+                case 'number':
+                    $total = number_format(1, 2);
+                    break;
+
+                default:
+                    // minutes
+                    $total = $res['total'];
+                    break;
+            }
+
+            // Reorganize the data
+            $data = array();
+            $cols = array();
+            foreach ($res['data'] as $entry) {
+                // Set data
+                switch ($format) {
+                    case 'time':
+                        $data[$entry['name']][$entry['date']] = $this->timeToString(intval($entry['duration']));
+                        break;
+
+                    case 'pcent':
+                        $data[$entry['name']][$entry['date']] = number_format(intval($entry['duration']) / intval($sumCols[$entry['date']]) * 100, 1);
+                        break;
+
+                    case 'number':
+                        $data[$entry['name']][$entry['date']] = number_format(intval($entry['duration']) / intval($sumCols[$entry['date']]), 2);
+                        break;
+
+                    default:
+                        // minutes
+                        $data[$entry['name']][$entry['date']] = $entry['duration'];
+                        break;
+                }
+                // Set col 'name'
+                if (!in_array($entry['date'], $cols)) {
+                    $cols[] = $entry['date'];
+                }
+            }
+            ksort($data);
+
+            // table head
+            $tHead = array_merge(array("#"), $cols, array("Total"));
+
+            // table body
+            $tBody = array();
+            foreach ($data as $key => $value) {
+                $row = array();
+
+                // Key
+                $row[] = empty($key) ? "---" : $key;
+
+                // Data
+                foreach ($cols as $date) {
+                    $row[] = $value[$date] ?? '-';
+                }
+
+                // Total
+                $row[] = $totalRow[$key];
+
+                $tBody[] = $row;
+            }
+
+            // table foot
+            $tFoot = array(0 => "Total");
+            foreach ($cols as $col) {
+                switch ($format) {
+                    case 'time':
+                        $tFoot[] = $sumCols[$date] ? $this->timeToString(intval($sumCols[$col])) : '00:00';
+                        break;
+
+                    case 'pcent':
+                        $tFoot[] = $sumCols[$col] ? number_format(100,1) : number_format(0,1);
+                        break;
+
+                    case 'number':
+                        $tFoot[] = $sumCols[$col] ? number_format(1,2) : number_format(0,2);
+                        break;
+
+                    default:
+                        // minutes
+                        $tFoot[] = $sumCols[$col] ?? '0';
+                        break;
+                }
+            }
+            $tFoot[] = $total;
+
+
+            return array(
+                'pivot' => array(
+                    'tHead' => $tHead,
+                    'tBody' => $tBody,
+                    'tFoot' => $tFoot,
+                ),
+                'chart' => $chart,
+            );
+        }
+
+        return array();
+    }
 
 
     /**
