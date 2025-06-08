@@ -22,9 +22,6 @@ use Slim\Flash\Messages;
 use Slim\Routing\RouteContext;
 use Slim\Views\Twig;
 
-use App\Repository\UserRepository;
-use PDO;
-
 final class TimesheetsController
 {
     private $container;
