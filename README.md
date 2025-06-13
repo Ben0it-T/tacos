@@ -1,3 +1,3 @@
-# tacos
+# Tacos
 
 Simple time tracking application
