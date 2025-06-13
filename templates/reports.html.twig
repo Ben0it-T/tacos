@@ -70,7 +70,7 @@
                     <thead>
                         <tr>
                             {% for col in pivot.tHead %}
-                                <th scope="col" {% if loop.first %}class="col-sticky"{% endif %}>{{ col matches '/^[\\d]{4}[-]{1}[\\d]{2}[-]{1}[\\d]{2}/' ? col|date(trans.dateFormats_date_light) : col }}</th>
+                                <th scope="col" {% if loop.first %}class="col-sticky"{% else %}class="text-end"{% endif %}>{{ col matches '/^[\\d]{4}[-]{1}[\\d]{2}[-]{1}[\\d]{2}/' ? col|date(trans.dateFormats_date_light) : col }}</th>
                             {% endfor %}
                         </tr>
                     </thead>
