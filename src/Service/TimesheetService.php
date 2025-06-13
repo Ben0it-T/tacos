@@ -254,11 +254,11 @@ final class TimesheetService
                         break;
 
                     case 'pcent':
-                        $data[$entry['name']][$entry['date']] = number_format(intval($entry['duration']) / intval($sumCols[$entry['date']]) * 100, 1);
+                        $data[$entry['name']][$entry['date']] = intval($sumCols[$entry['date']]) > 0 ? number_format(intval($entry['duration']) / intval($sumCols[$entry['date']]) * 100, 1) : number_format(0,1);
                         break;
 
                     case 'number':
-                        $data[$entry['name']][$entry['date']] = number_format(intval($entry['duration']) / intval($sumCols[$entry['date']]), 2);
+                        $data[$entry['name']][$entry['date']] = intval($sumCols[$entry['date']]) > 0 ? number_format(intval($entry['duration']) / intval($sumCols[$entry['date']]), 2) : number_format(0,2);
                         break;
 
                     default:
@@ -300,7 +300,7 @@ final class TimesheetService
             foreach ($cols as $col) {
                 switch ($format) {
                     case 'time':
-                        $tFoot[] = $sumCols[$date] ? $this->timeToString(intval($sumCols[$col])) : '00:00';
+                        $tFoot[] = $sumCols[$col] ? $this->timeToString(intval($sumCols[$col])) : '00:00';
                         break;
 
                     case 'pcent':
