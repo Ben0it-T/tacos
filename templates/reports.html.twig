@@ -78,7 +78,7 @@
                         {% for row in pivot.tBody %}
                             <tr>
                                 {% for col in row %}
-                                <td {% if loop.first %}class="col-sticky"{% elseif loop.last %}class="fw-bold"{% endif %} nowrap>{{ col }}</td>
+                                <td {% if loop.first %}class="col-sticky"{% elseif loop.last %}class="fw-bold text-end"{% else %}class="text-end"{% endif %} nowrap>{{ col }}</td>
                                 {% endfor %}
                             </tr>
                         {% endfor %}
@@ -86,7 +86,7 @@
                     <tfoot>
                         <tr class="fw-bold">
                             {% for col in pivot.tFoot %}
-                            <td {% if loop.first %}class="col-sticky"{% endif %} nowrap>{{ col }}</td>
+                            <td {% if loop.first %}class="col-sticky"{% else %}class="text-end"{% endif %} nowrap>{{ col }}</td>
                             {% endfor %}
                         </tr>
                     </tfoot>
