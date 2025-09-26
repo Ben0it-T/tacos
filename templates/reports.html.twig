@@ -65,12 +65,12 @@
     {% if pivot|length > 0 %}
     <div class="card mb-3">
         <div class="card-body">
-            <div class="table-responsive">
+            <div class="table-responsive mh-450px">
                 <table class="table table-hover table-sm w-auto">
                     <thead>
                         <tr>
                             {% for col in pivot.tHead %}
-                                <th scope="col" {% if loop.first %}class="col-sticky pe-5"{% else %}class="text-end"{% endif %}>{{ col matches '/^[\\d]{4}[-]{1}[\\d]{2}[-]{1}[\\d]{2}/' ? col|date(trans.dateFormats_date_light) : col }}</th>
+                                <th scope="col" {% if loop.first %}class="col-row-sticky  pe-5"{% else %}class="row-sticky text-end"{% endif %}>{{ col matches '/^[\\d]{4}[-]{1}[\\d]{2}[-]{1}[\\d]{2}/' ? col|date(trans.dateFormats_date_light) : col }}</th>
                             {% endfor %}
                         </tr>
                     </thead>

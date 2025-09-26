@@ -135,6 +135,11 @@ input.form-control::placeholder {
     position: relative;
 }
 
+.mh-450px {
+    max-height: 450px;
+    position: relative;
+}
+
 .toast {
     z-index: 1090;
     top: 35px;
@@ -145,3 +150,18 @@ input.form-control::placeholder {
     left:0px;
     background-color:white;
 }
+
+.row-sticky {
+    position:sticky;
+    top:0px;
+    background-color:white;
+}
+
+.col-row-sticky {
+    position:sticky;
+    top:0px;
+    left:0px;
+    background-color:white;
+    z-index: 5;
+}
+
