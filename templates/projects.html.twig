@@ -29,6 +29,7 @@
                 <thead>
                     <tr>
                         <th scope="col">{{ trans.table_row_name }}</th>
+                        <th scope="col">{{ trans.table_row_number }}</th>
                         <th scope="col">{{ trans.table_row_customer }}</th>
                         <th scope="col">{{ trans.table_row_description }}</th>
                         <th scope="col">{{ trans.table_row_teams }}</th>
@@ -45,6 +46,7 @@
                                     <span class="ms-1">{{ project.name }}</span>
                                 </div>
                             </td>
+                            <td>{{ project.number }}</td>
                             <td>
                                 <div class="d-inline-flex align-items-center text-nowrap">
                                     <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ project.customer.color }};"><span class="visually-hidden">color</span></span>

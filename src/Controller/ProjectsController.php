@@ -103,6 +103,7 @@ final class ProjectsController
                 'name' => $project->getName(),
                 'color' => $project->getColor(),
                 'customer' => $this->customerService->findCustomer($project->getCustomerId()),
+                'number' => (is_null($project->getNumber()) ? "" : $project->getNumber()),
                 'description' => $project->getComment(),
                 'teams' => $this->projectService->getNbOfTeamsForProject($project->getId()),
                 'visible' => $project->getVisible(),
