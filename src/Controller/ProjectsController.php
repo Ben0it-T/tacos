@@ -233,7 +233,6 @@ final class ProjectsController
             $timesheetsList = array();
             $duration = 0;
             foreach ($timesheets as $timesheet) {
-                $cnt++;
                 $timesheetsList[] = array(
                     'start' => $timesheet->getStart(),
                     'end' => $timesheet->getEnd(),
