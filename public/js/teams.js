@@ -34,19 +34,4 @@ $( document ).ready(function() {
         $('#team_edit_form_users option[value="'+memberId+'"]').prop('hidden', false);
     });
 
-    new DataTable('#teams', {
-        info: false,
-        ordering: false,
-        paging: false,
-        columnDefs: [
-            {targets: 'nosearch', searchable: false},
-            {targets: '_all', type: 'string-utf8'}
-        ],
-        language: {
-            search: '<i class="bi bi-search"></i>',
-            zeroRecords: '...',
-            emptyTable: '...'
-        }
-    });
-
 });

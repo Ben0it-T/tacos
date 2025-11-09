@@ -33,19 +33,4 @@ $( document ).ready(function() {
         $('#customer_edit_form_teams option[value="'+teamId+'"]').prop('hidden', false);
     });
 
-    new DataTable('#customers', {
-        info: false,
-        ordering: false,
-        paging: false,
-        columnDefs: [
-            {targets: 'nosearch', searchable: false},
-            {targets: '_all', type: 'string-utf8'}
-        ],
-        language: {
-            search: '<i class="bi bi-search"></i>',
-            zeroRecords: '...',
-            emptyTable: '...'
-        }
-    });
-
 });

@@ -1,11 +1,12 @@
+
 $( document ).ready(function() {
-    new DataTable('#users', {
+    new DataTable('#datatable', {
         info: false,
         ordering: false,
         paging: false,
         columnDefs: [
             {targets: 'nosearch', searchable: false},
-            {targets: '_all', type: 'string-utf8'}
+            {targets: '_all', className: 'dt-head-left'}
         ],
         language: {
             search: '<i class="bi bi-search"></i>',

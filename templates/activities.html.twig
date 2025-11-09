@@ -21,7 +21,7 @@
     <div class="card mb-3">
         <div class="card-body table-responsive">
 
-            <table class="table table-hover" id="activities">
+            <table class="table table-hover" id="datatable">
                 <thead>
                     <tr>
                         <th scope="col">{{ trans.table_row_name }}</th>
@@ -193,4 +193,5 @@
 
 {% block scripts %}
     <script nonce="{{ nonce }}" src="{{ basePath }}/js/activities.js"></script>
+    <script nonce="{{ nonce }}" src="{{ basePath }}/js/dataTables.js"></script>
 {% endblock %}
