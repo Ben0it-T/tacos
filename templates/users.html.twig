@@ -19,16 +19,16 @@
     <div class="card mb-3">
         <div class="card-body table-responsive">
 
-            <table class="table table-hover">
+            <table class="table table-hover" id="users">
                 <thead>
                     <tr>
                         <th scope="col">{{ trans.table_row_name }}</th>
                         <th scope="col">{{ trans.table_row_username }}</th>
                         <th scope="col">{{ trans.table_row_role }}</th>
-                        <th scope="col">{{ trans.table_row_teams }}</th>
+                        <th scope="col" class="nosearch">{{ trans.table_row_teams }}</th>
                         <th scope="col">{{ trans.table_row_lastlogin }}</th>
                         <th scope="col">{{ trans.table_row_enable }}</th>
-                        <th scope="col"></th>
+                        <th scope="col" class="nosearch"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -46,7 +46,7 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <span class="badge {{ user.teams == 0 ? "text-bg-secondary" : "text-bg-primary" }} ">{{ user.teams }}</span>
+                                <span class="float-start badge {{ user.teams == 0 ? "text-bg-secondary" : "text-bg-primary" }} ">{{ user.teams }}</span>
                             </td>
                             <td>{{ user.lastLogin is empty ? "" : user.lastLogin|date(trans.dateFormats_datetime) }}</td>
                             <td>
@@ -125,4 +125,8 @@
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block scripts %}
+    <script nonce="{{ nonce }}" src="{{ basePath }}/js/users.js"></script>
 {% endblock %}

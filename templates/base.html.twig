@@ -16,6 +16,7 @@
 
     <link href="{{ basePath }}/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ basePath }}/lib/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="{{ basePath }}/lib/datatables/dataTables.bootstrap5.min.css" rel="stylesheet">
     {% block css %}{% endblock %}
     <link href="{{ basePath }}/css/theme.css" rel="stylesheet">
 </head>
@@ -28,6 +29,9 @@
     <script nonce="{{ nonce }}" src="{{ basePath }}/lib/jquery/jquery-3.7.1.min.js"></script>
     <script nonce="{{ nonce }}" src="{{ basePath }}/lib/popper/popper.min.js"></script>
     <script nonce="{{ nonce }}" src="{{ basePath }}/lib/bootstrap/js/bootstrap.min.js"></script>
+    <script nonce="{{ nonce }}" src="{{ basePath }}/lib/datatables/dataTables.min.js"></script>
+    <script nonce="{{ nonce }}" src="{{ basePath }}/lib/datatables/dataTables.bootstrap5.min.js"></script>
+
     <script nonce="{{ nonce }}" src="{{ basePath }}/js/functions.js"></script>
     {% block scripts %}{% endblock %}
 </body>
