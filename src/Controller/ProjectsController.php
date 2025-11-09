@@ -6,7 +6,9 @@ namespace App\Controller;
 use App\Service\ActivityService;
 use App\Service\CustomerService;
 use App\Service\ProjectService;
+use App\Service\TagService;
 use App\Service\TeamService;
+use App\Service\TimesheetService;
 use App\Service\UserService;
 
 use Psr\Container\ContainerInterface;
@@ -23,16 +25,20 @@ final class ProjectsController
     private $activityService;
     private $customerService;
     private $projectService;
+    private $tagService;
     private $teamService;
+    private $timesheetService;
     private $userService;
 
-    public function __construct(ContainerInterface $container, ActivityService $activityService, CustomerService $customerService, ProjectService $projectService, TeamService $teamService, UserService $userService)
+    public function __construct(ContainerInterface $container, ActivityService $activityService, CustomerService $customerService, ProjectService $projectService, TagService $tagService, TeamService $teamService, TimesheetService $timesheetService, UserService $userService)
     {
         $this->container = $container;
         $this->activityService = $activityService;
         $this->customerService = $customerService;
         $this->projectService = $projectService;
+        $this->tagService = $tagService;
         $this->teamService = $teamService;
+        $this->timesheetService = $timesheetService;
         $this->userService = $userService;
     }
 
@@ -204,6 +210,42 @@ final class ProjectsController
                 $allowedActivitiesIds[] = $entry->getId();
             }
 
+            // Get Teams
+            $teams = $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
+            $teamsIds = array();
+            if (count($teams) > 0) {
+                foreach ($teams as $team) {
+                    $teamsIds[] = $team->getId();
+                }
+            }
+
+            // Get users in teams
+            $users = $this->userService->findAllEnabledUsersInTeams($teamsIds);
+            $usersIds = array();
+            if (count($users) > 0) {
+                foreach ($users as $usr) {
+                    $usersIds[] = $usr->getId();
+                }
+            }
+
+            // Get timesheets
+            $timesheets = $this->timesheetService->findAllTimesheetsByUsersIdAndProjetId($usersIds, $project->getId());
+            $timesheetsList = array();
+            $duration = 0;
+            foreach ($timesheets as $timesheet) {
+                $cnt++;
+                $timesheetsList[] = array(
+                    'start' => $timesheet->getStart(),
+                    'end' => $timesheet->getEnd(),
+                    'duration' => $this->timesheetService->timeToString($timesheet->getDuration()),
+                    'user' => $this->userService->findUser($timesheet->getUserId()),
+                    'activity' => $this->activityService->findActivity($timesheet->getActivityId()),
+                    'description' => $timesheet->getComment(),
+                    'tags' => $this->tagService->findAllTagsByTimesheetId($timesheet->getId()),
+                );
+                $duration += $timesheet->getDuration();
+            }
+
             $viewData = array();
             $viewData['colors'] = $colorsList;
             $viewData['project'] = $project;
@@ -212,6 +254,8 @@ final class ProjectsController
             $viewData['globalActivities'] = $globalActivities;
             $viewData['projectActivities'] = $projectActivities;
             $viewData['allowedActivitiesIds'] = $allowedActivitiesIds;
+            $viewData['timesheets'] = $timesheetsList;
+            $viewData['duration'] = $duration > 0 ? $this->timesheetService->timeToString($duration) : "";
 
             return $twig->render($response, 'project-details.html.twig', $viewData);
         }
@@ -376,6 +420,5 @@ final class ProjectsController
         $url = $routeParser->urlFor('projects');
         return $response->withStatus(302)->withHeader('Location', $url);
     }
-
 
 }

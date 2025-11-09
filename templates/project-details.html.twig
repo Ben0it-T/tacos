@@ -2,9 +2,7 @@
 
 {% block title %}{{trans.view_projects }}{% endblock %}
 
-{% block css %}
-    <link href="{{ basePath }}/css/container-max-width.css" rel="stylesheet">
-{% endblock %}
+
 
 {% block navbar %}
     {% embed 'navbar.html.twig' with {'title': trans.view_projects, 'navLinks': navLinks } %}{% endembed %}
@@ -143,5 +141,69 @@
         </div>
     </div>
 
+    <div class="card mb-3">
+        <div class="card-header fs-5 fw-bold">
+            {{ trans.view_teams_timesheets }}
+        </div>
 
+        <div class="card-body">
+            <div class="card-body table-responsive">
+                <table class="table table-hover" id="datatable">
+                    <thead>
+                        <tr>
+                            <th scope="col">{{ trans.table_row_date }}</th>
+                            <th scope="col">{{ trans.table_row_date_begin }}</th>
+                            <th scope="col">{{ trans.table_row_date_end }}</th>
+                            <th scope="col">{{ trans.table_row_date_duration }}</th>
+                            <th scope="col">{{ trans.table_row_activity }}</th>
+                            <th scope="col">{{ trans.table_row_user }}</th>
+                            <th scope="col">{{ trans.table_row_description }}</th>
+                            <th scope="col">{{ trans.table_row_tags }}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-group-divider">
+                        {% for timesheet in timesheets %}
+                            <tr>
+                                <td>{{ timesheet.start is empty ? "" : timesheet.start|date(trans.dateFormats_date) }}</td>
+                                <td class="text-end text-nowrap">{{ timesheet.start is empty ? "" : timesheet.start|date(trans.dateFormats_time) }}</td>
+                                <td class="text-end text-nowrap">{{ timesheet.end is empty ? "--:--" : timesheet.end|date(trans.dateFormats_time) }}</td>
+                                <td class="text-end text-nowrap">{% if timesheet.duration is empty %}<i data-since="{{ timesheet.start }}"></i>{% else %}{{ timesheet.duration }}{% endif %}</td>
+                                <td>
+                                    <div class="d-inline-flex align-items-center text-nowrap">
+                                        <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ timesheet.activity.color }};"><span class="visually-hidden">color</span></span>
+                                        <span class="ms-1">{{ timesheet.activity.name }}</span>
+                                    </div>
+                                </td>
+                                <td>{{ timesheet.user.name }}</td>
+                                <td>{{ timesheet.description|nl2br }}</td>
+                                <td>
+                                    {% if timesheet.tags|length > 0 %}
+                                        {% for tag in timesheet.tags %}
+                                            <span class="badge me-2" style="background-color: {{ tag.color }};">{{ tag.name }}</span>
+                                        {% endfor %}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        {% if duration > 0 %}
+                            <tr>
+                                <td></td>
+                                <td></td>
+                                <td class="form-text text-end text-nowrap">Total</td>
+                                <td class="form-text text-end text-nowrap">{{ duration }}</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script nonce="{{ nonce }}" src="{{ basePath }}/js/dataTables.js"></script>
 {% endblock %}

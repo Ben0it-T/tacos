@@ -128,6 +128,17 @@ final class TimesheetService
     }
 
     /**
+     * Find all Timesheets by users and project Id
+     *
+     * @param array $usersIds
+     * @param $projectId
+     * @return array of Timesheet
+     */
+    public function findAllTimesheetsByUsersIdAndProjetId(array $usersIds, int $projectId) {
+        return $this->timesheetRepository->findAllTimesheetsByUsersIdAndProjetId($usersIds, $projectId);
+    }
+
+    /**
      * Find all active timesheets by user Id
      *
      * @param int $userId

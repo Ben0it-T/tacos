@@ -347,6 +347,49 @@ final class TimesheetRepository
     }
 
     /**
+     * Find all Timesheets by users and project Id
+     *
+     * @param array $usersIds
+     * @param $projectId
+     * @return array of Timesheet
+     */
+    public function findAllTimesheetsByUsersIdAndProjetId(array $usersIds, int $projectId) {
+        $params = array(
+            'projectId' => $projectId
+        );
+        $in_params = array();
+
+        $inUsersIds = "";
+        if (count($usersIds) > 0) {
+            $in = "";
+            $i = 0;
+            foreach ($usersIds as $item) {
+                $key = ":usersIds".$i++;
+                $in .= "$key,";
+                $in_params[$key] = $item;
+            }
+            $in = rtrim($in,",");
+            $inUsersIds = "AND `tacos_timesheet`.`user_id` IN ($in) ";
+        }
+
+        $sql  = "SELECT `tacos_timesheet`.* FROM `tacos_timesheet` ";
+        $sql .= "WHERE `tacos_timesheet`.`project_id` = :projectId  ";
+        $sql .= $inUsersIds;
+        $sql .= "ORDER BY `tacos_timesheet`.`start` DESC, `tacos_timesheet`.`id` DESC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array_merge($params,$in_params));
+        $rows = $stmt->fetchAll();
+
+        $timesheet = array();
+        foreach ($rows as $row) {
+            $timesheet[$row['id']] = $this->buildEntity($row);
+        }
+
+        return $timesheet;
+    }
+
+    /**
      * Find all active timesheets by user Id
      *
      * @param int $userId
