@@ -33,6 +33,104 @@ final class TimesheetService
     }
 
     /**
+     * Get QueryParams (criteria)
+     *
+     * @param array $queryParams
+     * @param array $savedParams
+     * @return array of params
+     */
+    public function getQueryParams($queryParams, $savedParams) {
+
+        // Date
+        if (isset($queryParams['date']) && !empty($queryParams['date'])) {
+            list($date1, $date2) = explode(" - ", $queryParams['date']);
+
+            $start = date_create($date1);
+            if ($start instanceof \DateTime) {
+                $start = date_format($start,"Y-m-d");
+            }
+            else {
+                $start = date("Y-m-d");
+            }
+
+            $end = date_create($date2);
+            if ($end instanceof \DateTime) {
+                $end = date_format($end,"Y-m-d");
+            }
+            else {
+                $end = $start;
+            }
+        }
+        else if (isset($savedParams['start'])) {
+            $start = $savedParams['start'];
+            $end = $savedParams['end'];
+        }
+
+        // Users
+        $users = array();
+        if (isset($queryParams['users'])) {
+            if (($key = array_search("", $queryParams['users'])) !== false) {
+                unset($queryParams['users'][$key]);
+            }
+            $users = $queryParams['users'];
+        }
+        else if (isset($savedParams['users'])) {
+            $users = $savedParams['users'];
+        }
+
+        // Projects
+        $projects = array();
+        if (isset($queryParams['projects'])) {
+            if (($key = array_search("", $queryParams['projects'])) !== false) {
+                unset($queryParams['projects'][$key]);
+            }
+            $projects = $queryParams['projects'];
+        }
+        else if (isset($savedParams['projects'])) {
+            $projects = $savedParams['projects'];
+        }
+
+        // Activities
+        $activities = array();
+        if (isset($queryParams['activities'])) {
+            if (($key = array_search("", $queryParams['activities'])) !== false) {
+                unset($queryParams['activities'][$key]);
+            }
+            $activities = $queryParams['activities'];
+        }
+        else if (isset($savedParams['activities'])) {
+            $activities = $savedParams['activities'];
+        }
+
+        // Tags
+        $tags = array();
+        if (isset($queryParams['tags'])) {
+            if (($key = array_search("", $queryParams['tags'])) !== false) {
+                unset($queryParams['tags'][$key]);
+            }
+            $tags = $queryParams['tags'];
+        }
+        else if (isset($savedParams['tags'])) {
+            $tags = $savedParams['tags'];
+        }
+
+        $translations = $this->container->get('translations');
+        $startOfTheWeek = $translations['dateFormats_startOfTheWeek'];
+        $day = (date('w')+(7-$startOfTheWeek))%7;
+        $start = isset($start) ? $start : date("Y-m-d", strtotime('-'.$day.' days'));
+        $end = isset($end) ? $end : date("Y-m-d", strtotime('+'.(6-$day).' days'));
+
+        return array(
+            'start' => $start,
+            'end' => $end,
+            'users' => $users,
+            'projects' => $projects,
+            'activities' => $activities,
+            'tags' => $tags
+        );
+    }
+
+    /**
      * Find Timesheet
      *
      * @param int $id
@@ -146,6 +244,23 @@ final class TimesheetService
      */
     public function findAllActiveTimesheetByUserId(int $userId) {
         return $this->timesheetRepository->findAllActiveTimesheetByUserId($userId);
+    }
+
+
+    /**
+     * Find all Timesheets with Filer
+     *
+     * @param array $dates
+     * @param array $usersIds
+     * @param array $projectIds
+     * @param array $activityIds
+     * @param array $tagIds
+     *
+     * @return array of Timesheet
+     */
+    public function findTimesheetsWithUserAndProjectAndActivityAndTagsByCriteria($start="", $end="", $usersIds = array(), $projectIds = array(), $activityIds = array(), $tagIds = array()) {
+        // FOO
+        return $this->timesheetRepository->findTimesheetsWithUserAndProjectAndActivityAndTagsByCriteria([$start, $end], $usersIds, $projectIds, $activityIds, $tagIds);
     }
 
     /**

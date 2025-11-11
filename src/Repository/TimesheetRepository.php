@@ -98,6 +98,115 @@ final class TimesheetRepository
     }
 
     /**
+     * Find all Timesheets with Filer
+     *
+     * @param array $dates
+     * @param array $usersIds
+     * @param array $projectIds
+     * @param array $activityIds
+     * @param array $tagIds
+     *
+     * @return array of Timesheet
+     */
+    public function findTimesheetsWithUserAndProjectAndActivityAndTagsByCriteria(array $dates, array $usersIds, array $projectIds, array $activityIds, array $tagIds) {
+        $op = "";
+        $params = array();
+
+        $start = "";
+        if (count($dates) > 0) {
+            $params['date1'] = $dates[0];
+            $params['date2'] = $dates[1];
+            $start = " (DATE(`tacos_timesheet`.`start`) BETWEEN :date1 AND :date2) ";
+            $op = "AND ";
+        }
+
+        $inUsersIds = "";
+        if (count($usersIds) > 0) {
+            $in = "";
+            $i = 0;
+            foreach ($usersIds as $item) {
+                $key = ":usersIds".$i++;
+                $in .= "$key,";
+                $params[$key] = $item;
+            }
+            $in = rtrim($in,",");
+            $inUsersIds = $op . " `tacos_timesheet`.`user_id` IN ($in) ";
+            $op = "AND";
+        }
+
+        $inProjectIds = "";
+        if (count($projectIds) > 0) {
+            $in = "";
+            $i = 0;
+            foreach ($projectIds as $item) {
+                $key = ":projectId".$i++;
+                $in .= "$key,";
+                $params[$key] = $item;
+            }
+            $in = rtrim($in,",");
+            $inProjectIds = $op . " `tacos_timesheet`.`project_id` IN ($in) ";
+            $op = "AND";
+        }
+
+        $inActivityIds = "";
+        if (count($activityIds) > 0) {
+            $in = "";
+            $i = 0;
+            foreach ($activityIds as $item) {
+                $key = ":activityId".$i++;
+                $in .= "$key,";
+                $params[$key] = $item;
+            }
+            $in = rtrim($in,",");
+            $inActivityIds = $op . " `tacos_timesheet`.`activity_id` IN ($in) ";
+            $op = "AND";
+        }
+
+        $inTags = "";
+        if (count($tagIds) > 0) {
+            $in = "";
+            $i = 0;
+            foreach ($tagIds as $item) {
+                $key = ":tagId".$i++;
+                $in .= "$key,";
+                $params[$key] = $item;
+            }
+            $in = rtrim($in,",");
+            $inTags = $op . " `tacos_timesheet_tags`.`tag_id` IN ($in) ";
+        }
+
+        $sql  = 'SELECT `tacos_timesheet`.*, ';
+        $sql .= '`tacos_users`.`name` as userName, ';
+        $sql .= '`tacos_projects`.`name` as projectName, `tacos_projects`.`color` as projectColor, `tacos_projects`.`number` as projectNumber, ';
+        $sql .= '`tacos_activities`.`name` as activityName, `tacos_activities`.`color` as activityColor, `tacos_activities`.`number` as activityNumber, ';
+        $sql .= 'GROUP_CONCAT( `tacos_tags`.`id` ) as tagIds ';
+        $sql .= 'FROM `tacos_timesheet` ';
+        $sql .= 'LEFT JOIN `tacos_users` ON `tacos_users`.`id` = `tacos_timesheet`.`user_id` ';
+        $sql .= 'LEFT JOIN `tacos_projects` ON `tacos_projects`.`id` = `tacos_timesheet`.`project_id` ';
+        $sql .= 'LEFT JOIN `tacos_activities` ON `tacos_activities`.`id` = `tacos_timesheet`.`activity_id` ';
+        $sql .= 'LEFT JOIN `tacos_timesheet_tags` ON `tacos_timesheet_tags`.`timesheet_id` = `tacos_timesheet`.`id` ';
+        $sql .= 'LEFT JOIN `tacos_tags` ON `tacos_tags`.`id` = `tacos_timesheet_tags`.`tag_id` ';
+        $sql .= 'WHERE ';
+
+        $sql .= $start;
+        $sql .= $inUsersIds;
+        $sql .= $inProjectIds;
+        $sql .= $inActivityIds;
+        $sql .= $inTags;
+
+        $sql .= "GROUP BY `tacos_timesheet`.`id` ";
+        $sql .= "ORDER BY `tacos_timesheet`.`start` DESC, `tacos_timesheet`.`id` DESC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
+
+        return $rows;
+    }
+
+
+
+    /**
      * Find all Timesheets by user Id
      *
      * @param int $userId
