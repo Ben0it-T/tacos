@@ -97,7 +97,7 @@ final class TimesheetsController
         }
 
         // Get Query Params
-        $queryParams = $this->timesheetService->getQueryParams($request->getQueryParams(), $session['timesheets']);
+        $queryParams = $this->timesheetService->getQueryParams($request->getQueryParams(), $session['timesheets'] ?? []);
 
         // Check selected Projects
         for ($i=0; $i < count($queryParams['projects']) ; $i++) {
@@ -257,7 +257,7 @@ final class TimesheetsController
         }
 
         // Get Query Params
-        $queryParams = $this->timesheetService->getQueryParams($request->getQueryParams(), $session['teamsTimesheets']);
+        $queryParams = $this->timesheetService->getQueryParams($request->getQueryParams(), $session['teamsTimesheets'] ?? []);
 
         // Check Query Params
         // Check selected Users
