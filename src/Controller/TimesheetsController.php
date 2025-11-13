@@ -701,6 +701,13 @@ final class TimesheetsController
     public function exportTimesheets(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $session = $request->getAttribute('session');
+
+        if (!isset($session['timesheets'])) {
+            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+            $url = $routeParser->urlFor('timesheets');
+            return $response->withStatus(302)->withHeader('Location', $url);
+        }
+
         $currentUser = $this->userService->findUser($session['auth']['userId']);
 
         $criteria = array(
@@ -777,6 +784,13 @@ final class TimesheetsController
     public function exportTeamsTimesheets(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $session = $request->getAttribute('session');
+
+        if (!isset($session['teamsTimesheets'])) {
+            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+            $url = $routeParser->urlFor('timesheets_teams');
+            return $response->withStatus(302)->withHeader('Location', $url);
+        }
+
         $currentUser = $this->userService->findUser($session['auth']['userId']);
 
         $criteria = array(
