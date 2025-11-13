@@ -306,7 +306,8 @@ ALTER TABLE `tacos_timesheet`
   ADD KEY `idx-user_id` (`user_id`),
   ADD KEY `idx-activity_id` (`activity_id`),
   ADD KEY `idx-project_id` (`project_id`),
-  ADD KEY `idx-start` (`start`);
+  ADD KEY `idx-start` (`start`),
+  ADD KEY `idx-end` (`end`);
 
 --
 -- Index for table `tacos_timesheet_tags`
