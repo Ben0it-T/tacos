@@ -4,14 +4,17 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\Timesheet;
+use App\Helper\SqlHelper;
 use PDO;
 
 final class TimesheetRepository
 {
     private $pdo;
+    private $sqlHelper;
 
-    public function __construct(PDO $pdo) {
+    public function __construct(PDO $pdo, SqlHelper $sqlHelper) {
         $this->pdo = $pdo;
+        $this->sqlHelper = $sqlHelper;
     }
 
     /**
@@ -98,7 +101,7 @@ final class TimesheetRepository
     }
 
     /**
-     * Find all Timesheets with Filer
+     * Find all Timesheets with filters
      *
      * @param array $dates
      * @param array $usersIds
@@ -109,90 +112,59 @@ final class TimesheetRepository
      * @return array of Timesheet
      */
     public function findTimesheetsWithUserAndProjectAndActivityAndTagsByCriteria(array $dates, array $usersIds, array $projectIds, array $activityIds, array $tagIds) {
-        $op = "";
         $params = array();
+        $where = array();
 
-        $start = "";
+        // dates
         if (count($dates) > 0) {
             $params['date1'] = $dates[0];
             $params['date2'] = $dates[1];
-            $start = " (DATE(`tacos_timesheet`.`start`) BETWEEN :date1 AND :date2) ";
-            $op = "AND ";
+            $where[] = "(DATE(`tacos_timesheet`.`start`) BETWEEN :date1 AND :date2)";
         }
 
-        $inUsersIds = "";
-        if (count($usersIds) > 0) {
-            $in = "";
-            $i = 0;
-            foreach ($usersIds as $item) {
-                $key = ":usersIds".$i++;
-                $in .= "$key,";
-                $params[$key] = $item;
-            }
-            $in = rtrim($in,",");
-            $inUsersIds = $op . " `tacos_timesheet`.`user_id` IN ($in) ";
-            $op = "AND";
+        // usersIds
+        [$clause, $pdoParams] = $this->sqlHelper->buildInClause($usersIds, 'usersId', '`tacos_timesheet`.`user_id`');
+        if ($clause !== '') {
+            $where[] = $clause;
+            $params = array_merge($params, $pdoParams);
         }
 
-        $inProjectIds = "";
-        if (count($projectIds) > 0) {
-            $in = "";
-            $i = 0;
-            foreach ($projectIds as $item) {
-                $key = ":projectId".$i++;
-                $in .= "$key,";
-                $params[$key] = $item;
-            }
-            $in = rtrim($in,",");
-            $inProjectIds = $op . " `tacos_timesheet`.`project_id` IN ($in) ";
-            $op = "AND";
+        // projectIds
+        [$clause, $pdoParams] = $this->sqlHelper->buildInClause($projectIds, 'projectId', '`tacos_timesheet`.`project_id`');
+        if ($clause !== '') {
+            $where[] = $clause;
+            $params = array_merge($params, $pdoParams);
         }
 
-        $inActivityIds = "";
-        if (count($activityIds) > 0) {
-            $in = "";
-            $i = 0;
-            foreach ($activityIds as $item) {
-                $key = ":activityId".$i++;
-                $in .= "$key,";
-                $params[$key] = $item;
-            }
-            $in = rtrim($in,",");
-            $inActivityIds = $op . " `tacos_timesheet`.`activity_id` IN ($in) ";
-            $op = "AND";
+        // activityIds
+        [$clause, $pdoParams] = $this->sqlHelper->buildInClause($activityIds, 'activityId', '`tacos_timesheet`.`activity_id`');
+        if ($clause !== '') {
+            $where[] = $clause;
+            $params = array_merge($params, $pdoParams);
         }
 
-        $inTags = "";
-        if (count($tagIds) > 0) {
-            $in = "";
-            $i = 0;
-            foreach ($tagIds as $item) {
-                $key = ":tagId".$i++;
-                $in .= "$key,";
-                $params[$key] = $item;
-            }
-            $in = rtrim($in,",");
-            $inTags = $op . " `tacos_timesheet_tags`.`tag_id` IN ($in) ";
+        // tagIds
+        [$clause, $pdoParams] = $this->sqlHelper->buildInClause($tagIds, 'tagId', '`tacos_timesheet_tags`.`tag_id`');
+        if ($clause !== '') {
+            $where[] = $clause;
+            $params = array_merge($params, $pdoParams);
         }
 
         $sql  = 'SELECT `tacos_timesheet`.*, ';
         $sql .= '`tacos_users`.`name` as userName, ';
         $sql .= '`tacos_projects`.`name` as projectName, `tacos_projects`.`color` as projectColor, `tacos_projects`.`number` as projectNumber, ';
         $sql .= '`tacos_activities`.`name` as activityName, `tacos_activities`.`color` as activityColor, `tacos_activities`.`number` as activityNumber, ';
-        $sql .= 'GROUP_CONCAT( `tacos_tags`.`id` ) as tagIds ';
+        $sql .= 'GROUP_CONCAT(DISTINCT `tacos_tags`.`id`) as tagIds ';
         $sql .= 'FROM `tacos_timesheet` ';
         $sql .= 'LEFT JOIN `tacos_users` ON `tacos_users`.`id` = `tacos_timesheet`.`user_id` ';
         $sql .= 'LEFT JOIN `tacos_projects` ON `tacos_projects`.`id` = `tacos_timesheet`.`project_id` ';
         $sql .= 'LEFT JOIN `tacos_activities` ON `tacos_activities`.`id` = `tacos_timesheet`.`activity_id` ';
         $sql .= 'LEFT JOIN `tacos_timesheet_tags` ON `tacos_timesheet_tags`.`timesheet_id` = `tacos_timesheet`.`id` ';
         $sql .= 'LEFT JOIN `tacos_tags` ON `tacos_tags`.`id` = `tacos_timesheet_tags`.`tag_id` ';
-        $sql .= 'WHERE ';
 
-        $sql .= $start;
-        $sql .= $inUsersIds;
-        $sql .= $inProjectIds;
-        $sql .= $inActivityIds;
-        $sql .= $inTags;
+        if (!empty($where)) {
+            $sql .= 'WHERE ' . implode(' AND ', $where) . ' ';
+        }
 
         $sql .= "GROUP BY `tacos_timesheet`.`id` ";
         $sql .= "ORDER BY `tacos_timesheet`.`start` DESC, `tacos_timesheet`.`id` DESC";
@@ -700,28 +672,6 @@ final class TimesheetRepository
                 'end2' => $timesheet->getEnd(),
                 'modifiedAt' => date("Y-m-d H:i:s"),
                 'id' => $timesheet->getId(),
-            ]);
-            return true;
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
-
-    /**
-     * Sop All Timesheets for user
-     *
-     * @param int $userId
-     * @param string $date
-     * @return bool
-     */
-    public function stopAllTimesheetsForUserId(int $userId, $date) {
-        try {
-            $stmt = $this->pdo->prepare('UPDATE `tacos_timesheet` SET `tacos_timesheet`.`end` = :end1, `tacos_timesheet`.`duration` = CAST(TIME_TO_SEC(TIMEDIFF(:end2, `tacos_timesheet`.`start`))/60 AS UNSIGNED) , `tacos_timesheet`.`modified_at` = :modifiedAt WHERE `tacos_timesheet`.`user_id` = :userId AND `tacos_timesheet`.`end` is NULL');
-            $res = $stmt->execute([
-                'end1' => $date,
-                'end2' => $date,
-                'modifiedAt' => date("Y-m-d H:i:s"),
-                'userId' => $userId,
             ]);
             return true;
         } catch (\Exception $e) {
