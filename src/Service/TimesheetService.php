@@ -43,7 +43,12 @@ final class TimesheetService
 
         // Date
         if (isset($queryParams['date']) && !empty($queryParams['date'])) {
-            list($date1, $date2) = explode(" - ", $queryParams['date']);
+            if (str_contains($queryParams['date'], " - ")) {
+                list($date1, $date2) = explode(" - ", $queryParams['date']);
+            }
+            else {
+                $date1 = $date2 = $queryParams['date'];
+            }
 
             $start = date_create($date1);
             if ($start instanceof \DateTime) {
@@ -68,7 +73,7 @@ final class TimesheetService
 
         // Users
         $users = array();
-        if (isset($queryParams['users'])) {
+        if (isset($queryParams['users']) && is_array($queryParams['users'])) {
             if (($key = array_search("", $queryParams['users'])) !== false) {
                 unset($queryParams['users'][$key]);
             }
@@ -80,7 +85,7 @@ final class TimesheetService
 
         // Projects
         $projects = array();
-        if (isset($queryParams['projects'])) {
+        if (isset($queryParams['projects']) && is_array($queryParams['projects'])) {
             if (($key = array_search("", $queryParams['projects'])) !== false) {
                 unset($queryParams['projects'][$key]);
             }
@@ -92,7 +97,7 @@ final class TimesheetService
 
         // Activities
         $activities = array();
-        if (isset($queryParams['activities'])) {
+        if (isset($queryParams['activities']) && is_array($queryParams['activities'])) {
             if (($key = array_search("", $queryParams['activities'])) !== false) {
                 unset($queryParams['activities'][$key]);
             }
@@ -104,7 +109,7 @@ final class TimesheetService
 
         // Tags
         $tags = array();
-        if (isset($queryParams['tags'])) {
+        if (isset($queryParams['tags']) && is_array($queryParams['tags'])) {
             if (($key = array_search("", $queryParams['tags'])) !== false) {
                 unset($queryParams['tags'][$key]);
             }
@@ -246,22 +251,27 @@ final class TimesheetService
         return $this->timesheetRepository->findAllActiveTimesheetByUserId($userId);
     }
 
-
     /**
-     * Find all Timesheets with Filer
+     * Find Timesheets by criteria
      *
-     * @param array $dates
-     * @param array $usersIds
-     * @param array $projectIds
-     * @param array $activityIds
-     * @param array $tagIds
-     *
-     * @return array of Timesheet
+     * @param array $queryParams
+     * @return array of Timesheet with User, Projet, Activity and Tags
      */
-    public function findTimesheetsWithUserAndProjectAndActivityAndTagsByCriteria($start="", $end="", $usersIds = array(), $projectIds = array(), $activityIds = array(), $tagIds = array()) {
-        // FOO
-        return $this->timesheetRepository->findTimesheetsWithUserAndProjectAndActivityAndTagsByCriteria([$start, $end], $usersIds, $projectIds, $activityIds, $tagIds);
+    public function findTimesheetsByCriteria($criteria) {
+        if (!isset($criteria['users'])) {
+            return [];
+        }
+
+        $criteria['start'] = isset($criteria['start']) ? $criteria['start'] : date("Y-m-d");
+        $criteria['end'] = isset($criteria['end']) ? $criteria['end'] : date("Y-m-d");
+        $criteria['projects'] = isset($criteria['projects']) ? $criteria['projects'] : array();
+        $criteria['activities'] = isset($criteria['activities']) ? $criteria['activities'] : array();
+        $criteria['tags'] = isset($criteria['tags']) ? $criteria['tags'] : array();
+
+        return $this->timesheetRepository->findTimesheetsWithUserAndProjectAndActivityAndTagsByCriteria([$criteria['start'], $criteria['end']], $criteria['users'], $criteria['projects'], $criteria['activities'], $criteria['tags']);
     }
+
+
 
     /**
      * Get number of active records

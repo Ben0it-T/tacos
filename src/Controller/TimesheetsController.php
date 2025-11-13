@@ -98,6 +98,7 @@ final class TimesheetsController
 
         // Get Query Params
         $queryParams = $this->timesheetService->getQueryParams($request->getQueryParams(), $session['timesheets'] ?? []);
+        $queryParams['users'] = [$currentUser->getId()];
 
         // Check selected Projects
         for ($i=0; $i < count($queryParams['projects']) ; $i++) {
@@ -130,7 +131,7 @@ final class TimesheetsController
 
         // Get timesheets
         $allTags = $this->tagService->findAllTags();
-        $timesheets = $this->timesheetService->findTimesheetsWithUserAndProjectAndActivityAndTagsByCriteria($queryParams['start'], $queryParams['end'], [$currentUser->getId()], $queryParams['projects'], $queryParams['activities'], $queryParams['tags']);
+        $timesheets = $this->timesheetService->findTimesheetsByCriteria($queryParams);
         $duration = 0;
         $timesheetRestart = $this->container->get('settings')['timesheet']['restart'];
         for ($i=0; $i < count($timesheets); $i++) {
@@ -266,7 +267,6 @@ final class TimesheetsController
                 unset($queryParams['users'][$i]);
             }
         }
-        $selectedUsersIds = empty($queryParams['users']) ? $usersIds : $queryParams['users'];
 
         // Check selected Projects
         for ($i=0; $i < count($queryParams['projects']) ; $i++) {
@@ -298,9 +298,12 @@ final class TimesheetsController
         $_SESSION['teamsTimesheets']['activities'] = $queryParams['activities'];
         $_SESSION['teamsTimesheets']['tags'] = $queryParams['tags'];
 
+        $criteria = $queryParams;
+        $criteria['users'] = empty($queryParams['users']) ? $usersIds : $queryParams['users'];
+
         // Get timesheets
         $allTags = $this->tagService->findAllTags();
-        $timesheets = $this->timesheetService->findTimesheetsWithUserAndProjectAndActivityAndTagsByCriteria($queryParams['start'], $queryParams['end'], $selectedUsersIds, $queryParams['projects'], $queryParams['activities'], $queryParams['tags']);
+        $timesheets = $this->timesheetService->findTimesheetsByCriteria($criteria);
         $duration = 0;
         for ($i=0; $i < count($timesheets); $i++) {
             // Duration
@@ -700,11 +703,14 @@ final class TimesheetsController
         $session = $request->getAttribute('session');
         $currentUser = $this->userService->findUser($session['auth']['userId']);
 
-        $dateStart = $session['timesheets']['start'];
-        $dateEnd = $session['timesheets']['end'];
-        $selectedProjects = $session['timesheets']['projects'];
-        $selectedActivities = $session['timesheets']['activities'];
-        $selectedTags = $session['timesheets']['tags'];
+        $criteria = array(
+            'start' => $session['timesheets']['start'],
+            'end' => $session['timesheets']['end'],
+            'users' => [$currentUser->getId()],
+            'projects' => $session['timesheets']['projects'],
+            'activities' => $session['timesheets']['activities'],
+            'tags' => $session['timesheets']['tags']
+        );
 
         // Set
         $delimiter = ";";
@@ -714,7 +720,7 @@ final class TimesheetsController
 
         // Get timesheets
         $tags = $this->tagService->findAllTags();
-        $timesheets = $this->timesheetService->findTimesheetsWithUserAndProjectAndActivityAndTagsByCriteria($dateStart, $dateEnd, [$currentUser->getId()], $selectedProjects, $selectedActivities, $selectedTags);
+        $timesheets = $this->timesheetService->findTimesheetsByCriteria($criteria);
         for ($i=0; $i < count($timesheets); $i++) {
             // Tags
             $timesheets[$i]['tags'] = array();
@@ -773,12 +779,14 @@ final class TimesheetsController
         $session = $request->getAttribute('session');
         $currentUser = $this->userService->findUser($session['auth']['userId']);
 
-        $dateStart = $session['teamsTimesheets']['start'];
-        $dateEnd = $session['teamsTimesheets']['end'];
-        $selectedUsers = $session['teamsTimesheets']['users'];
-        $selectedProjects = $session['teamsTimesheets']['projects'];
-        $selectedActivities = $session['teamsTimesheets']['activities'];
-        $selectedTags = $session['teamsTimesheets']['tags'];
+        $criteria = array(
+            'start' => $session['teamsTimesheets']['start'],
+            'end' => $session['teamsTimesheets']['end'],
+            'users' => $session['teamsTimesheets']['users'],
+            'projects' => $session['teamsTimesheets']['projects'],
+            'activities' => $session['teamsTimesheets']['activities'],
+            'tags' => $session['teamsTimesheets']['tags']
+        );
 
         // Get Teams
         $teams = $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
@@ -802,7 +810,7 @@ final class TimesheetsController
                 );
             }
         }
-        $selectedUsersIds = empty($selectedUsers) ? $usersIds : $selectedUsers;
+        $criteria['users'] = empty($criteria['users']) ? $usersIds : $criteria['users'];
 
         // Set
         $delimiter = ";";
@@ -812,7 +820,7 @@ final class TimesheetsController
 
         // Get timesheets
         $allTags = $this->tagService->findAllTags();
-        $timesheets = $this->timesheetService->findTimesheetsWithUserAndProjectAndActivityAndTagsByCriteria($dateStart, $dateEnd, $selectedUsersIds, $selectedProjects, $selectedActivities, $selectedTags);
+        $timesheets = $this->timesheetService->findTimesheetsByCriteria($criteria);
         for ($i=0; $i < count($timesheets); $i++) {
             // Tags
             $timesheets[$i]['tags'] = array();
