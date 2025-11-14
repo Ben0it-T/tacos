@@ -39,7 +39,7 @@ final class TimesheetService
      * @param array $savedParams
      * @return array of params
      */
-    public function getQueryParams($queryParams, $savedParams) {
+    public function getQueryParams(array $queryParams, array $savedParams) {
 
         // Date
         if (isset($queryParams['date']) && !empty($queryParams['date'])) {
@@ -136,7 +136,7 @@ final class TimesheetService
     }
 
     /**
-     * Find Timesheet
+     * Find Timesheet by id
      *
      * @param int $id
      * @return Timesheet or false
@@ -146,9 +146,10 @@ final class TimesheetService
     }
 
     /**
-     * Find Timesheet
+     * Find Timesheet by id and user Id
      *
      * @param int $id
+     * @param int $userId
      * @return Timesheet or false
      */
     public function findTimesheetByIdAndUserId(int $id, int $userId) {
@@ -156,7 +157,7 @@ final class TimesheetService
     }
 
     /**
-     * Find Active Timesheet by user Id
+     * Find the last active Timesheet by user ID
      *
      * @param int $userId
      * @return Timesheet or false
@@ -165,116 +166,37 @@ final class TimesheetService
         return $this->timesheetRepository->findOneActiveTimesheetByUserId($userId);
     }
 
-
-
     /**
-     * Find all Timesheets by user Id
+     * Find all active Timesheets by user Id
      *
      * @param int $userId
-     * @return array of Timesheet
-     */
-    public function findAllTimesheetByUserId(int $userId) {
-        return $this->timesheetRepository->findAllTimesheetByUserId($userId);
-    }
-
-    /**
-     * Find all Timesheets by user Id and date
-     *
-     * @param int $userId
-     * @param $date
-     * @return array of Timesheet
-     */
-    public function findAllTimesheetByUserIdAndStart(int $userId, $date) {
-        return $this->timesheetRepository->findAllTimesheetByUserIdAndStart($userId, $date);
-    }
-
-    /**
-     * Find all Timesheets by user Id between date
-     *
-     * @param int $userId
-     * @param $date1
-     * @param $date2
-     * @return array of Timesheet
-     */
-    public function findAllTimesheetByUserIdBetween(int $userId, $date1, $date2) {
-        return $this->timesheetRepository->findAllTimesheetByUserIdBetween($userId, $date1, $date2);
-    }
-
-    /**
-     * Find all Timesheets by user and Filters
-     *
-     * @param int $userId
-     * @param $date1
-     * @param $date2
-     * @param $projectIds
-     * @param $activityIds
-     * @param $tagIds
-     * @return array of Timesheet
-     */
-    public function findAllTimesheetByUserIdAndFilters(int $userId, $date1, $date2, $projectIds = array(), $activityIds = array(), $tagIds = array()) {
-        return $this->timesheetRepository->findAllTimesheetByUserIdAndFilters($userId, $date1, $date2, $projectIds, $activityIds, $tagIds);
-    }
-
-    /**
-     * Find all Timesheets by users and Filters
-     *
-     * @param array $usersIds
-     * @param $date1
-     * @param $date2
-     * @param $projectIds
-     * @param $activityIds
-     * @param $tagIds
-     * @return array of Timesheet
-     */
-    public function findAllTimesheetsByUsersIdAndFilters(array $usersIds, $date1, $date2, $projectIds = array(), $activityIds = array(), $tagIds = array()) {
-        return $this->timesheetRepository->findAllTimesheetsByUsersIdAndFilters($usersIds, $date1, $date2, $projectIds, $activityIds, $tagIds);
-    }
-
-    /**
-     * Find all Timesheets by users and project Id
-     *
-     * @param array $usersIds
-     * @param $projectId
-     * @return array of Timesheet
-     */
-    public function findAllTimesheetsByUsersIdAndProjetId(array $usersIds, int $projectId) {
-        return $this->timesheetRepository->findAllTimesheetsByUsersIdAndProjetId($usersIds, $projectId);
-    }
-
-    /**
-     * Find all active timesheets by user Id
-     *
-     * @param int $userId
-     * @return array of Timesheet
+     * @return array of Timesheets
      */
     public function findAllActiveTimesheetByUserId(int $userId) {
         return $this->timesheetRepository->findAllActiveTimesheetByUserId($userId);
     }
 
     /**
-     * Find Timesheets by criteria
+     * Find Timesheets (with User, Projet, Activity and Tags) by criteria (dates, users, projects, activities, tags)
      *
      * @param array $queryParams
      * @return array of Timesheet with User, Projet, Activity and Tags
      */
-    public function findTimesheetsByCriteria($criteria) {
+    public function findTimesheetsByCriteria(array $criteria) {
         if (!isset($criteria['users'])) {
             return [];
         }
 
-        $criteria['start'] = isset($criteria['start']) ? $criteria['start'] : date("Y-m-d");
-        $criteria['end'] = isset($criteria['end']) ? $criteria['end'] : date("Y-m-d");
+        $criteria['dates'] = (isset($criteria['start']) && isset($criteria['end'])) ? [$criteria['start'], $criteria['end']] : array();
         $criteria['projects'] = isset($criteria['projects']) ? $criteria['projects'] : array();
         $criteria['activities'] = isset($criteria['activities']) ? $criteria['activities'] : array();
         $criteria['tags'] = isset($criteria['tags']) ? $criteria['tags'] : array();
 
-        return $this->timesheetRepository->findTimesheetsWithUserAndProjectAndActivityAndTagsByCriteria([$criteria['start'], $criteria['end']], $criteria['users'], $criteria['projects'], $criteria['activities'], $criteria['tags']);
+        return $this->timesheetRepository->findTimesheetsWithUserAndProjectAndActivityAndTagsByCriteria($criteria['dates'], $criteria['users'], $criteria['projects'], $criteria['activities'], $criteria['tags']);
     }
 
-
-
     /**
-     * Get number of active records
+     * Get number of active records by user Id
      *
      * @param int $userId
      * @return int
@@ -305,7 +227,7 @@ final class TimesheetService
     }
 
     /**
-     * Get report
+     * Get report data
      *
      * @param int $userId
      * @param $date1

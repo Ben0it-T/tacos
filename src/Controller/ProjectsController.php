@@ -183,17 +183,6 @@ final class ProjectsController
         }
 
         if ($project) {
-            // Get colors
-            $colorChoices = $this->container->get('settings')['theme']['colorChoices'];
-            $colorsList = array();
-            foreach (explode(',',$colorChoices) as $key => $value) {
-                list($colorName, $colorValue) = explode('|', $value);
-                //$colorsList[$colorName] = $colorValue;
-                $colorsList[$key] = array(
-                    'name' => $colorName,
-                    'value' => $colorValue,
-                );
-            }
 
             // Get selected Customer
             $selectedCustomer = $this->customerService->findCustomer($project->getCustomerId());
@@ -229,31 +218,38 @@ final class ProjectsController
             }
 
             // Get timesheets
-            $timesheets = $this->timesheetService->findAllTimesheetsByUsersIdAndProjetId($usersIds, $project->getId());
-            $timesheetsList = array();
+            $criteria = array(
+                'users' => $usersIds,
+                'projects' => [$project->getId()],
+            );
+            $allTags = $this->tagService->findAllTags();
+            $timesheets = $this->timesheetService->findTimesheetsByCriteria($criteria);
             $duration = 0;
-            foreach ($timesheets as $timesheet) {
-                $timesheetsList[] = array(
-                    'start' => $timesheet->getStart(),
-                    'end' => $timesheet->getEnd(),
-                    'duration' => $this->timesheetService->timeToString($timesheet->getDuration()),
-                    'user' => $this->userService->findUser($timesheet->getUserId()),
-                    'activity' => $this->activityService->findActivity($timesheet->getActivityId()),
-                    'description' => $timesheet->getComment(),
-                    'tags' => $this->tagService->findAllTagsByTimesheetId($timesheet->getId()),
-                );
-                $duration += $timesheet->getDuration();
+            for ($i=0; $i < count($timesheets); $i++) {
+                // Duration
+                $duration += $timesheets[$i]['duration'];
+                $timesheets[$i]['duration'] = $this->timesheetService->timeToString($timesheets[$i]['duration']);
+                // Tags
+                $timesheets[$i]['tags'] = array();
+                if (!is_null($timesheets[$i]['tagIds'])) {
+                    $tagsIds = explode(',', $timesheets[$i]['tagIds']);
+                    foreach ($tagsIds as $tagId) {
+                        $timesheets[$i]['tags'][] = array(
+                            'name' => $allTags[$tagId]->getName(),
+                            'color' => $allTags[$tagId]->getColor()
+                        );
+                    }
+                }
             }
 
             $viewData = array();
-            $viewData['colors'] = $colorsList;
             $viewData['project'] = $project;
             $viewData['selectedCustomer'] = $selectedCustomer;
             $viewData['selectedTeams'] = $selectedTeams;
             $viewData['globalActivities'] = $globalActivities;
             $viewData['projectActivities'] = $projectActivities;
             $viewData['allowedActivitiesIds'] = $allowedActivitiesIds;
-            $viewData['timesheets'] = $timesheetsList;
+            $viewData['timesheets'] = $timesheets;
             $viewData['duration'] = $duration > 0 ? $this->timesheetService->timeToString($duration) : "";
 
             return $twig->render($response, 'project-details.html.twig', $viewData);
