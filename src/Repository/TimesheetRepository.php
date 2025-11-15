@@ -117,7 +117,7 @@ final class TimesheetRepository
         if (count($dates) > 0) {
             $params['date1'] = $dates[0];
             $params['date2'] = $dates[1];
-            $where[] = "(DATE(`tacos_timesheet`.`start`) BETWEEN :date1 AND :date2)";
+            $where[] = "(`tacos_timesheet`.`start` >= :date1 AND `tacos_timesheet`.`start` < DATE_ADD(:date2, INTERVAL 1 DAY))";
         }
 
         // usersIds
@@ -322,7 +322,8 @@ final class TimesheetRepository
         $sql  = "SELECT " . $field . " as `name`, DATE_FORMAT(`tacos_timesheet`.`start`, '%Y-%m-%d') as `date`, SUM(`tacos_timesheet`.duration) as `duration` ";
         $sql .= "FROM `tacos_timesheet` ";
         $sql .= $join;
-        $sql .= "WHERE `tacos_timesheet`.`user_id` = :userId AND (DATE(`tacos_timesheet`.`start`) BETWEEN :date1 AND :date2) ";
+        $sql .= "WHERE `tacos_timesheet`.`user_id` = :userId ";
+        $sql .= "AND (`tacos_timesheet`.`start` >= :date1 AND `tacos_timesheet`.`start` < DATE_ADD(:date2, INTERVAL 1 DAY)) ";
         $sql .= "GROUP BY " . $group . ", `date` ";
         $sql .= "ORDER BY `date` ASC , `name` ASC ";
         $stmt = $this->pdo->prepare($sql);
@@ -333,7 +334,8 @@ final class TimesheetRepository
         $sql  = "SELECT " . $field . " as `name`, SUM(`tacos_timesheet`.duration) as `duration` ";
         $sql .= "FROM `tacos_timesheet` ";
         $sql .= $join;
-        $sql .= "WHERE `tacos_timesheet`.`user_id` = :userId AND (DATE(`tacos_timesheet`.`start`) BETWEEN :date1 AND :date2) ";
+        $sql .= "WHERE `tacos_timesheet`.`user_id` = :userId ";
+        $sql .= "AND (`tacos_timesheet`.`start` >= :date1 AND `tacos_timesheet`.`start` < DATE_ADD(:date2, INTERVAL 1 DAY)) ";
         $sql .= "GROUP BY " . $group . " ";
         $sql .= "ORDER BY `name` ASC";
         $stmt = $this->pdo->prepare($sql);
@@ -343,7 +345,8 @@ final class TimesheetRepository
         // Sum of Cols (dates)
         $sql  = "SELECT DATE_FORMAT(`tacos_timesheet`.`start`, '%Y-%m-%d') as `date`, SUM(`tacos_timesheet`.duration) as `duration` ";
         $sql .= "FROM `tacos_timesheet` ";
-        $sql .= "WHERE `tacos_timesheet`.`user_id` = :userId AND (DATE(`tacos_timesheet`.`start`) BETWEEN :date1 AND :date2) ";
+        $sql .= "WHERE `tacos_timesheet`.`user_id` = :userId ";
+        $sql .= "AND (`tacos_timesheet`.`start` >= :date1 AND `tacos_timesheet`.`start` < DATE_ADD(:date2, INTERVAL 1 DAY)) ";
         $sql .= "GROUP BY `date` ";
         $sql .= "ORDER BY `date` ASC";
         $stmt = $this->pdo->prepare($sql);
@@ -353,7 +356,8 @@ final class TimesheetRepository
         // Total
         $sql  = "SELECT SUM(`tacos_timesheet`.duration) as `duration` ";
         $sql .= "FROM `tacos_timesheet` ";
-        $sql .= "WHERE `tacos_timesheet`.`user_id` = :userId AND (DATE(`tacos_timesheet`.`start`) BETWEEN :date1 AND :date2) ";
+        $sql .= "WHERE `tacos_timesheet`.`user_id` = :userId ";
+        $sql .= "AND (`tacos_timesheet`.`start` >= :date1 AND `tacos_timesheet`.`start` < DATE_ADD(:date2, INTERVAL 1 DAY)) ";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
         $res['total'] = $stmt->fetchColumn();
