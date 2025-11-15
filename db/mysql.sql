@@ -319,7 +319,9 @@ ALTER TABLE `tacos_users`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `idx-username` (`username`) USING BTREE,
   ADD UNIQUE KEY `idx-email` (`email`) USING BTREE,
-  ADD UNIQUE KEY `idx-password_request_token` (`password_request_token`) USING BTREE;
+  ADD UNIQUE KEY `idx-password_request_token` (`password_request_token`) USING BTREE,
+  ADD KEY `idx-role_id` (`role_id`),
+  ADD KEY `idx-password_request_date` (`password_request_date`);
 
 --
 -- Index for table `tacos_users_teams`
