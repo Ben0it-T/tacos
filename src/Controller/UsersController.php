@@ -175,6 +175,8 @@ final class UsersController
             }
             else {
                 $flash->addMessage('error', $errors);
+                $url = $routeParser->urlFor('users_edit', array('username' => $args['username']));
+                return $response->withStatus(302)->withHeader('Location', $url);
             }
         }
 
