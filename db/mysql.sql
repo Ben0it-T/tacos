@@ -106,10 +106,6 @@ CREATE TABLE `tacos_roles` (
   `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Déchargement des données de la table `tacos_roles`
---
-
 INSERT INTO `tacos_roles` (`id`, `name`) VALUES
 (3, 'ROLE_ADMIN'),
 (2, 'ROLE_TEAMLEAD'),
@@ -212,7 +208,6 @@ CREATE TABLE `tacos_users_teams` (
   `team_id` int NOT NULL,
   `teamlead` tinyint(1) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 
 
 
@@ -384,9 +379,7 @@ ALTER TABLE `tacos_timesheet`
 ALTER TABLE `tacos_users`
   MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
---
--- Constraints pour les tables déchargées
---
+
 
 --
 -- Constraints for table `tacos_activities`
@@ -444,8 +437,15 @@ ALTER TABLE `tacos_timesheet_tags`
   ADD CONSTRAINT `fk-tacos_timesheet_tags-timesheet_id` FOREIGN KEY (`timesheet_id`) REFERENCES `tacos_timesheet` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `tacos_users`
+--
+ALTER TABLE `tacos_users`
+  ADD CONSTRAINT `fk-tacos_users-role_id` FOREIGN KEY (`role_id`) REFERENCES `tacos_roles` (`id`) ON DELETE RESTRICT;
+
+--
 -- Constraints for table `tacos_users_teams`
 --
 ALTER TABLE `tacos_users_teams`
   ADD CONSTRAINT `fk-tacos_users_teams-team_id` FOREIGN KEY (`team_id`) REFERENCES `tacos_teams` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
   ADD CONSTRAINT `fk-tacos_users_teams-user_id` FOREIGN KEY (`user_id`) REFERENCES `tacos_users` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT;
+
