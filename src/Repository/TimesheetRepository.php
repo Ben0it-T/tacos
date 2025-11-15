@@ -217,32 +217,47 @@ final class TimesheetRepository
      * @return int
      */
     public function getWorkingHoursByTimePeriodAndUserId(string $timePeriod, int $userId) {
+        $today = new \DateTimeImmutable('today');
+
         switch ($timePeriod) {
             case 'week':
-                $condition = "YEARWEEK(`tacos_timesheet`.`start`, 1) = YEARWEEK(CURDATE(), 1)";
+                $start = $today->modify('monday this week');
+                $end   = $start->modify('+1 week');
                 break;
 
             case 'lastweek':
-                $condition = "YEARWEEK(`tacos_timesheet`.`start`, 1) = YEARWEEK(CURDATE(), 1) - 1";
+                $start = $today->modify('monday last week');
+                $end   = $start->modify('+1 week');
                 break;
 
             case 'month':
-                $condition = "DATE_FORMAT(`tacos_timesheet`.`start`, '%Y%m') = DATE_FORMAT(CURDATE(), '%Y%m')";
+                $start = new \DateTimeImmutable($today->format('Y-m-01 00:00:00'));
+                $end   = $start->modify('+1 month');
                 break;
 
              case 'lastmonth':
-                $condition = "DATE_FORMAT(`tacos_timesheet`.`start`, '%Y%m') = DATE_FORMAT(CURDATE() - INTERVAL 1 MONTH, '%Y%m')";
+                $start = (new \DateTimeImmutable($today->format('Y-m-01 00:00:00')))->modify('-1 month');
+                $end   = $start->modify('+1 month');
                 break;
 
             default:
                 // today
-                $condition = "DATE(`tacos_timesheet`.`start`) = CURDATE()";
+                $start = $today;
+                $end   = $today->modify('+1 day');
                 break;
         }
 
-        $stmt = $this->pdo->prepare('SELECT SUM(duration) as duration FROM `tacos_timesheet` WHERE `tacos_timesheet`.`user_id` = :userId AND '.$condition.' AND `tacos_timesheet`.`end` is not null');
+        $sql  = "SELECT SUM(duration) as duration ";
+        $sql .= "FROM `tacos_timesheet` ";
+        $sql .= "WHERE `tacos_timesheet`.`user_id` = :userId ";
+        $sql .= "AND `tacos_timesheet`.`start` >= :start AND `tacos_timesheet`.`start` < :end ";
+        $sql .= "AND `tacos_timesheet`.`end` is not null";
+
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'userId' => $userId,
+            'start' => $start->format('Y-m-d H:i:s'),
+            'end' => $end->format('Y-m-d H:i:s')
         ]);
 
         return $stmt->fetchColumn();
