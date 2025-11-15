@@ -35,21 +35,13 @@ final class UsersController
         $routeParser = $routeContext->getRouteParser();
 
         $users = $this->userService->findAllUsers();
-        $roles = $this->userService->findAllRoles();
 
-        $usersList = array();
-        foreach ($users as $user) {
-            $usersList[] = array(
-                'id' => $user->getId(),
-                'name' => $user->getName(),
-                'username' => $user->getUsername(),
-                'role' => $translations[strtolower($roles[$user->getRole()]->getName())],
-                'teams' => $this->userService->getNbOfTeamsForUser($user->getId()),
-                'lastLogin' => $user->getLastLogin(),
-                'enable' => $user->getEnabled() ? true : false,
-                'editLink' => $routeParser->urlFor('users_edit', array('username' => $user->getUsername())),
-                'viewLink' => $routeParser->urlFor('users_details', array('username' => $user->getUsername())),
-            );
+        $users = $this->userService->findAllUsersWithTeamCount();
+        for ($i=0; $i < count($users); $i++) {
+            $users[$i]['role'] = $translations[strtolower($users[$i]['role'])];
+            $users[$i]['enable'] = $users[$i]['enable'] ? true : false;
+            $users[$i]['editLink'] = $routeParser->urlFor('users_edit', array('username' => $users[$i]['username']));
+            $users[$i]['viewLink'] = $routeParser->urlFor('users_details', array('username' => $users[$i]['username']));
         }
 
         $viewData = array();
@@ -57,7 +49,7 @@ final class UsersController
             'loginMinLength' => $this->container->get('settings')['auth']['loginMinLength'],
             'pwdMinLength' => $this->container->get('settings')['auth']['pwdMinLength'],
         );
-        $viewData['users'] = $usersList;
+        $viewData['users'] = $users;
 
         $viewData['flashMsgSuccess'] = $flash->getFirstMessage('success');
         $viewData['flashMsgError'] = $flash->getFirstMessage('error');

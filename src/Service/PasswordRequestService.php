@@ -77,9 +77,7 @@ final class PasswordRequestService
      */
     public function unsetPasswordRequests(): void {
         $settings = $this->container->get('settings')['auth'];
-        $tokenLifetime = intval($settings['pwdRequestTokenLifetime']);
-        $lifetime = time()-$tokenLifetime;
-        $this->userRepository->unsetUsersPasswordRequests($lifetime);
+        $this->userRepository->unsetUsersPasswordRequests(intval($settings['pwdRequestTokenLifetime']));
     }
 
     /**
@@ -93,9 +91,7 @@ final class PasswordRequestService
         if ($this->validateToken($token) && $this->validatePasswordStrength($password)) {
             $settings = $this->container->get('settings')['auth'];
             $requestToken = hash('sha256', $settings['pwdRequestSalt'] . $token);
-            $tokenLifetime = intval(time() - $settings['pwdRequestTokenLifetime']);
-
-            $user = $this->userRepository->findOneByToken($requestToken, $tokenLifetime);
+            $user = $this->userRepository->findOneByToken($requestToken, intval($settings['pwdRequestTokenLifetime']));
             if ($user) {
                 $options = array(
                     'memory_cost' => PASSWORD_ARGON2_DEFAULT_MEMORY_COST,
@@ -122,9 +118,8 @@ final class PasswordRequestService
     public function validateToken(string $token) {
         $settings = $this->container->get('settings')['auth'];
         $requestToken = hash('sha256', $settings['pwdRequestSalt'] . $token);
-        $tokenLifetime = intval(time() - $settings['pwdRequestTokenLifetime']);
 
-        return $this->userRepository->isTokenExists($requestToken, $tokenLifetime);
+        return $this->userRepository->isTokenExists($requestToken, intval($settings['pwdRequestTokenLifetime']));
     }
 
     /**

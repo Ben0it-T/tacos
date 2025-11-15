@@ -4,14 +4,17 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\User;
+use App\Helper\SqlHelper;
 use PDO;
 
 final class UserRepository
 {
     private $pdo;
+    private $sqlHelper;
 
-    public function __construct(PDO $pdo) {
+    public function __construct(PDO $pdo, SqlHelper $sqlHelper) {
         $this->pdo = $pdo;
+        $this->sqlHelper = $sqlHelper;
     }
 
     /**
@@ -21,7 +24,7 @@ final class UserRepository
      * @return User or false
      */
     public function find(int $id) {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_users` WHERE `tacos_users`.`id` = ? AND `tacos_users`.`enabled` = 1');
+        $stmt = $this->pdo->prepare('SELECT `tacos_users`.* FROM `tacos_users` WHERE `tacos_users`.`id` = ? AND `tacos_users`.`enabled` = 1 LIMIT 1');
         $stmt->execute([$id]);
         $row = $stmt->fetch();
 
@@ -40,7 +43,7 @@ final class UserRepository
      * @return User or false
      */
     public function findOneByIdentifier(string $identifier) {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_users` WHERE (`tacos_users`.`username` = :username OR `tacos_users`.`email` = :email) AND `tacos_users`.`enabled` = 1');
+        $stmt = $this->pdo->prepare('SELECT `tacos_users`.* FROM `tacos_users` WHERE (`tacos_users`.`username` = :username OR `tacos_users`.`email` = :email) AND `tacos_users`.`enabled` = 1 LIMIT 1');
         $stmt->execute([
             'username' => $identifier,
             'email' => $identifier
@@ -63,10 +66,11 @@ final class UserRepository
      * @return User or false
      */
     public function findOneByToken(string $token, int $tokenLifetime) {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_users` WHERE UNIX_TIMESTAMP(`tacos_users`.`password_request_date`) > :tokenLifetime AND `tacos_users`.`password_request_token` = :token AND `tacos_users`.`enabled` = 1');
+        $threshold = date("Y-m-d H:i:s", intval(time() - $tokenLifetime));
+        $stmt = $this->pdo->prepare('SELECT `tacos_users`.* FROM `tacos_users` WHERE `tacos_users`.`password_request_token` = :token AND `tacos_users`.`password_request_date` > :threshold AND `tacos_users`.`enabled` = 1 LIMIT 1');
         $stmt->execute([
-            'tokenLifetime' => intval($tokenLifetime),
-            'token'         => $token,
+            'threshold' => $threshold,
+            'token'     => $token,
         ]);
         $row = $stmt->fetch();
 
@@ -85,7 +89,7 @@ final class UserRepository
      * @return User or false
      */
     public function findOneByUsername(string $username) {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_users` WHERE `tacos_users`.`username` = :username');
+        $stmt = $this->pdo->prepare('SELECT `tacos_users`.* FROM `tacos_users` WHERE `tacos_users`.`username` = :username LIMIT 1');
         $stmt->execute([
             'username' => $username,
         ]);
@@ -99,15 +103,13 @@ final class UserRepository
         }
     }
 
-
-
     /**
      * Find all Users
      *
      * @return array of Users
      */
     public function findAll() {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_users` ORDER BY `tacos_users`.`name` ASC');
+        $stmt = $this->pdo->prepare('SELECT `tacos_users`.* FROM `tacos_users` ORDER BY `tacos_users`.`name` ASC');
         $stmt->execute();
         $rows = $stmt->fetchAll();
 
@@ -125,7 +127,7 @@ final class UserRepository
      * @return array of Users
      */
     public function findAllEnabled() {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_users` WHERE `tacos_users`.`enabled` = 1 ORDER BY `tacos_users`.`name` ASC');
+        $stmt = $this->pdo->prepare('SELECT `tacos_users`.* FROM `tacos_users` WHERE `tacos_users`.`enabled` = 1 ORDER BY `tacos_users`.`name` ASC');
         $stmt->execute();
         $rows = $stmt->fetchAll();
 
@@ -143,37 +145,48 @@ final class UserRepository
      * @param array list of teamsIds
      * @return array of Users
      */
-    public function findAllEnabledUsersInTeams($teamsIds) {
+    public function findAllEnabledUsersInTeams(array $teamsIds) {
         $users = array();
+
         if (count($teamsIds) > 0) {
-            $in = str_repeat('?,', count($teamsIds) - 1) . '?';
-            // distinct users ?
-            $stmt = $this->pdo->prepare("SELECT `tacos_users`.* FROM `tacos_users_teams` LEFT JOIN `tacos_users` ON `tacos_users`.`id` = `tacos_users_teams`.`user_id` WHERE `tacos_users_teams`.`team_id` IN ($in) AND `tacos_users`.`enabled` = 1 GROUP BY `tacos_users`.`id` ORDER BY `tacos_users`.`name`");
-            $stmt->execute($teamsIds);
+            [$teamsIN, $pdoParams] = $this->sqlHelper->buildInClause($teamsIds, 'teamsId', '`tacos_users_teams`.`team_id`');
+
+            $sql  = "SELECT DISTINCT `tacos_users`.* FROM `tacos_users_teams` ";
+            $sql .= "INNER JOIN `tacos_users` ON `tacos_users`.`id` = `tacos_users_teams`.`user_id` ";
+            $sql .= "WHERE {$teamsIN} ";
+            $sql .= "AND `tacos_users`.`enabled` = 1 ";
+            $sql .= "ORDER BY `tacos_users`.`name`";
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($pdoParams);
             $rows = $stmt->fetchAll();
 
             foreach ($rows as $row) {
                 $users[$row['id']] = $this->buildEntity($row);
             }
+
         }
 
         return $users;
     }
 
-
-
     /**
-     * Get number of teams for user
+     * Find all Users with Teams count
      *
-     * @param int $userId
-     * @return int number of teams for user
+     * @return array of Users with Role and Teams count
      */
-    public function getNbOfTeamsForUser($userId) {
-        $stmt = $this->pdo->prepare('SELECT count(*) as cnt FROM `tacos_users_teams` WHERE `tacos_users_teams`.`user_id` = :userId');
-        $stmt->execute([
-            'userId' => $userId,
-        ]);
-        return $stmt->fetchColumn();
+    public function findAllUsersWithTeamCount() {
+        $sql  = "SELECT `tacos_users`.`id`, `tacos_users`.`username`, `tacos_users`.`name`, `tacos_users`.`enabled` as enable, `tacos_roles`.`name` as role, `tacos_users`.`last_login` as lastLogin, COUNT(`tacos_users_teams`.`team_id`) AS teams ";
+        $sql .= "FROM `tacos_users` ";
+        $sql .= "LEFT JOIN `tacos_users_teams` ON `tacos_users_teams`.`user_id` = `tacos_users`.`id` ";
+        $sql .= "LEFT JOIN `tacos_roles` ON `tacos_roles`.`id` = `tacos_users`.`role_id` ";
+        $sql .= "GROUP BY `tacos_users`.`id` ";
+        $sql .= "ORDER BY `tacos_users`.`name`";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
     }
 
     /**
@@ -190,8 +203,6 @@ final class UserRepository
         return $stmt->fetchAll();
     }
 
-
-
     /**
      * Check if token exists
      *
@@ -200,10 +211,12 @@ final class UserRepository
      * @return bool
      */
     public function isTokenExists(string $token, int $tokenLifetime) {
-        $stmt = $this->pdo->prepare('SELECT count(*) as cnt FROM `tacos_users` WHERE UNIX_TIMESTAMP(`tacos_users`.`password_request_date`) > :tokenLifetime AND `tacos_users`.`password_request_token` = :token AND `tacos_users`.`enabled` = 1');
+        $threshold = date("Y-m-d H:i:s", intval(time() - $tokenLifetime));
+        $stmt = $this->pdo->prepare('SELECT count(*) as cnt FROM `tacos_users` WHERE `tacos_users`.`password_request_token` = :token AND `tacos_users`.`password_request_date` > :threshold AND `tacos_users`.`enabled` = 1');
+
         $stmt->execute([
-            'tokenLifetime' => intval($tokenLifetime),
-            'token'         => $token,
+            'threshold' => $threshold,
+            'token'     => $token,
         ]);
         $cnt = $stmt->fetchColumn();
 
@@ -289,9 +302,10 @@ final class UserRepository
      * @param int $lifetime
      */
     public function unsetUsersPasswordRequests(int $lifetime): void {
-        $stmt = $this->pdo->prepare('UPDATE `tacos_users` SET `tacos_users`.`password_request_date` = NULL, `tacos_users`.`password_request_token` = NULL WHERE UNIX_TIMESTAMP(`tacos_users`.`password_request_date`) < :lifetime');
+        $threshold = date("Y-m-d H:i:s", time() - intval($lifetime));
+        $stmt = $this->pdo->prepare('UPDATE `tacos_users` SET `tacos_users`.`password_request_date` = NULL, `tacos_users`.`password_request_token` = NULL WHERE `tacos_users`.`password_request_date` < :threshold AND `tacos_users`.`password_request_token` IS NOT NULL');
         $stmt->execute([
-            'lifetime' => $lifetime
+            'threshold' => $threshold
         ]);
     }
 

@@ -27,7 +27,7 @@ final class UserService
     }
 
     /**
-     * Find User
+     * Find User by id
      *
      * @param int $id
      * @return User or false
@@ -74,7 +74,14 @@ final class UserService
         return $this->userRepository->findAllEnabledUsersInTeams($teamsIds);
     }
 
-
+    /**
+     * Find all Users with Teams count
+     *
+     * @return array of Users
+     */
+    public function findAllUsersWithTeamCount() {
+        return $this->userRepository->findAllUsersWithTeamCount();
+    }
 
     /**
      * Find Role
