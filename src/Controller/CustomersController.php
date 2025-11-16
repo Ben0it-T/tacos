@@ -47,28 +47,16 @@ final class CustomersController
 
         // Get customers
         if ($currentUser->getRole() === 3) {
-            $customers = $this->customerService->findAllCustomers();
+            $customers = $this->customerService->findAllCustomerswithTeamsCountAndProjectsCount();
         }
         else {
-            $customersNotInTeam = $this->customerService->findAllCustomersNotInTeam();
-            $customersInUserTeams = $this->customerService->findAllCustomersByUserId($currentUser->getId());
-            $customers = array_merge($customersNotInTeam, $customersInUserTeams);
+            $customers = $this->customerService->findCustomersWithTeamsCountAndProjectsCountByUserId($currentUser->getId());
         }
-        $customersList = array();
-        foreach ($customers as $customer) {
-            $customersList[] = array(
-                'id' => $customer->getId(),
-                'name' => $customer->getName(),
-                'color' => $customer->getColor(),
-                'number' => $customer->getNumber(),
-                'visible' => $customer->getVisible(),
-                'teams' => $this->customerService->getNbOfTeamsForCustomer($customer->getId()),
-                'projects' => $this->projectService->getNbOfProjectsForCustomer($customer->getId()),
-                'editLink' => $routeParser->urlFor('customers_edit', array('customerId' => $customer->getId())),
-                'viewLink' => $routeParser->urlFor('customers_details', array('customerId' => $customer->getId())),
-            );
+
+        for ($i=0; $i < count($customers); $i++) {
+            $customers[$i]['editLink'] = $routeParser->urlFor('customers_edit', array('customerId' => $customers[$i]['id']));
+            $customers[$i]['viewLink'] = $routeParser->urlFor('customers_details', array('customerId' => $customers[$i]['id']));
         }
-        usort($customersList, fn($a, $b) => $a['name'] <=> $b['name']);
 
         // Get teams
         $teams = $this->teamService->findAllTeams();
@@ -94,8 +82,8 @@ final class CustomersController
 
         $viewData = array();
         $viewData['userRole'] = $currentUser->getRole();
+        $viewData['customers'] = $customers;
         $viewData['colors'] = $colorsList;
-        $viewData['customers'] = $customersList;
         $viewData['teams'] = $teamsList;
 
         $viewData['flashMsgSuccess'] = $flash->getFirstMessage('success');
@@ -137,21 +125,12 @@ final class CustomersController
         $session = $request->getAttribute('session');
         $currentUser = $this->userService->findUser($session['auth']['userId']);
 
-        $customer = $this->customerService->findCustomer(intval($args['customerId']));
-
-        if ($currentUser->getRole() != 3) {
-            $customersNotInTeam = $this->customerService->findAllCustomersNotInTeam();
-            $customersInUserTeams = $this->customerService->findAllCustomersByUserId($currentUser->getId());
-            $customers = array_merge($customersNotInTeam, $customersInUserTeams);
-
-            $customersList = array();
-            foreach ($customers as $entry) {
-                $customersList[] = $entry->getId();
-            }
-
-            if (!in_array($customer->getId(), $customersList)) {
-                $customer = false;
-            }
+        // Get customers
+        if ($currentUser->getRole() === 3) {
+            $customer = $this->customerService->findCustomer(intval($args['customerId']));
+        }
+        else {
+            $customer = $this->customerService->findOneByCustomerIdAndTeamleaderId(intval($args['customerId']), intval($currentUser->getId()));
         }
 
         if ($customer) {
@@ -221,10 +200,10 @@ final class CustomersController
             }
 
             // Get selected Teams
-            $selectedTeams = $this->customerService->getTeamsForCustomer($customer->getId());
+            $selectedTeams = $this->teamService->findAllTeamsByCustomerId($customer->getId());
             $selectedTeamsIds = array();
             foreach ($selectedTeams as $selectedTeam) {
-                $selectedTeamsIds[] = $selectedTeam['teamId'];
+                $selectedTeamsIds[] = $selectedTeam->getId();
             }
 
             $viewData = array();

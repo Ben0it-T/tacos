@@ -27,7 +27,7 @@ final class CustomerService
     }
 
     /**
-     * Find Customer
+     * Find Customer by id
      *
      * @param int $id
      * @return Customer or false
@@ -37,12 +37,40 @@ final class CustomerService
     }
 
     /**
+     * Find Customer by id and by Teamleader id
+     *
+     * @param int $id
+     * @return Customer or false
+     */
+    public function findOneByCustomerIdAndTeamleaderId(int $customerId, int $teamleaderId) {
+        return $this->customerRepository->findOneByCustomerIdAndTeamleaderId($customerId, $teamleaderId);
+    }
+
+    /**
      * Find Customers
      *
      * @return array of Customers
      */
     public function findAllCustomers() {
         return $this->customerRepository->findAll();
+    }
+
+    /**
+     * Find Customers with Teams count and Projects count
+     *
+     * @return array of Customers with Teams count and Projects count
+     */
+    public function findAllCustomersWithTeamsCountAndProjectsCount() {
+        return $this->customerRepository->findAllCustomersWithTeamsCountAndProjectsCount();
+    }
+
+    /**
+     * Find Customers with Teams count and Projects count by User id
+     *
+     * @return array of Customers with Teams count and Projects count
+     */
+    public function findCustomersWithTeamsCountAndProjectsCountByUserId(int $userId) {
+        return $this->customerRepository->findCustomersWithTeamsCountAndProjectsCountByUserId($userId);
     }
 
     /**
@@ -129,30 +157,6 @@ final class CustomerService
     public function findAllVisibleCustomersNotInTeam() {
         return $this->customerRepository->findAllVisibleCustomersNotInTeam();
     }
-
-
-
-    /**
-     * Get number of teams for customer
-     *
-     * @param int $customerId
-     * @return int number of Teams
-     */
-    public function getNbOfTeamsForCustomer(int $customerId) {
-        return $this->customerRepository->getNbOfTeamsForCustomer($customerId);
-    }
-
-    /**
-     * Get Customer Teams
-     *
-     * @param int $customerId
-     * @return array list of Teams
-     */
-    public function getTeamsForCustomer(int $customerId) {
-        return $this->customerRepository->getTeamsForCustomer($customerId);
-    }
-
-
 
     /**
      * Create new Customer
