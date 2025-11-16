@@ -53,7 +53,7 @@
                             </td>
                             <td>{{ activity.description|nl2br }}</td>
                             <td>
-                                <span class="badge {{ activity.teams == 0 ? "text-bg-secondary" : "text-bg-primary" }} ">{{ activity.teams }}</span>
+                                <span class="float-start badge {{ activity.teams == 0 ? "text-bg-secondary" : "text-bg-primary" }} ">{{ activity.teams }}</span>
                             </td>
                             <td>
                                 {% if activity.visible == true %}
