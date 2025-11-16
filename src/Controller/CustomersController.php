@@ -241,11 +241,9 @@ final class CustomersController
             }
             else {
                 $flash->addMessage('error', $errors);
+                $url = $routeParser->urlFor('customers_edit', array('customerId' => $args['customerId']));
+                return $response->withStatus(302)->withHeader('Location', $url);
             }
-
-            // redirect
-            $url = $routeParser->urlFor('customers_edit', array('customerId' => $args['customerId']));
-            return $response->withStatus(302)->withHeader('Location', $url);
         }
 
         // redirect
