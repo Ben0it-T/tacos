@@ -40,28 +40,13 @@ final class TeamsController
         $session = $request->getAttribute('session');
         $currentUser = $this->userService->findUser($session['auth']['userId']);
 
-        $teams = ($currentUser->getRole() === 3) ? $this->teamService->findAllTeams() : $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
-        $users = $this->userService->findAllUsersEnabled();
-
-        $teamsList = array();
-        foreach ($teams as $team) {
-            $teamleaders = $this->teamService->getTeamTeamleaders($team->getId());
-            $teamleadersList = array();
-            foreach ($teamleaders as $teamleader) {
-                $teamleadersList[] = $teamleader['name'];
-            }
-
-            $teamsList[] = array(
-                'id' => $team->getId(),
-                'name' => $team->getName(),
-                'color' => $team->getColor(),
-                'members' => $this->teamService->getNbOfTeamMembers($team->getId()),
-                'teamleaders' => $teamleadersList ? implode(", ", $teamleadersList) : "",
-                'editLink' => $routeParser->urlFor('teams_edit', array('teamId' => $team->getId())),
-                'viewLink' => $routeParser->urlFor('teams_details', array('teamId' => $team->getId())),
-            );
+        $teams = ($currentUser->getRole() === 3) ? $this->teamService->findAllTeamsWithUserCountAndTeamleads() : $this->teamService->findAllTeamsWithUserCountAndTeamleadsByTeamleaderId($currentUser->getId());
+        for ($i=0; $i < count($teams); $i++) {
+            $teams[$i]['editLink'] = $routeParser->urlFor('teams_edit', array('teamId' => $teams[$i]['id']));
+            $teams[$i]['viewLink'] = $routeParser->urlFor('teams_details', array('teamId' => $teams[$i]['id']));
         }
 
+        $users = $this->userService->findAllUsersEnabled();
         $usersList = array();
         foreach ($users as $user) {
             $usersList[] = array(
@@ -84,7 +69,7 @@ final class TeamsController
         $viewData = array();
         $viewData['canCreateTeam'] = ($currentUser->getRole() === 3) ? true : false;
         $viewData['colors'] = $colorsList;
-        $viewData['teams'] = $teamsList;
+        $viewData['teams'] = $teams;
         $viewData['users'] = $usersList;
 
         $viewData['flashMsgSuccess'] = $flash->getFirstMessage('success');

@@ -21,7 +21,7 @@ final class TeamRepository
      * @return Team or false
      */
     public function find(int $id) {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_teams` WHERE `tacos_teams`.`id` = ?');
+        $stmt = $this->pdo->prepare('SELECT `tacos_teams`.* FROM `tacos_teams` WHERE `tacos_teams`.`id` = ? LIMIT 1');
         $stmt->execute([$id]);
         $row = $stmt->fetch();
 
@@ -41,7 +41,7 @@ final class TeamRepository
      * @return Team or false
      */
     public function findOneByIdAndTeamleader(int $teamId, int $teamleaderId) {
-        $stmt = $this->pdo->prepare('SELECT `tacos_teams`.* FROM `tacos_teams` LEFT JOIN `tacos_users_teams` ON `tacos_users_teams`.`team_id` = `tacos_teams`.`id` WHERE `tacos_teams`.`id` = :teamId AND `tacos_users_teams`.`user_id` = :teamleaderId AND `tacos_users_teams`.`teamlead` = 1 ORDER BY `tacos_teams`.`name` ASC');
+        $stmt = $this->pdo->prepare('SELECT `tacos_teams`.* FROM `tacos_teams` LEFT JOIN `tacos_users_teams` ON `tacos_users_teams`.`team_id` = `tacos_teams`.`id` WHERE `tacos_teams`.`id` = :teamId AND `tacos_users_teams`.`user_id` = :teamleaderId AND `tacos_users_teams`.`teamlead` = 1 ORDER BY `tacos_teams`.`name` ASC LIMIT 1');
 
         $stmt->execute([
             'teamId' => $teamId,
@@ -65,7 +65,7 @@ final class TeamRepository
      * @return array of Teams
      */
     public function findAll() {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_teams` ORDER BY `tacos_teams`.`name` ASC');
+        $stmt = $this->pdo->prepare('SELECT `tacos_teams`.* FROM `tacos_teams` ORDER BY `tacos_teams`.`name` ASC');
         $stmt->execute();
         $rows = $stmt->fetchAll();
 
@@ -205,20 +205,53 @@ final class TeamRepository
         return false;
     }
 
+    /**
+     * Find all Teams with Users count and Teamleaders
+     *
+     * @return array of Teams with Users count and Teamleaders
+     */
+    public function findAllTeamsWithUserCountAndTeamleads() {
+        $sql  = "SELECT `tacos_teams`.`id`, `tacos_teams`.`name`, `tacos_teams`.`color`, ";
+        $sql .= "COUNT(DISTINCT `tacos_users_teams`.`user_id`) AS members, ";
+        $sql .= "GROUP_CONCAT(DISTINCT IF(`tacos_users_teams`.`teamlead` = 1, `tacos_users`.`name`, NULL) ORDER BY `tacos_users`.`name` SEPARATOR ', ') AS teamleaders ";
+        $sql .= "FROM `tacos_teams` ";
+        $sql .= "LEFT JOIN `tacos_users_teams` ON `tacos_users_teams`.`team_id` = `tacos_teams`.`id` ";
+        $sql .= "LEFT JOIN `tacos_users` ON `tacos_users`.`id` = `tacos_users_teams`.`user_id` ";
+        $sql .= "GROUP BY `tacos_teams`.`id`, `tacos_teams`.`name`, `tacos_teams`.`color` ";
+        $sql .= "ORDER BY `tacos_teams`.`name`";
 
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
 
     /**
-     * Get number of team members
+     * Find all Teams with Users count and Teamleaders by Teamleader id
      *
-     * @param int $teamId
-     * @return int number of team members
+     * @return array of Teams with Users count and Teamleaders
      */
-    public function getNbOfTeamMembers(int $teamId) {
-        $stmt = $this->pdo->prepare('SELECT count(*) as cnt FROM `tacos_users_teams` WHERE `tacos_users_teams`.`team_id` = :teamId');
+    public function findAllTeamsWithUserCountAndTeamleadsByTeamleaderId(int $teamleaderId) {
+        $sql  = "SELECT `tacos_teams`.`id`, `tacos_teams`.`name`, `tacos_teams`.`color`, ";
+        $sql .= "COUNT(DISTINCT `tacos_users_teams`.`user_id`) AS members, ";
+        $sql .= "GROUP_CONCAT(DISTINCT IF(`tacos_users_teams`.`teamlead` = 1, `tacos_users`.`name`, NULL) ORDER BY `tacos_users`.`name` SEPARATOR ', ') AS teamleaders ";
+        $sql .= "FROM `tacos_teams` ";
+        $sql .= "LEFT JOIN `tacos_users_teams` ON `tacos_users_teams`.`team_id` = `tacos_teams`.`id` ";
+        $sql .= "LEFT JOIN `tacos_users` ON `tacos_users`.`id` = `tacos_users_teams`.`user_id` ";
+
+        $sql .= "INNER JOIN `tacos_users_teams` ut_tl ON ut_tl.`team_id` = `tacos_teams`.`id` ";
+        $sql .= "AND ut_tl.`user_id` = :teamleaderId ";
+        $sql .= "AND ut_tl.`teamlead` = 1 ";
+
+        $sql .= "GROUP BY `tacos_teams`.`id`, `tacos_teams`.`name`, `tacos_teams`.`color` ";
+        $sql .= "ORDER BY `tacos_teams`.`name`";
+
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
-            'teamId' => $teamId,
+            'teamleaderId' => $teamleaderId
         ]);
-        return $stmt->fetchColumn();
+
+        return $stmt->fetchAll();
     }
 
     /**

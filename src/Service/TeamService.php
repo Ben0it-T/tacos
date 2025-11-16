@@ -56,8 +56,6 @@ final class TeamService
         return $this->teamRepository->findAll();
     }
 
-
-
     /**
      * Find all Teams by activity
      *
@@ -108,16 +106,22 @@ final class TeamService
         return $this->teamRepository->findAllByTeamleaderId($teamleaderId);
     }
 
-
+    /**
+     * Find all Teams with Users count and Teamleaders
+     *
+     * @return array of Teams with Users count and Teamleaders
+     */
+    public function findAllTeamsWithUserCountAndTeamleads() {
+        return $this->teamRepository->findAllTeamsWithUserCountAndTeamleads();
+    }
 
     /**
-     * Count Team members
+     * Find all Teams with Users count and Teamleaders by Teamleader id
      *
-     * @param int $teamId
-     * @return int number of members
+     * @return array of Teams with Users count and Teamleaders
      */
-    public function getNbOfTeamMembers(int $teamId) {
-        return $this->teamRepository->getNbOfTeamMembers($teamId);
+    public function findAllTeamsWithUserCountAndTeamleadsByTeamleaderId(int $teamleaderId) {
+        return $this->teamRepository->findAllTeamsWithUserCountAndTeamleadsByTeamleaderId($teamleaderId);
     }
 
     /**
