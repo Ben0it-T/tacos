@@ -219,11 +219,9 @@ final class TeamsController
             }
             else {
                 $flash->addMessage('error', $errors);
+                $url = $routeParser->urlFor('teams_edit', array('teamId' => $args['teamId']));
+                return $response->withStatus(302)->withHeader('Location', $url);
             }
-
-            // redirect
-            $url = $routeParser->urlFor('teams_edit', array('teamId' => $args['teamId']));
-            return $response->withStatus(302)->withHeader('Location', $url);
         }
 
         // redirect
