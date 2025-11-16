@@ -43,10 +43,10 @@
                             </td>
                             <td>{{ customer.number }}</td>
                             <td>
-                                <span class="badge {{ customer.teams == 0 ? "text-bg-secondary" : "text-bg-primary" }} ">{{ customer.teams }}</span>
+                                <span class="float-start badge {{ customer.teams == 0 ? "text-bg-secondary" : "text-bg-primary" }} ">{{ customer.teams }}</span>
                             </td>
                             <td>
-                                <span class="badge {{ customer.projects == 0 ? "text-bg-secondary" : "text-bg-primary" }} ">{{ customer.projects }}</span>
+                                <span class="float-start badge {{ customer.projects == 0 ? "text-bg-secondary" : "text-bg-primary" }} ">{{ customer.projects }}</span>
                             </td>
                             <td>
                                 {% if customer.visible == true %}
