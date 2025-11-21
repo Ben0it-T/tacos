@@ -60,9 +60,7 @@ final class TimesheetsController
         $currentUser = $this->userService->findUser($session['auth']['userId']);
 
         // Get projects
-        $projectsNotInTeam = $this->projectService->findAllVisibleProjectsNotInTeam();
-        $projectsInTeams = $this->projectService->findAllVisibleProjectsByUserId($currentUser->getId());
-        $projects = array_merge($projectsNotInTeam, $projectsInTeams);
+        $projects = $this->projectService->findAllByUserIdAndVisibility($currentUser->getId(), 1);
         $projectsIds = array();
         $projectsList = array();
         foreach ($projects as $entry) {
@@ -72,7 +70,7 @@ final class TimesheetsController
                 'name' => $entry->getName(),
             );
         }
-        usort($projectsList, fn($a, $b) => $a['name'] <=> $b['name']);
+        //usort($projectsList, fn($a, $b) => $a['name'] <=> $b['name']);
 
         // Get activities
         $activitiesNotInTeam = $this->activityService->findAllVisibleActivitiesNotInTeam();
@@ -220,20 +218,16 @@ final class TimesheetsController
             }
         }
 
-        // Get projects
-        $projectsNotInTeam = $this->projectService->findAllVisibleProjectsNotInTeam();
-        $projectsInTeams = $this->projectService->findAllVisibleProjectsByUserId($currentUser->getId());
-        $projects = array_merge($projectsNotInTeam, $projectsInTeams);
-        $projectsIds = array();
+        // Get projects.
+        $projects = $this->projectService->findAllByTeamleaderIdAndVisibility($currentUser->getId(), 1);
         $projectsList = array();
         foreach ($projects as $entry) {
-            $projectsIds[] = $entry->getId();
             $projectsList[] = array(
                 'id' => $entry->getId(),
                 'name' => $entry->getName(),
             );
         }
-        usort($projectsList, fn($a, $b) => $a['name'] <=> $b['name']);
+        //usort($projectsList, fn($a, $b) => $a['name'] <=> $b['name']);
 
         // Get activities
         $activitiesNotInTeam = $this->activityService->findAllVisibleActivitiesNotInTeam();
@@ -371,9 +365,7 @@ final class TimesheetsController
         usort($customersList, fn($a, $b) => $a['name'] <=> $b['name']);
 
         // Get projects
-        $projectsNotInTeam = $this->projectService->findAllVisibleProjectsNotInTeam();
-        $projectsInTeams = $this->projectService->findAllVisibleProjectsByUserId($currentUser->getId());
-        $projects = array_merge($projectsNotInTeam, $projectsInTeams);
+        $projects = $this->projectService->findAllByUserIdAndVisibility($currentUser->getId(), 1);
         $projectsList = array();
         foreach ($projects as $entry) {
             $projectsList[] = array(
@@ -381,7 +373,7 @@ final class TimesheetsController
                 'name' => $entry->getName(),
             );
         }
-        usort($projectsList, fn($a, $b) => $a['name'] <=> $b['name']);
+        //usort($projectsList, fn($a, $b) => $a['name'] <=> $b['name']);
 
         // Get activities
         $activitiesNotInTeam = $this->activityService->findAllVisibleActivitiesNotInTeam();
@@ -474,9 +466,7 @@ final class TimesheetsController
             usort($customersList, fn($a, $b) => $a['name'] <=> $b['name']);
 
             // Get projects
-            $projectsNotInTeam = $this->projectService->findAllVisibleProjectsNotInTeam();
-            $projectsInTeams = $this->projectService->findAllVisibleProjectsByUserId($currentUser->getId());
-            $projects = array_merge($projectsNotInTeam, $projectsInTeams);
+            $projects = $this->projectService->findAllByUserIdAndVisibility($currentUser->getId(), 1);
             $projectsList = array();
             foreach ($projects as $entry) {
                 $projectsList[] = array(
@@ -484,7 +474,7 @@ final class TimesheetsController
                     'name' => $entry->getName(),
                 );
             }
-            usort($projectsList, fn($a, $b) => $a['name'] <=> $b['name']);
+            //usort($projectsList, fn($a, $b) => $a['name'] <=> $b['name']);
 
             // Get activities
             $activitiesNotInTeam = $this->activityService->findAllVisibleActivitiesNotInTeam();

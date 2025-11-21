@@ -46,14 +46,12 @@ final class ActivitiesController
         $currentUser = $this->userService->findUser($session['auth']['userId']);
 
         // Get projects
-        $projectsNotInTeam = $this->projectService->findAllVisibleProjectsNotInTeam();
         if ($currentUser->getRole() === 3) {
-            $projectsInTeams = $this->projectService->findAllVisibleProjectsHaveTeams();
+            $projects = $this->projectService->findAllByVisibility(1);
         }
         else {
-            $projectsInTeams = $this->projectService->findAllVisibleProjectsByUserId($currentUser->getId());
+            $projects = $this->projectService->findAllByUserIdAndVisibility($currentUser->getId(), 1);
         }
-        $projects = array_merge($projectsNotInTeam, $projectsInTeams);
         $projectsList = array();
         foreach ($projects as $entry) {
             $projectsList[] = array(
@@ -61,7 +59,6 @@ final class ActivitiesController
                 'name' => $entry->getName(),
             );
         }
-        usort($projectsList, fn($a, $b) => $a['name'] <=> $b['name']);
 
         // Get teams
         $teams = ($currentUser->getRole() === 3) ? $this->teamService->findAllTeams() : $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());

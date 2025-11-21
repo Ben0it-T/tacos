@@ -49,13 +49,13 @@
                             <td>{{ project.number }}</td>
                             <td>
                                 <div class="d-inline-flex align-items-center text-nowrap">
-                                    <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ project.customer.color }};"><span class="visually-hidden">color</span></span>
-                                    <span class="ms-1">{{ project.customer.name }}</span>
+                                    <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ project.customerColor }};"><span class="visually-hidden">color</span></span>
+                                    <span class="ms-1">{{ project.customerName }}</span>
                                 </div>
                             </td>
-                            <td>{{ project.description|nl2br }}</td>
+                            <td>{{ project.comment|nl2br }}</td>
                             <td>
-                                <span class="float-start badge {{ project.teams == 0 ? "text-bg-secondary" : "text-bg-primary" }} ">{{ project.teams }}</span>
+                                <span class="float-start badge {{ project.teamsCount == 0 ? "text-bg-secondary" : "text-bg-primary" }} ">{{ project.teamsCount }}</span>
                             </td>
                             <td>
                                 {% if project.visible == true %}
@@ -69,7 +69,7 @@
                                     <a class="icon-link icon-link-hover mx-2" href="{{ project.viewLink }}">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    {% if userRole == 3 or (userRole == 2 and project.teams > 0) %}
+                                    {% if userRole == 3 or (userRole == 2 and project.teamsCount > 0) %}
                                     <a class="icon-link icon-link-hover mx-2" href="{{ project.editLink }}">
                                         <i class="bi bi-pencil"></i>
                                     </a>

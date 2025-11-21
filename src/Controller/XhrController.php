@@ -56,18 +56,11 @@ final class XhrController
                 case 'projects':
                     if ($key === "") {
                         // Get all
-                        $projectsNotInTeam = $this->projectService->findAllVisibleProjectsNotInTeam();
-                        if ($currentUser->getRole() === 3) {
-                            $projectsInTeams = $this->projectService->findAllVisibleProjectsHaveTeams();
-                        }
-                        else {
-                            $projectsInTeams = $this->projectService->findAllVisibleProjectsByUserId($currentUser->getId());
-                        }
-                        $results = array_merge($projectsNotInTeam, $projectsInTeams);
+                        $results = $this->projectService->findAllByUserIdAndVisibility($currentUser->getId(), 1);
                     }
                     else {
                         // Get by customer id
-                        $results = ($currentUser->getRole() === 3) ? $this->projectService->findAllVisibleProjectsByCustomerId(intval($key)) : $this->projectService->findAllVisibleProjectsByUserIdAndCustomerId($currentUser->getId(), intval($key));
+                        $results = $this->projectService->findAllByUserIdAndCustomerIdAndVisibility($currentUser->getId(), intval($key), 1);
                     }
                     break;
 

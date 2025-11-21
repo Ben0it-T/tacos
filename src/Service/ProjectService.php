@@ -30,145 +30,134 @@ final class ProjectService
     }
 
     /**
-     * Find Project
+     * Find One Project by id
      *
      * @param int $id
-     * @return Project or false
+     * @return Project entity or false
      */
     public function findProject(int $id) {
-        return $this->projectRepository->find($id);
+        return $this->projectRepository->findOneById($id);
     }
 
     /**
-     * Find all Projects
+     * Find One Project by id and teamleader id
      *
-     * @return array of Projects
+     * @param int $projectId
+     * @param int $teamleaderId
+     * @return Project entity or false
      */
-    public function findAllProjects() {
+    public function findOneByIdAndTeamleaderId(int $projectId, int $teamleaderId) {
+        return $this->projectRepository->findOneByIdAndTeamleaderId($projectId, $teamleaderId);
+    }
+
+
+
+    /**
+     * Find All Projects
+     *
+     * @return array of Project entities
+     */
+    public function findAll() {
         return $this->projectRepository->findAll();
     }
 
     /**
-     * Find all Projects by customer
+     * Find All Projects by visibility
+     *
+     * @param int $visible
+     * @return array of Project entities
+     */
+    public function findAllByVisibility(int $visible) {
+        return $this->projectRepository->findAllByVisibility($visible);
+    }
+
+    /**
+     * Find All Projects by Customer id
      *
      * @param int $customerId
      * @return array of Projects
      */
-    public function findAllProjectsByCustomerId($customerId) {
-        return $this->projectRepository->findAllProjectsByCustomerId($customerId);
+    public function findAllByCustomerId(int $customerId) {
+        return $this->projectRepository->findAllByCustomerId($customerId);
     }
 
     /**
-     * Find all Visible Projects by customer
+     * Find All Projects by Customer id and visibility
      *
      * @param int $customerId
-     * @return array of Projects
+     * @param int $visible
+     * @return array of Project entities
      */
-    public function findAllVisibleProjectsByCustomerId($customerId) {
-        return $this->projectRepository->findAllVisibleProjectsByCustomerId($customerId);
-    }
-
-    /**
-     * Find All Projects have teams
-     *
-     * @return array of Projects
-     */
-    public function findAllProjectsHaveTeams() {
-        return $this->projectRepository->findAllProjectsHaveTeams();
-    }
-
-    /**
-     * Find All Visible Projects have teams
-     *
-     * @return array of Projects
-     */
-    public function findAllVisibleProjectsHaveTeams() {
-        return $this->projectRepository->findAllVisibleProjectsHaveTeams();
-    }
-
-    /**
-     * Find All Projects not in a team
-     *
-     * @return array of Projects
-     */
-    public function findAllProjectsNotInTeam() {
-        return $this->projectRepository->findAllProjectsNotInTeam();
-    }
-
-    /**
-     * Find All Visible Projects not in a team
-     *
-     * @return array of Projects
-     */
-    public function findAllVisibleProjectsNotInTeam() {
-        return $this->projectRepository->findAllVisibleProjectsNotInTeam();
+    public function findAllByCustomerIdAndVisibility(int $customerId, int $visible) {
+        return $this->projectRepository->findAllByCustomerIdAndVisibility($customerId, $visible);
     }
 
     /**
      * Find All Projects by user Id
      *
      * @param int $userId
-     * @return array of Projects
+     * @return array of Project entities
      */
-    public function findAllProjectsByUserId(int $userId) {
-        return $this->projectRepository->findAllProjectsByUserId($userId);
+    public function findAllByUserId(int $userId) {
+        return $this->projectRepository->findAllByUserId($userId);
     }
 
     /**
-     * Find All Visible Projects by user Id
+     * Find All Projects by user Id and visibility
      *
      * @param int $userId
-     * @return array of Projects
+     * @param int $visible
+     * @return array of Project entities
      */
-    public function findAllVisibleProjectsByUserId(int $userId) {
-        return $this->projectRepository->findAllVisibleProjectsByUserId($userId);
+    public function findAllByUserIdAndVisibility(int $userId, int $visible) {
+        return $this->projectRepository->findAllByUserIdAndVisibility($userId, $visible);
     }
 
     /**
-     * Find All Visible Projects by user Id and customer Id
+     * Find All Projects by user Id and customer id and visibility
+     * Note : A project is either linked to at least one team, or linked to none.
+     *        A user can see the projects associated/linked with their teams AND projects that are not associated/linked with any team.
      *
      * @param int $userId
      * @param int $customerId
-     * @return array of Projects
+     * @param int $visible
+     * @return array of Project entities
      */
-    public function findAllVisibleProjectsByUserIdAndCustomerId(int $userId, int $customerId) {
-        return $this->projectRepository->findAllVisibleProjectsByUserIdAndCustomerId($userId, $customerId);
+    public function findAllByUserIdAndCustomerIdAndVisibility(int $userId, int $customerId, int $visible) {
+        return $this->projectRepository->findAllByUserIdAndCustomerIdAndVisibility($userId, $customerId, $visible);
+    }
+
+    /**
+     * Find All Projects by teamleader Id and visibility
+     *
+     * @param int $teamleaderId
+     * @param int $visible
+     * @return array of Project entities
+     */
+    public function findAllByTeamleaderIdAndVisibility(int $teamleaderId, int $visible) {
+        return $this->projectRepository->findAllByTeamleaderIdAndVisibility($teamleaderId, $visible);
     }
 
 
 
     /**
-     * Get number of projects for customer
+     * Find All Projects with Teams count and Customer
      *
-     * @param int $projectId
-     * @return int number of teams
+     * @return array of Projects with Teams count and Customer
      */
-    public function getNbOfProjectsForCustomer(int $customerId) {
-        return $this->projectRepository->getNbOfProjectsForCustomer($customerId);
+    public function findAllProjectsWithTeamsCountAndCustomer() {
+        return $this->projectRepository->findAllProjectsWithTeamsCountAndCustomer();
     }
 
     /**
-     * Get number of teams for project
+     * Find Projects with Teams count and Customer by Teamleader id
      *
-     * @param int $projectId
-     * @return int number of teams
+     * @param int $teamleaderId
+     * @return array of Projects with Teams count and Customer
      */
-    public function getNbOfTeamsForProject(int $projectId) {
-        return $this->projectRepository->getNbOfTeamsForProject($projectId);
+    public function findAllProjectsWithTeamsCountAndCustomerByTeamleaderId(int $teamleaderId) {
+        return $this->projectRepository->findAllProjectsWithTeamsCountAndCustomerByTeamleaderId($teamleaderId);
     }
-
-    /**
-     * Get teams for project
-     *
-     * @param int $projectId
-     * @return array list of teams
-     */
-    public function getTeamsForProject(int $projectId) {
-        return $this->projectRepository->getTeamsForProject($projectId);
-    }
-
-
-
 
 
 

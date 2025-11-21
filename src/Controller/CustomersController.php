@@ -150,7 +150,7 @@ final class CustomersController
             $selectedTeams = $this->teamService->findAllTeamsByCustomerId($customer->getId());
 
             // Get projects
-            $projects = $this->projectService->findAllProjectsByCustomerId($customer->getId());
+            $projects = $this->projectService->findAllByCustomerId($customer->getId());
 
             $viewData = array();
             $viewData['customer'] = $customer;

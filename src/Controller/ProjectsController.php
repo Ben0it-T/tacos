@@ -96,35 +96,23 @@ final class ProjectsController
 
         // Get projects
         if ($currentUser->getRole() === 3) {
-            $projects = $this->projectService->findAllProjects();
+            $projects = $this->projectService->findAllProjectsWithTeamsCountAndCustomer();
         }
         else {
-            $projectsNotInTeam = $this->projectService->findAllProjectsNotInTeam();
-            $projectsInUserTeams = $this->projectService->findAllProjectsByUserId($currentUser->getId());
-            $projects = array_merge($projectsNotInTeam, $projectsInUserTeams);
+            $projects = $this->projectService->findAllProjectsWithTeamsCountAndCustomerByTeamleaderId($currentUser->getId());
         }
-        $projectsList = array();
-        foreach ($projects as $project) {
-            $projectsList[] = array(
-                'name' => $project->getName(),
-                'color' => $project->getColor(),
-                'customer' => $this->customerService->findCustomer($project->getCustomerId()),
-                'number' => (is_null($project->getNumber()) ? "" : $project->getNumber()),
-                'description' => $project->getComment(),
-                'teams' => $this->projectService->getNbOfTeamsForProject($project->getId()),
-                'visible' => $project->getVisible(),
-                'editLink' => $routeParser->urlFor('projects_edit', array('projectId' => $project->getId())),
-                'viewLink' => $routeParser->urlFor('projects_details', array('projectId' => $project->getId())),
-            );
+
+        for ($i=0; $i < count($projects); $i++) {
+            $projects[$i]['editLink'] = $routeParser->urlFor('projects_edit', array('projectId' => $projects[$i]['id']));
+            $projects[$i]['viewLink'] = $routeParser->urlFor('projects_details', array('projectId' => $projects[$i]['id']));
         }
-        usort($projectsList, fn($a, $b) => strtoupper($a['name']) <=> strtoupper($b['name']));
 
         $viewData = array();
         $viewData['userRole'] = $currentUser->getRole();
         $viewData['colors'] = $colorsList;
         $viewData['customers'] = $customersList;
-        $viewData['projects'] = $projectsList;
         $viewData['teams'] = $teamsList;
+        $viewData['projects'] = $projects;
 
         $viewData['flashMsgSuccess'] = $flash->getFirstMessage('success');
         $viewData['flashMsgError'] = $flash->getFirstMessage('error');
@@ -165,21 +153,11 @@ final class ProjectsController
         $session = $request->getAttribute('session');
         $currentUser = $this->userService->findUser($session['auth']['userId']);
 
-        $project = $this->projectService->findProject(intval($args['projectId']));
-
-        if ($currentUser->getRole() != 3) {
-            $projectsNotInTeam = $this->projectService->findAllProjectsNotInTeam();
-            $projectsInUserTeams = $this->projectService->findAllProjectsByUserId($currentUser->getId());
-            $projects = array_merge($projectsNotInTeam, $projectsInUserTeams);
-
-            $projectsList = array();
-            foreach ($projects as $entry) {
-                $projectsList[] = $entry->getId();
-            }
-
-            if (!in_array($project->getId(), $projectsList)) {
-                $project = false;
-            }
+        if ($currentUser->getRole() === 3) {
+            $project = $this->projectService->findProject(intval($args['projectId']));
+        }
+        else {
+            $project = $this->projectService->findOneByIdAndTeamleaderId(intval($args['projectId']), intval($currentUser->getId()));
         }
 
         if ($project) {
@@ -272,21 +250,12 @@ final class ProjectsController
         $session = $request->getAttribute('session');
         $currentUser = $this->userService->findUser($session['auth']['userId']);
 
-        $project = $this->projectService->findProject(intval($args['projectId']));
-
-        if ($currentUser->getRole() != 3) {
-            $projects = $this->projectService->findAllProjectsByUserId($currentUser->getId());
-
-            $projectsList = array();
-            foreach ($projects as $entry) {
-                $projectsList[] = $entry->getId();
-            }
-
-            if (!in_array($project->getId(), $projectsList)) {
-                $project = false;
-            }
+        if ($currentUser->getRole() === 3) {
+            $project = $this->projectService->findProject(intval($args['projectId']));
         }
-
+        else {
+            $project = $this->projectService->findOneByIdAndTeamleaderId(intval($args['projectId']), intval($currentUser->getId()));
+        }
 
         if ($project) {
             // Get customers
@@ -317,10 +286,10 @@ final class ProjectsController
                 );
             }
 
-            $selectedTeams = $this->projectService->getTeamsForProject($project->getId());
+            $selectedTeams = $this->teamService->findAllTeamsByProjectId($project->getId());
             $selectedTeamsIds = array();
             foreach ($selectedTeams as $selectedTeam) {
-                $selectedTeamsIds[] = $selectedTeam['teamId'];
+                $selectedTeamsIds[] = $selectedTeam->getId();
             }
 
             // Get activities
@@ -381,19 +350,11 @@ final class ProjectsController
         $session = $request->getAttribute('session');
         $currentUser = $this->userService->findUser($session['auth']['userId']);
 
-        $project = $this->projectService->findProject(intval($args['projectId']));
-
-        if ($currentUser->getRole() != 3) {
-            $projects = $this->projectService->findAllProjectsByUserId($currentUser->getId());
-
-            $projectsList = array();
-            foreach ($projects as $entry) {
-                $projectsList[] = $entry->getId();
-            }
-
-            if (!in_array($project->getId(), $projectsList)) {
-                $project = false;
-            }
+        if ($currentUser->getRole() === 3) {
+            $project = $this->projectService->findProject(intval($args['projectId']));
+        }
+        else {
+            $project = $this->projectService->findOneByIdAndTeamleaderId(intval($args['projectId']), intval($currentUser->getId()));
         }
 
         if ($project) {
