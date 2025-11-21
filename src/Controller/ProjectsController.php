@@ -365,11 +365,9 @@ final class ProjectsController
             }
             else {
                 $flash->addMessage('error', $errors);
+                $url = $routeParser->urlFor('projects_edit', array('projectId' => $args['projectId']));
+                return $response->withStatus(302)->withHeader('Location', $url);
             }
-
-            // redirect
-            $url = $routeParser->urlFor('projects_edit', array('projectId' => $args['projectId']));
-            return $response->withStatus(302)->withHeader('Location', $url);
         }
 
         // redirect
