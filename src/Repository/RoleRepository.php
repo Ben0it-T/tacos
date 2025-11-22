@@ -20,9 +20,11 @@ final class RoleRepository
      * @param int $id
      * @return Role or false
      */
-    public function find(int $id) {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_roles` WHERE `tacos_roles`.`id` = ?');
-        $stmt->execute([$id]);
+    public function find(int $id): Role|false {
+        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_roles` WHERE `tacos_roles`.`id` = :id LIMIT 1');
+        $stmt->execute([
+            'id' => $id
+        ]);
         $row = $stmt->fetch();
 
         if ($row) {
@@ -36,9 +38,9 @@ final class RoleRepository
     /**
      * Find all Roles
      *
-     * @return array of Roles
+     * @return array of Role entities
      */
-    public function findAll() {
+    public function findAll(): array {
         $stmt = $this->pdo->prepare('SELECT * FROM `tacos_roles`');
         $stmt->execute();
         $rows = $stmt->fetchAll();
