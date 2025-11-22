@@ -27,146 +27,134 @@ final class ActivityService
     }
 
     /**
-     * Find Activity
+     * Find Activity by id
      *
      * @param int $id
-     * @return Activity or false
+     * @return Activity entity or false
      */
     public function findActivity(int $id) {
         return $this->activityRepository->find($id);
     }
 
     /**
-     * Find all Activities
+     * Find One Activity by id and User id
      *
-     * @return array of Activity
+     * @param int $activityId
+     * @param int $userId
+     * @return Activity entity or false
      */
-    public function findAllActivities() {
+    public function findOneByIdAndUserId(int $activityId, int $userId) {
+        return $this->activityRepository->findOneByIdAndUserId($activityId, $userId);
+    }
+
+    /**
+     * Find One Activity by id and teamleader id
+     *
+     * @param int $activityId
+     * @param int $teamleaderId
+     * @return Activity entity or false
+     */
+    public function findOneByIdAndTeamleaderId(int $activityId, int $teamleaderId) {
+        return $this->activityRepository->findOneByIdAndTeamleaderId($activityId, $teamleaderId);
+    }
+
+
+
+    /**
+     * Find All Activities
+     *
+     * @return array of Activity entities
+     */
+    public function findAll() {
         return $this->activityRepository->findAll();
     }
 
     /**
-     * Find (all) project activities
+     * Find All Activities by Project id
+     * Activities linked to a project
+     * = projet "global activities" + project "project activities"
      *
-     * @param int $projectId
-     * @return array of Activity
+     * @param int  $projectId
+     * @param ?int $visible
+     * @return array of Activity entities
      */
-    public function findProjectAllowedActivities(int $projectId) {
-        return $this->activityRepository->findProjectAllowedActivities($projectId);
+    public function findAllByProjectId(int $projectId, ?int $visible = null) {
+        return $this->activityRepository->findAllByProjectId($projectId, $visible);
     }
 
     /**
-     * Find All Activities by projectId
+     * Find All 'Project Activities' by projectId
      *
-     * @param int $projectId
-     * @return array of Activity
+     * @param int  $projectId
+     * @param ?int $visible
+     * @return array of Activity entities
      */
-    public function findAllActivitiesByProjectId(int $projectId) {
-        return $this->activityRepository->findAllActivitiesByProjectId($projectId);
+    public function findAllProjectActivitiesByProjectId(int $projectId, ?int $visible = null) {
+        return $this->activityRepository->findAllProjectActivitiesByProjectId($projectId, $visible);
     }
 
     /**
-     * Find All Visible Activities by projectId
+     * Find All 'Global Activities'
      *
-     * @param int $projectId
-     * @return array of Activity
+     * @param ?int $visible
+     * @return array of Activity entities
      */
-    public function findAllVisibleActivitiesByProjectId(int $projectId) {
-        return $this->activityRepository->findAllVisibleActivitiesByProjectId($projectId);
+    public function findAllGlobalActivities(?int $visible = null) {
+        return $this->activityRepository->findAllGlobalActivities($visible);
     }
 
     /**
-     * Find All Global Activities
+     * Find All Activities by User Id
      *
-     * @return array of Activity
+     * @param int  $userId
+     * @param ?int $visible
+     * @return array of Activity entities
      */
-    public function findAllGlobalActivities() {
-        return $this->activityRepository->findAllGlobalActivities();
+    public function findAllByUserId(int $userId, ?int $visible = null) {
+        return $this->activityRepository->findAllByUserId($userId, $visible);
     }
 
     /**
-     * Find All Visible Global Activities
+     * Find All Activities by Teamleader Id
      *
-     * @return array of Activity
+     * @param int  $teamleaderId
+     * @param ?int $visible
+     * @return array of Activity entities
      */
-    public function findAllVisibleGlobalActivities() {
-        return $this->activityRepository->findAllVisibleGlobalActivities();
+    public function findAllByTeamleaderId(int $teamleaderId, ?int $visible = null) {
+        return $this->activityRepository->findAllByTeamleaderId($teamleaderId, $visible);
     }
 
     /**
-     * Find All Activities have teams
+     * Find All Activities by Project Id and by User Id
      *
-     * @return array of Activity
+     * @param int  $projectId
+     * @param int  $userId
+     * @param ?int $visible
+     * @return array of Activity entities
      */
-    public function findAllActivitiesHaveTeams() {
-        return $this->activityRepository->findAllActivitiesHaveTeams();
-    }
-
-    /**
-     * Find All visible Activities have teams
-     *
-     * @return array of Activity
-     */
-    public function findAllVisibleActivitiesHaveTeams() {
-        return $this->activityRepository->findAllVisibleActivitiesHaveTeams();
-    }
-
-    /**
-     * Find All Activities not in a team
-     *
-     * @return array of Activity
-     */
-    public function findAllActivitiesNotInTeam() {
-        return $this->activityRepository->findAllActivitiesNotInTeam();
-    }
-
-    /**
-     * Find All Visible Activities not in a team
-     *
-     * @return array of Activity
-     */
-    public function findAllVisibleActivitiesNotInTeam() {
-        return $this->activityRepository->findAllVisibleActivitiesNotInTeam();
-    }
-
-    /**
-     * Find All Activities by user Id
-     *
-     * @return array of Activity
-     */
-    public function findAllActivitiesByUserId(int $userId) {
-        return $this->activityRepository->findAllActivitiesByUserId($userId);
-    }
-
-    /**
-     * Find All Visible Activities by user Id
-     *
-     * @return array of Activity
-     */
-    public function findAllVisibleActivitiesByUserId(int $userId) {
-        return $this->activityRepository->findAllVisibleActivitiesByUserId($userId);
+    public function findAllByUserIdAndProjectId(int $userId, int $projectId, ?int $visible = null) {
+        return $this->activityRepository->findAllByUserIdAndProjectId($userId, $projectId, $visible);
     }
 
 
 
     /**
-     * Get number of teams for activity
+     * Find All Activities with Teams count and Project
      *
-     * @param int $activityId
-     * @return int number of teams for activity
+     * @return array of Activities with Teams count and Project
      */
-    public function getNbOfTeamsForActivity(int $activityId) {
-        return $this->activityRepository->getNbOfTeamsForActivity($activityId);
+    public function findAllActivitiesWithTeamsCountAndProject() {
+        return $this->activityRepository->findAllActivitiesWithTeamsCountAndProject();
     }
 
     /**
-     * Get teams for project
+     * Find All Activities with Teams count and Project by Teamleader id
      *
-     * @param int $activityId
-     * @return array list of Teams
+     * @return array of Activities with Teams count and Project
      */
-    public function getTeamsForactivity(int $activityId) {
-        return $this->activityRepository->getTeamsForactivity($activityId);
+    public function findAllActivitiesWithTeamsCountAndProjectByTeamleaderId(int $teamleaderId) {
+        return $this->activityRepository->findAllActivitiesWithTeamsCountAndProjectByTeamleaderId($teamleaderId);
     }
 
 

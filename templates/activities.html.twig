@@ -44,16 +44,16 @@
                             </td>
                             <td>{{ activity.number }}</td>
                             <td>
-                                {% if activity.project.name is defined %}
+                                {% if activity.projectName is defined %}
                                     <div class="d-inline-flex align-items-center text-nowrap">
-                                        <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ activity.project.color }};"><span class="visually-hidden">color</span></span>
-                                        <span class="ms-1">{{ activity.project.name }}</span>
+                                        <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ activity.projectColor }};"><span class="visually-hidden">color</span></span>
+                                        <span class="ms-1">{{ activity.projectName }}</span>
                                     </div>
                                 {% endif %}
                             </td>
-                            <td>{{ activity.description|nl2br }}</td>
+                            <td>{{ activity.comment|nl2br }}</td>
                             <td>
-                                <span class="float-start badge {{ activity.teams == 0 ? "text-bg-secondary" : "text-bg-primary" }} ">{{ activity.teams }}</span>
+                                <span class="float-start badge {{ activity.teamsCount == 0 ? "text-bg-secondary" : "text-bg-primary" }} ">{{ activity.teamsCount }}</span>
                             </td>
                             <td>
                                 {% if activity.visible == true %}
@@ -67,7 +67,7 @@
                                     <a class="icon-link icon-link-hover mx-2" href="{{ activity.viewLink }}">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    {% if userRole == 3 or (userRole == 2 and activity.teams > 0) %}
+                                    {% if userRole == 3 or (userRole == 2 and activity.teamsCount > 0) %}
                                     <a class="icon-link icon-link-hover mx-2" href="{{ activity.editLink }}">
                                         <i class="bi bi-pencil"></i>
                                     </a>

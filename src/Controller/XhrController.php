@@ -67,34 +67,12 @@ final class XhrController
                 case 'activities':
                     if ($key === "") {
                         // Get all
-                        $activitiesNotInTeam = $this->activityService->findAllVisibleActivitiesNotInTeam();
-                        if ($currentUser->getRole() === 3) {
-                            $activitiesInTeams = $this->activityService->findAllVisibleActivitiesHaveTeams();
-                        }
-                        else {
-                            $activitiesInTeams = $this->activityService->findAllVisibleActivitiesByUserId($currentUser->getId());
-                        }
-                        $results = array_merge($activitiesNotInTeam, $activitiesInTeams);
+                        $results = $this->activityService->findAllByUserId($currentUser->getId(), 1);
 
                     }
                     else {
                         // Get by project id
-                        $project = $this->projectService->findProject(intval($key));
-                        $globalActivities = ($project->getGlobalActivities() === 1) ? $this->activityService->findAllGlobalActivities() : array();
-                        $projectActivities = $this->activityService->findAllActivitiesByProjectId(intval($key));
-                        $allowedActivities = $this->activityService->findProjectAllowedActivities(intval($key));
-                        $allowedActivitiesIds = array();
-                        foreach ($allowedActivities as $entry) {
-                            $allowedActivitiesIds[] = $entry->getId();
-                        }
-                        $results = array_merge($globalActivities, $projectActivities);
-
-                        // Filter allowed activities
-                        foreach ($results as $index => $activity) {
-                            if (!in_array($activity->getId(), $allowedActivitiesIds)) {
-                                unset($results[$index]);
-                            }
-                        }
+                        $results = $this->activityService->findAllByUserIdAndProjectId($currentUser->getId(), intval($key), 1);
                     }
                     break;
 

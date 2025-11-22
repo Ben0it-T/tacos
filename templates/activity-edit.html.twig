@@ -94,12 +94,12 @@
                         </div>
                     </div>
                     {% for selectedTeam in selectedTeams %}
-                        <div class="row mb-3 mx-0" id="activity_edit_form_teams_{{ selectedTeam.teamId }}">
+                        <div class="row mb-3 mx-0" id="activity_edit_form_teams_{{ selectedTeam.id }}">
                             <div class="col-sm-9 offset-sm-3 border border-secondary-subtle">
                                 <div class="form py-2">
-                                    <input type="hidden" name="activity_edit_form[selectedTeams][]" value="{{ selectedTeam.teamId }}" required="required">
+                                    <input type="hidden" name="activity_edit_form[selectedTeams][]" value="{{ selectedTeam.id }}" required="required">
                                     <span class="form-label">{{ selectedTeam.name }}</span>
-                                    <button type="button" class="btn-remove-member btn btn-light btn-sm d-inline-flex float-end" value="{{ selectedTeam.teamId }}">
+                                    <button type="button" class="btn-remove-member btn btn-light btn-sm d-inline-flex float-end" value="{{ selectedTeam.id }}">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>

@@ -70,12 +70,9 @@ final class TimesheetsController
                 'name' => $entry->getName(),
             );
         }
-        //usort($projectsList, fn($a, $b) => $a['name'] <=> $b['name']);
 
         // Get activities
-        $activitiesNotInTeam = $this->activityService->findAllVisibleActivitiesNotInTeam();
-        $activitiesInTeams = $this->activityService->findAllVisibleActivitiesByUserId($currentUser->getId());
-        $activities = array_merge($activitiesNotInTeam, $activitiesInTeams);
+        $activities = $this->activityService->findAllByUserId($currentUser->getId(), 1);
         $activitiesIds = array();
         $activitiesList = array();
         foreach ($activities as $entry) {
@@ -85,7 +82,6 @@ final class TimesheetsController
                 'name' => $entry->getName(),
             );
         }
-        usort($activitiesList, fn($a, $b) => $a['name'] <=> $b['name']);
 
         // Get tags
         $tags = $this->tagService->findAllVisibleTags();
@@ -227,12 +223,9 @@ final class TimesheetsController
                 'name' => $entry->getName(),
             );
         }
-        //usort($projectsList, fn($a, $b) => $a['name'] <=> $b['name']);
 
         // Get activities
-        $activitiesNotInTeam = $this->activityService->findAllVisibleActivitiesNotInTeam();
-        $activitiesInTeams = $this->activityService->findAllVisibleActivitiesByUserId($currentUser->getId());
-        $activities = array_merge($activitiesNotInTeam, $activitiesInTeams);
+        $activities = $this->activityService->findAllByTeamleaderId($currentUser->getId(), 1);
         $activitiesIds = array();
         $activitiesList = array();
         foreach ($activities as $entry) {
@@ -242,7 +235,6 @@ final class TimesheetsController
                 'name' => $entry->getName(),
             );
         }
-        usort($activitiesList, fn($a, $b) => $a['name'] <=> $b['name']);
 
         // Get tags
         $tags = $this->tagService->findAllVisibleTags();
@@ -373,12 +365,9 @@ final class TimesheetsController
                 'name' => $entry->getName(),
             );
         }
-        //usort($projectsList, fn($a, $b) => $a['name'] <=> $b['name']);
 
         // Get activities
-        $activitiesNotInTeam = $this->activityService->findAllVisibleActivitiesNotInTeam();
-        $activitiesInTeams = $this->activityService->findAllVisibleActivitiesByUserId($currentUser->getId());
-        $activities = array_merge($activitiesNotInTeam, $activitiesInTeams);
+        $activities = $this->activityService->findAllByUserId($currentUser->getId(), 1);
         $activitiesList = array();
         foreach ($activities as $entry) {
             $activitiesList[] = array(
@@ -386,7 +375,6 @@ final class TimesheetsController
                 'name' => $entry->getName(),
             );
         }
-        usort($activitiesList, fn($a, $b) => $a['name'] <=> $b['name']);
 
         // Get tags
         $tags = $this->tagService->findAllVisibleTags();
@@ -474,12 +462,9 @@ final class TimesheetsController
                     'name' => $entry->getName(),
                 );
             }
-            //usort($projectsList, fn($a, $b) => $a['name'] <=> $b['name']);
 
             // Get activities
-            $activitiesNotInTeam = $this->activityService->findAllVisibleActivitiesNotInTeam();
-            $activitiesInTeams = $this->activityService->findAllVisibleActivitiesByUserId($currentUser->getId());
-            $activities = array_merge($activitiesNotInTeam, $activitiesInTeams);
+            $activities = $this->activityService->findAllByUserId($currentUser->getId(), 1);
             $activitiesList = array();
             foreach ($activities as $entry) {
                 $activitiesList[] = array(
@@ -487,7 +472,6 @@ final class TimesheetsController
                     'name' => $entry->getName(),
                 );
             }
-            usort($activitiesList, fn($a, $b) => $a['name'] <=> $b['name']);
 
             // Get tags
             $tags = $this->tagService->findAllVisibleTags();
@@ -502,10 +486,10 @@ final class TimesheetsController
             // Get project activities
             $project = $this->projectService->findProject($timesheet->getProjectId());
             $globalActivities = ($project->getGlobalActivities() === 1) ? $this->activityService->findAllGlobalActivities() : array();
-            $projectActivities = $this->activityService->findAllActivitiesByProjectId($timesheet->getProjectId());
+            $projectActivities = $this->activityService->findAllProjectActivitiesByProjectId($timesheet->getProjectId());
             $projectActivities = array_merge($globalActivities, $projectActivities);
 
-            $allowedActivities = $this->activityService->findProjectAllowedActivities($timesheet->getProjectId());
+            $allowedActivities = $this->activityService->findAllByProjectId($timesheet->getProjectId());
             $allowedActivitiesIds = array();
             foreach ($allowedActivities as $entry) {
                 $allowedActivitiesIds[] = $entry->getId();

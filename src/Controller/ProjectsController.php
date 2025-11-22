@@ -170,8 +170,8 @@ final class ProjectsController
 
             // Get activities
             $globalActivities = $this->activityService->findAllGlobalActivities();
-            $projectActivities = $this->activityService->findAllActivitiesByProjectId($project->getId());
-            $allowedActivities = $this->activityService->findProjectAllowedActivities($project->getId());
+            $projectActivities = $this->activityService->findAllProjectActivitiesByProjectId($project->getId());
+            $allowedActivities = $this->activityService->findAllByProjectId($project->getId());
             $allowedActivitiesIds = array();
             foreach ($allowedActivities as $entry) {
                 $allowedActivitiesIds[] = $entry->getId();
@@ -294,8 +294,8 @@ final class ProjectsController
 
             // Get activities
             $globalActivities = $this->activityService->findAllGlobalActivities();
-            $projectActivities = $this->activityService->findAllActivitiesByProjectId($project->getId());
-            $projectAuthorisedActivities = $this->activityService->findProjectAllowedActivities($project->getId());
+            $projectActivities = $this->activityService->findAllProjectActivitiesByProjectId($project->getId());
+            $projectAuthorisedActivities = $this->activityService->findAllByProjectId($project->getId());
             $projectAuthorisedActivitiesList = array();
             foreach ($projectAuthorisedActivities as $entry) {
                 $projectAuthorisedActivitiesList[] = $entry->getId();

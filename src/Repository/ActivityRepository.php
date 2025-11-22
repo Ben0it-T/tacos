@@ -18,11 +18,76 @@ final class ActivityRepository
      * Find Activity by id
      *
      * @param int $id
-     * @return Activity or false
+     * @return Activity entity or false
      */
-    public function find(int $id) {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_activities` WHERE `tacos_activities`.`id` = ?');
-        $stmt->execute([$id]);
+    public function find(int $id): Activity|false {
+        $sql = 'SELECT a.* FROM `tacos_activities` a WHERE a.`id` = :id LIMIT 1';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'id' => $id
+        ]);
+        $row = $stmt->fetch();
+
+        if ($row) {
+            return $this->buildEntity($row);
+        }
+        else {
+            return false;
+        }
+    }
+
+    /**
+     * Find One Activity by id and User id
+     *
+     * @param int $activityId
+     * @param int $userId
+     * @return Activity entity or false
+     */
+    public function findOneByIdAndUserId(int $activityId, int $userId): Activity|false {
+        $sql  = 'SELECT a.* ';
+        $sql .= 'FROM `tacos_activities` a ';
+        $sql .= 'LEFT JOIN `tacos_activities_teams` at ON at.`activity_id` = a.`id` ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = at.`team_id` AND ut.`user_id` = :userId ';
+        $sql .= 'WHERE a.`id` = :activityId AND (ut.`user_id` IS NOT NULL OR at.`activity_id` IS NULL) ';
+        $sql .= 'LIMIT 1';
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->execute([
+            'activityId' => $activityId,
+            'userId' => $userId
+        ]);
+        $row = $stmt->fetch();
+
+        if ($row) {
+            return $this->buildEntity($row);
+        }
+        else {
+            return false;
+        }
+    }
+
+    /**
+     * Find One Activity by id and teamleader id
+     *
+     * @param int $activityId
+     * @param int $teamleaderId
+     * @return Activity entity or false
+     */
+    public function findOneByIdAndTeamleaderId(int $activityId, int $teamleaderId): Activity|false {
+        $sql  = 'SELECT a.* ';
+        $sql .= 'FROM `tacos_activities` a ';
+        $sql .= 'JOIN `tacos_activities_teams` at ON at.`activity_id` = a.`id` ';
+        $sql .= 'JOIN `tacos_users_teams` ut ON ut.`team_id` = at.`team_id` AND ut.`user_id` = :teamleaderId AND ut.`teamlead` = 1 ';
+        $sql .= 'WHERE a.`id` = :activityId ';
+        $sql .= 'LIMIT 1';
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->execute([
+            'activityId' => $activityId,
+            'teamleaderId' => $teamleaderId
+        ]);
         $row = $stmt->fetch();
 
         if ($row) {
@@ -38,10 +103,11 @@ final class ActivityRepository
     /**
      * Find All Activities
      *
-     * @return array of Activity
+     * @return array of Activity entities
      */
-    public function findAll() {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_activities` ORDER BY `tacos_activities`.`name` ASC, `tacos_activities`.`number` ASC');
+    public function findAll(): array {
+        $sql = 'SELECT a.* FROM `tacos_activities` a ORDER BY a.`name` ASC, `a.`number` ASC';
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
         $rows = $stmt->fetchAll();
 
@@ -54,196 +120,32 @@ final class ActivityRepository
     }
 
     /**
-     * Find (all) project activities
+     * Find All Activities by Project id
+     * Activities linked to a project
+     * = projet "global activities" + project "project activities"
      *
-     * @param int $projectId
-     * @return array of Activities for this project
+     * @param int  $projectId
+     * @param ?int $visible
+     * @return array of Activity entities
      */
-    public function findProjectAllowedActivities(int $projectId) {
-        $stmt = $this->pdo->prepare('SELECT `tacos_activities`.* FROM `tacos_activities` LEFT JOIN `tacos_projects_activities` ON `tacos_projects_activities`.`activity_id` = `tacos_activities`.`id`  WHERE `tacos_projects_activities`.`project_id` = :projectId ORDER BY `tacos_activities`.`name` ASC');
-        $stmt->execute([
-            'projectId' => $projectId,
-        ]);
-        $rows = $stmt->fetchAll();
-
-        $activities = array();
-        foreach ($rows as $row) {
-            $activities[$row['id']] = $this->buildEntity($row);
+    public function findAllByProjectId(int $projectId, ?int $visible = null): array {
+        $sql  = 'SELECT a.* ';
+        $sql .= 'FROM `tacos_activities` a ';
+        $sql .= 'LEFT JOIN `tacos_projects_activities` pa ON pa.`activity_id` = a.`id` ';
+        $sql .= 'WHERE pa.`project_id` = :projectId ';
+        if (!is_null($visible)) {
+            $sql .= 'AND a.`visible` = :visible ';
         }
-
-        return $activities;
-    }
-
-    /**
-     * Find All Activities by projectId
-     *
-     * @param int $projectId
-     * @return array of Activity
-     */
-    public function findAllActivitiesByProjectId(int $projectId) {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_activities` WHERE `tacos_activities`.`project_id` = :projectId ORDER BY `tacos_activities`.`name` ASC');
-        $stmt->execute([
-            'projectId' => $projectId,
-        ]);
-        $rows = $stmt->fetchAll();
-
-        $activities = array();
-        foreach ($rows as $row) {
-            $activities[$row['id']] = $this->buildEntity($row);
-        }
-
-        return $activities;
-    }
-
-    /**
-     * Find All Visible Activities by projectId
-     *
-     * @param int $projectId
-     * @return array of Activity
-     */
-    public function findAllVisibleActivitiesByProjectId(int $projectId) {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_activities` WHERE `tacos_activities`.`project_id` = :projectId AND `tacos_activities`.`visible` = 1 ORDER BY `tacos_activities`.`name` ASC');
-        $stmt->execute([
-            'projectId' => $projectId,
-        ]);
-        $rows = $stmt->fetchAll();
-
-        $activities = array();
-        foreach ($rows as $row) {
-            $activities[$row['id']] = $this->buildEntity($row);
-        }
-
-        return $activities;
-    }
-
-    /**
-     * Find All Global Activities
-     *
-     * @return array of Activity
-     */
-    public function findAllGlobalActivities() {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_activities` WHERE `tacos_activities`.`project_id` is NULL ORDER BY `tacos_activities`.`name` ASC');
-        $stmt->execute();
-        $rows = $stmt->fetchAll();
-
-        $activities = array();
-        foreach ($rows as $row) {
-            $activities[$row['id']] = $this->buildEntity($row);
-        }
-
-        return $activities;
-    }
-
-    /**
-     * Find All Visible Global Activities
-     *
-     * @return array of Activity
-     */
-    public function findAllVisibleGlobalActivities() {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_activities` WHERE `tacos_activities`.`project_id` is NULL AND `tacos_activities`.`visible` = 1 ORDER BY `tacos_activities`.`name` ASC');
-        $stmt->execute();
-        $rows = $stmt->fetchAll();
-
-        $activities = array();
-        foreach ($rows as $row) {
-            $activities[$row['id']] = $this->buildEntity($row);
-        }
-
-        return $activities;
-    }
-
-
-    /**
-     * Find All Activities have teams
-     *
-     * @return array of Activity
-     */
-    public function findAllActivitiesHaveTeams() {
-        $stmt = $this->pdo->prepare('SELECT `tacos_activities`.* FROM `tacos_activities` LEFT JOIN `tacos_activities_teams` ON `tacos_activities_teams`.`activity_id` = `tacos_activities`.`id` WHERE `tacos_activities_teams`.`team_id` IS NOT NULL GROUP BY `tacos_activities`.`id` ORDER BY `tacos_activities`.`name` ASC');
-        $stmt->execute();
-        $rows = $stmt->fetchAll();
-
-        $activities = array();
-        foreach ($rows as $row) {
-            $activities[$row['id']] = $this->buildEntity($row);
-        }
-
-        return $activities;
-    }
-
-    /**
-     * Find All visible Activities have teams
-     *
-     * @return array of Activity
-     */
-    public function findAllVisibleActivitiesHaveTeams() {
-        $stmt = $this->pdo->prepare('SELECT `tacos_activities`.* FROM `tacos_activities` LEFT JOIN `tacos_activities_teams` ON `tacos_activities_teams`.`activity_id` = `tacos_activities`.`id` WHERE `tacos_activities_teams`.`team_id` IS NOT NULL AND `tacos_activities`.`visible` = 1 GROUP BY `tacos_activities`.`id` ORDER BY `tacos_activities`.`name` ASC');
-        $stmt->execute();
-        $rows = $stmt->fetchAll();
-
-        $activities = array();
-        foreach ($rows as $row) {
-            $activities[$row['id']] = $this->buildEntity($row);
-        }
-
-        return $activities;
-    }
-
-    /**
-     * Find All Activities not in a team
-     *
-     * @return array of Activity
-     */
-    public function findAllActivitiesNotInTeam() {
-        $stmt = $this->pdo->prepare('SELECT `tacos_activities`.* FROM `tacos_activities` LEFT JOIN `tacos_activities_teams` ON `tacos_activities_teams`.`activity_id` = `tacos_activities`.`id` WHERE `tacos_activities_teams`.`team_id` IS NULL GROUP BY `tacos_activities`.`id` ORDER BY `tacos_activities`.`name` ASC');
-        $stmt->execute();
-        $rows = $stmt->fetchAll();
-
-        $activities = array();
-        foreach ($rows as $row) {
-            $activities[$row['id']] = $this->buildEntity($row);
-        }
-
-        return $activities;
-    }
-
-    /**
-     * Find All Visible Activities not in a team (global activities)
-     *
-     * @return array of Activity
-     */
-    public function findAllVisibleActivitiesNotInTeam() {
-        $stmt = $this->pdo->prepare('SELECT `tacos_activities`.* FROM `tacos_activities` LEFT JOIN `tacos_activities_teams` ON `tacos_activities_teams`.`activity_id` = `tacos_activities`.`id` WHERE `tacos_activities_teams`.`team_id` IS NULL AND `tacos_activities`.`visible` = 1 GROUP BY `tacos_activities`.`id` ORDER BY `tacos_activities`.`name` ASC');
-        $stmt->execute();
-        $rows = $stmt->fetchAll();
-
-        $activities = array();
-        foreach ($rows as $row) {
-            $activities[$row['id']] = $this->buildEntity($row);
-        }
-
-        return $activities;
-    }
-
-    /**
-     * Find All Activities by user Id
-     *
-     * @param int $userId
-     * @return array of Activity
-     */
-    public function findAllActivitiesByUserId(int $userId) {
-        $sql  = 'SELECT `tacos_activities`.* ';
-        $sql .= 'FROM `tacos_activities` ';
-        $sql .= 'LEFT JOIN `tacos_activities_teams` ON `tacos_activities_teams`.`activity_id` = `tacos_activities`.`id` ';
-        $sql .= 'LEFT JOIN `tacos_users_teams` ON `tacos_users_teams`.`team_id` = `tacos_activities_teams`.`team_id` ';
-        $sql .= 'LEFT JOIN `tacos_users` ON `tacos_users`.`id` = `tacos_users_teams`.`user_id` ';
-        $sql .= 'WHERE `tacos_users`.`id` = :userId ';
-        $sql .= 'GROUP BY `tacos_activities`.`id` ORDER BY `tacos_activities`.`name` ASC';
+        $sql .= 'ORDER BY a.`name` ASC';
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            'userId' => $userId,
-        ]);
+
+        $params = ['projectId' => $projectId];
+        if (!is_null($visible)) {
+            $params['visible'] = $visible;
+        }
+
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
         $activities = array();
@@ -255,25 +157,175 @@ final class ActivityRepository
     }
 
     /**
-     * Find All Visible Activities by user Id
+     * Find All 'Project Activities' by projectId
      *
-     * @param int $userId
-     * @return array of Activity
+     * @param int  $projectId
+     * @param ?int $visible
+     * @return array of Activity entities
      */
-    public function findAllVisibleActivitiesByUserId(int $userId) {
-        $sql  = 'SELECT `tacos_activities`.* ';
-        $sql .= 'FROM `tacos_activities` ';
-        $sql .= 'LEFT JOIN `tacos_activities_teams` ON `tacos_activities_teams`.`activity_id` = `tacos_activities`.`id` ';
-        $sql .= 'LEFT JOIN `tacos_users_teams` ON `tacos_users_teams`.`team_id` = `tacos_activities_teams`.`team_id` ';
-        $sql .= 'LEFT JOIN `tacos_users` ON `tacos_users`.`id` = `tacos_users_teams`.`user_id` ';
-        $sql .= 'WHERE `tacos_users`.`id` = :userId ';
-        $sql .= 'AND `tacos_activities`.`visible` = 1 ';
-        $sql .= 'GROUP BY `tacos_activities`.`id` ORDER BY `tacos_activities`.`name` ASC';
+    public function findAllProjectActivitiesByProjectId(int $projectId, ?int $visible = null): array {
+        $sql  = 'SELECT a.* ';
+        $sql .= 'FROM `tacos_activities` a ';
+        $sql .= 'WHERE a.`project_id` = :projectId ';
+        if (!is_null($visible)) {
+            $sql .= 'AND a.`visible` = :visible ';
+        }
+        $sql .= 'ORDER BY a.`name` ASC';
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            'userId' => $userId,
-        ]);
+
+        $params = ['projectId' => $projectId];
+        if (!is_null($visible)) {
+            $params['visible'] = $visible;
+        }
+
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
+
+        $activities = array();
+        foreach ($rows as $row) {
+            $activities[$row['id']] = $this->buildEntity($row);
+        }
+
+        return $activities;
+    }
+
+    /**
+     * Find All 'Global Activities'
+     *
+     * @param ?int $visible
+     * @return array of Activity entities
+     */
+    public function findAllGlobalActivities(?int $visible = null): array {
+        $sql  = 'SELECT a.* ';
+        $sql .= 'FROM `tacos_activities` a ';
+        $sql .= 'WHERE a.`project_id` IS NULL ';
+        if (!is_null($visible)) {
+            $sql .= 'AND a.`visible` = :visible ';
+        }
+        $sql .= 'ORDER BY a.`name` ASC';
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $params = array();
+        if (!is_null($visible)) {
+            $params['visible'] = $visible;
+        }
+
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
+
+        $activities = array();
+        foreach ($rows as $row) {
+            $activities[$row['id']] = $this->buildEntity($row);
+        }
+
+        return $activities;
+    }
+
+    /**
+     * Find All Activities by User Id
+     *
+     * @param int  $userId
+     * @param ?int $visible
+     * @return array of Activity entities
+     */
+    public function findAllByUserId(int $userId, ?int $visible = null): array {
+        $sql  = 'SELECT DISTINCT a.* ';
+        $sql .= 'FROM `tacos_activities` a ';
+        $sql .= 'LEFT JOIN `tacos_activities_teams` at ON at.`activity_id` = a.`id` ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = at.`team_id` AND ut.`user_id` = :userId ';
+        $sql .= 'WHERE (ut.`user_id` IS NOT NULL OR at.`activity_id` IS NULL) ';
+        if (!is_null($visible)) {
+            $sql .= 'AND a.`visible` = :visible ';
+        }
+        $sql .= 'ORDER BY a.`name` ASC';
+
+        $stmt = $this->pdo->prepare($sql);
+
+         $params = ['userId' => $userId];
+        if (!is_null($visible)) {
+            $params['visible'] = $visible;
+        }
+
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
+
+        $activities = array();
+        foreach ($rows as $row) {
+            $activities[$row['id']] = $this->buildEntity($row);
+        }
+
+        return $activities;
+    }
+
+    /**
+     * Find All Activities by Teamleader Id
+     *
+     * @param int  $teamleaderId
+     * @param ?int $visible
+     * @return array of Activity entities
+     */
+    public function findAllByTeamleaderId(int $teamleaderId, ?int $visible = null): array {
+        $sql  = 'SELECT DISTINCT a.* ';
+        $sql .= 'FROM `tacos_activities` a ';
+        $sql .= 'LEFT JOIN `tacos_activities_teams` at ON at.`activity_id` = a.`id` ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = at.`team_id` AND ut.`user_id` = :teamleaderId AND ut.`teamlead` = 1 ';
+        $sql .= 'WHERE (ut.`user_id` IS NOT NULL OR at.`activity_id` IS NULL) ';
+        if (!is_null($visible)) {
+            $sql .= 'AND a.`visible` = :visible ';
+        }
+        $sql .= 'ORDER BY a.`name` ASC';
+
+        $stmt = $this->pdo->prepare($sql);
+
+         $params = ['teamleaderId' => $teamleaderId];
+        if (!is_null($visible)) {
+            $params['visible'] = $visible;
+        }
+
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
+
+        $activities = array();
+        foreach ($rows as $row) {
+            $activities[$row['id']] = $this->buildEntity($row);
+        }
+
+        return $activities;
+    }
+
+    /**
+     * Find All Activities by User Id and by Project Id
+     *
+     * @param int  $projectId
+     * @param int  $userId
+     * @param ?int $visible
+     * @return array of Activity entities
+     */
+    public function findAllByUserIdAndProjectId(int $userId, int $projectId, ?int $visible = null): array {
+        $sql  = 'SELECT DISTINCT a.* ';
+        $sql .= 'FROM `tacos_activities` a ';
+        $sql .= 'LEFT JOIN `tacos_projects_activities` pa ON pa.`activity_id` = a.`id` ';
+        $sql .= 'LEFT JOIN `tacos_activities_teams` at ON at.`activity_id` = a.`id` ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = at.`team_id` AND ut.`user_id` = :userId ';
+        $sql .= 'WHERE pa.`project_id` = :projectId AND (ut.`user_id` IS NOT NULL OR at.`activity_id` IS NULL) ';
+        if (!is_null($visible)) {
+            $sql .= 'AND a.`visible` = :visible ';
+        }
+        $sql .= 'ORDER BY a.`name` ASC';
+
+        $stmt = $this->pdo->prepare($sql);
+
+         $params = array(
+            'projectId' => $projectId,
+            'userId' => $userId
+         );
+        if (!is_null($visible)) {
+            $params['visible'] = $visible;
+        }
+
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
         $activities = array();
@@ -286,36 +338,52 @@ final class ActivityRepository
 
 
 
-    /**
-     * Get number of teams for activity
-     *
-     * @param int $activityId
-     * @return int number of teams for activity
-     */
-    public function getNbOfTeamsForActivity(int $activityId) {
-        $stmt = $this->pdo->prepare('SELECT count(*) as cnt FROM `tacos_activities_teams` WHERE `tacos_activities_teams`.`activity_id` = :activityId');
-        $stmt->execute([
-            'activityId' => $activityId,
-        ]);
-        return $stmt->fetchColumn();
-    }
+
 
     /**
-     * Get teams for activity
+     * Find All Activities with Teams count and Project
      *
-     * @param int activityId
-     * @return array list of Teams
+     * @return array of Activities with Teams count and Project
      */
-    public function getTeamsForactivity(int $activityId) {
-        $stmt = $this->pdo->prepare('SELECT `tacos_activities_teams`.`team_id` as teamId, `tacos_teams`.`name` as name FROM `tacos_activities_teams` LEFT JOIN `tacos_teams` ON `tacos_teams`.`id` = `tacos_activities_teams`.`team_id` WHERE `tacos_activities_teams`.`activity_id` = :activityId ORDER BY name');
-        $stmt->execute([
-            'activityId' => $activityId,
-        ]);
+    public function findAllActivitiesWithTeamsCountAndProject(): array {
+        $sql  = 'SELECT a.`id`, a.`name`, a.`color`, a.`number`, a.`comment`, a.`visible`, ';
+        $sql .= 'p.`name` as projectName , p.`color` as projectColor, ';
+        $sql .= 'COUNT(DISTINCT at.`team_id`) AS teamsCount ';
+        $sql .= 'FROM `tacos_activities` a ';
+        $sql .= 'LEFT JOIN `tacos_projects` p ON p.`id` = a.`project_id` ';
+        $sql .= 'LEFT JOIN `tacos_activities_teams` at ON at.`activity_id` = a.`id` ';
+        $sql .= 'GROUP BY a.`id` ';
+        $sql .= 'ORDER BY a.`name` ASC';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+
         return $stmt->fetchAll();
     }
 
+    /**
+     * Find All Activities with Teams count and Project by Teamleader id
+     *
+     * @return array of Activities with Teams count and Project
+     */
+    public function findAllActivitiesWithTeamsCountAndProjectByTeamleaderId(int $teamleaderId): array {
+        $sql  = 'SELECT a.`id`, a.`name`, a.`color`, a.`number`, a.`comment`, a.`visible`, ';
+        $sql .= 'p.`name` as projectName , p.`color` as projectColor, ';
+        $sql .= 'COUNT(DISTINCT at.`team_id`) AS teamsCount ';
+        $sql .= 'FROM `tacos_activities` a ';
+        $sql .= 'LEFT JOIN `tacos_projects` p ON p.`id` = a.`project_id` ';
+        $sql .= 'LEFT JOIN `tacos_activities_teams` at ON at.`activity_id` = a.`id` ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = at.`team_id` AND ut.`user_id` = :teamleaderId AND ut.`teamlead` = 1 ';
+        $sql .= 'WHERE (ut.`user_id` IS NOT NULL OR at.`activity_id` IS NULL)  ';
+        $sql .= 'GROUP BY a.`id` ';
+        $sql .= 'ORDER BY a.`name` ASC';
 
-
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'teamleaderId' => $teamleaderId
+        ]);
+        return $stmt->fetchAll();
+    }
 
 
 

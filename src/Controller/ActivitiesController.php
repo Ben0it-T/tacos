@@ -84,35 +84,23 @@ final class ActivitiesController
 
         // Get Activities
         if ($currentUser->getRole() === 3) {
-            $activities = $this->activityService->findAllActivities();
+            $activities = $this->activityService->findAllActivitiesWithTeamsCountAndProject();
         }
         else {
-            $activitiesNotInTeam = $this->activityService->findAllActivitiesNotInTeam();
-            $activitiesInUserTeams = $this->activityService->findAllActivitiesByUserId($currentUser->getId());
-            $activities = array_merge($activitiesNotInTeam, $activitiesInUserTeams);
+            $activities = $this->activityService->findAllActivitiesWithTeamsCountAndProjectByTeamleaderId($currentUser->getId());
         }
-        $activitiesList = array();
-        foreach ($activities as $activity) {
-            $activitiesList[] = array(
-                'name' => $activity->getName(),
-                'color' => $activity->getColor(),
-                'number' => (is_null($activity->getNumber()) ? "" : $activity->getNumber()),
-                'project' => (is_null($activity->getProjectId()) ? "" : $this->projectService->findProject($activity->getProjectId())),
-                'description' => $activity->getComment(),
-                'teams' => $this->activityService->getNbOfTeamsForActivity($activity->getId()),
-                'visible' => $activity->getVisible(),
-                'editLink' => $routeParser->urlFor('activities_edit', array('activityId' => $activity->getId())),
-                'viewLink' => $routeParser->urlFor('activities_details', array('activityId' => $activity->getId())),
-            );
+
+        for ($i=0; $i < count($activities); $i++) {
+            $activities[$i]['editLink'] = $routeParser->urlFor('activities_edit', array('activityId' => $activities[$i]['id']));
+            $activities[$i]['viewLink'] = $routeParser->urlFor('activities_details', array('activityId' => $activities[$i]['id']));
         }
-        usort($activitiesList, fn($a, $b) => $a['name'] <=> $b['name']);
 
         $viewData = array();
         $viewData['userRole'] = $currentUser->getRole();
         $viewData['colors'] = $colorsList;
         $viewData['projects'] = $projectsList;
         $viewData['teams'] = $teamsList;
-        $viewData['activities'] = $activitiesList;
+        $viewData['activities'] = $activities;
 
         $viewData['flashMsgSuccess'] = $flash->getFirstMessage('success');
         $viewData['flashMsgError'] = $flash->getFirstMessage('error');
@@ -153,21 +141,11 @@ final class ActivitiesController
         $session = $request->getAttribute('session');
         $currentUser = $this->userService->findUser($session['auth']['userId']);
 
-        $activity = $this->activityService->findActivity(intval($args['activityId']));
-
-        if ($currentUser->getRole() != 3) {
-            $activitiesNotInTeam = $this->activityService->findAllActivitiesNotInTeam();
-            $activitiesInUserTeams = $this->activityService->findAllActivitiesByUserId($currentUser->getId());
-            $activities = array_merge($activitiesNotInTeam, $activitiesInUserTeams);
-
-            $activitiesList = array();
-            foreach ($activities as $entry) {
-                $activitiesList[] = $entry->getId();
-            }
-
-            if (!in_array($activity->getId(), $activitiesList)) {
-                $activity = false;
-            }
+        if ($currentUser->getRole() === 3) {
+            $activity = $this->activityService->findActivity(intval($args['activityId']));
+        }
+        else {
+            $activity = $this->activityService->findOneByIdAndUserId(intval($args['activityId']), $currentUser->getId());
         }
 
         if ($activity) {
@@ -215,19 +193,11 @@ final class ActivitiesController
         $session = $request->getAttribute('session');
         $currentUser = $this->userService->findUser($session['auth']['userId']);
 
-        $activity = $this->activityService->findActivity(intval($args['activityId']));
-
-        if ($currentUser->getRole() != 3) {
-            $activities = $this->activityService->findAllActivitiesByUserId($currentUser->getId());
-
-            $activitiesList = array();
-            foreach ($activities as $entry) {
-                $activitiesList[] = $entry->getId();
-            }
-
-            if (!in_array($activity->getId(), $activitiesList)) {
-                $activity = false;
-            }
+        if ($currentUser->getRole() === 3) {
+            $activity = $this->activityService->findActivity(intval($args['activityId']));
+        }
+        else {
+            $activity = $this->activityService->findOneByIdAndTeamleaderId(intval($args['activityId']), $currentUser->getId());
         }
 
         if ($activity) {
@@ -257,10 +227,10 @@ final class ActivitiesController
             $selectedProject = is_null($activity->getProjectId()) ? "" : $this->projectService->findProject($activity->getProjectId());
 
             // Get selected Teams
-            $selectedTeams = $this->activityService->getTeamsForactivity($activity->getId());
+            $selectedTeams = $this->teamService->findAllTeamsByActivityId($activity->getId());
             $selectedTeamsIds = array();
             foreach ($selectedTeams as $selectedTeam) {
-                $selectedTeamsIds[] = $selectedTeam['teamId'];
+                $selectedTeamsIds[] = $selectedTeam->getId();
             }
 
             $viewData = array();
@@ -293,19 +263,11 @@ final class ActivitiesController
         $session = $request->getAttribute('session');
         $currentUser = $this->userService->findUser($session['auth']['userId']);
 
-        $activity = $this->activityService->findActivity(intval($args['activityId']));
-
-        if ($currentUser->getRole() != 3) {
-            $activities = $this->activityService->findAllActivitiesByUserId($currentUser->getId());
-
-            $activitiesList = array();
-            foreach ($activities as $entry) {
-                $activitiesList[] = $entry->getId();
-            }
-
-            if (!in_array($activity->getId(), $activitiesList)) {
-                $activity = false;
-            }
+        if ($currentUser->getRole() === 3) {
+            $activity = $this->activityService->findActivity(intval($args['activityId']));
+        }
+        else {
+            $activity = $this->activityService->findOneByIdAndTeamleaderId(intval($args['activityId']), $currentUser->getId());
         }
 
         if ($activity) {
