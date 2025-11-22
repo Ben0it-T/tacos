@@ -278,11 +278,9 @@ final class ActivitiesController
             }
             else {
                 $flash->addMessage('error', $errors);
+                $url = $routeParser->urlFor('activities_edit', array('activityId' => $args['activityId']));
+                return $response->withStatus(302)->withHeader('Location', $url);
             }
-
-            // redirect
-            $url = $routeParser->urlFor('activities_edit', array('activityId' => $args['activityId']));
-            return $response->withStatus(302)->withHeader('Location', $url);
         }
 
         // redirect
