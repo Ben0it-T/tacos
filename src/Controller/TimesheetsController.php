@@ -84,7 +84,7 @@ final class TimesheetsController
         }
 
         // Get tags
-        $tags = $this->tagService->findAllVisibleTags();
+        $tags = $this->tagService->findAllVisible();
         $tagsIds = array();
         foreach ($tags as $entry) {
             $tagsIds[] = $entry->getId();
@@ -124,7 +124,7 @@ final class TimesheetsController
         $_SESSION['timesheets']['tags'] = $queryParams['tags'];
 
         // Get timesheets
-        $allTags = $this->tagService->findAllTags();
+        $allTags = $this->tagService->findAll();
         $timesheets = $this->timesheetService->findTimesheetsByCriteria($queryParams);
         $duration = 0;
         $timesheetRestart = $this->container->get('settings')['timesheet']['restart'];
@@ -237,7 +237,7 @@ final class TimesheetsController
         }
 
         // Get tags
-        $tags = $this->tagService->findAllVisibleTags();
+        $tags = $this->tagService->findAllVisible();
         $tagsIds = array();
         foreach ($tags as $entry) {
             $tagsIds[] = $entry->getId();
@@ -288,7 +288,7 @@ final class TimesheetsController
         $criteria['users'] = empty($queryParams['users']) ? $usersIds : $queryParams['users'];
 
         // Get timesheets
-        $allTags = $this->tagService->findAllTags();
+        $allTags = $this->tagService->findAll();
         $timesheets = $this->timesheetService->findTimesheetsByCriteria($criteria);
         $duration = 0;
         for ($i=0; $i < count($timesheets); $i++) {
@@ -377,7 +377,7 @@ final class TimesheetsController
         }
 
         // Get tags
-        $tags = $this->tagService->findAllVisibleTags();
+        $tags = $this->tagService->findAllVisible();
 
         // Start date
         $rounding = $this->container->get('settings')['timesheet']['rounding'];
@@ -474,10 +474,10 @@ final class TimesheetsController
             }
 
             // Get tags
-            $tags = $this->tagService->findAllVisibleTags();
+            $tags = $this->tagService->findAllVisible();
 
             // Get selected tags
-            $selectedTags = $this->tagService->findAllTagsByTimesheetId($timesheet->getId());
+            $selectedTags = $this->tagService->findAllByTimesheetId($timesheet->getId());
             $selectedTagsIds = array();
             foreach ($selectedTags as $selectedTag) {
                 $selectedTagsIds[] = $selectedTag->getId();
@@ -605,7 +605,7 @@ final class TimesheetsController
                 'project' => $this->projectService->findProject($timesheet->getProjectId()),
                 'activity' => $this->activityService->findActivity($timesheet->getActivityId()),
                 'description' => $timesheet->getComment(),
-                'tags' => $this->tagService->findAllTagsByTimesheetId($timesheet->getId()),
+                'tags' => $this->tagService->findAllByTimesheetId($timesheet->getId()),
             );
 
             return $twig->render($response, 'timesheet-delete.html.twig', $viewData);
@@ -700,7 +700,7 @@ final class TimesheetsController
         $record_seperator = "\r\n";
 
         // Get timesheets
-        $tags = $this->tagService->findAllTags();
+        $tags = $this->tagService->findAll();
         $timesheets = $this->timesheetService->findTimesheetsByCriteria($criteria);
         for ($i=0; $i < count($timesheets); $i++) {
             // Tags
@@ -807,7 +807,7 @@ final class TimesheetsController
         $record_seperator = "\r\n";
 
         // Get timesheets
-        $allTags = $this->tagService->findAllTags();
+        $allTags = $this->tagService->findAll();
         $timesheets = $this->timesheetService->findTimesheetsByCriteria($criteria);
         for ($i=0; $i < count($timesheets); $i++) {
             // Tags

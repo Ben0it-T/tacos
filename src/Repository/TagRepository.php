@@ -18,11 +18,13 @@ final class TagRepository
      * Find Tag by id
      *
      * @param int $id
-     * @return Tag or false
+     * @return Tag entity or false
      */
-    public function find(int $id) {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_tags` WHERE `tacos_tags`.`id` = ?');
-        $stmt->execute([$id]);
+    public function find(int $id): Tag|false {
+        $stmt = $this->pdo->prepare('SELECT t.* FROM `tacos_tags` t WHERE t.`id` = :id LIMIT 1');
+        $stmt->execute([
+            'id' => $id
+        ]);
         $row = $stmt->fetch();
 
         if ($row) {
@@ -36,29 +38,22 @@ final class TagRepository
     /**
      * Find All Tag
      *
-     * @return array of Tag
+     * @param ?int $visible
+     * @return array of Tag entities
      */
-    public function findAll() {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_tags` ORDER BY `tacos_tags`.`name` ASC');
-        $stmt->execute();
-        $rows = $stmt->fetchAll();
-
-        $tags = array();
-        foreach ($rows as $row) {
-            $tags[$row['id']] = $this->buildEntity($row);
+    public function findAll(?int $visible = null): array {
+        $sql  = 'SELECT t.* FROM `tacos_tags` t ';
+        if (!is_null($visible)) {
+            $sql .= 'WHERE t.`visible` = :visible ';
         }
+        $sql .= 'ORDER BY t.`name` ASC';
 
-        return $tags;
-    }
-
-    /**
-     * Find All Visible Tag
-     *
-     * @return array of Tag
-     */
-    public function findAllVisibleTags() {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_tags` WHERE `tacos_tags`.`visible` = 1 ORDER BY `tacos_tags`.`name` ASC');
-        $stmt->execute();
+        $stmt = $this->pdo->prepare($sql);
+        $params = array();
+        if (!is_null($visible)) {
+            $params['visible'] = $visible;
+        }
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
         $tags = array();
@@ -72,14 +67,26 @@ final class TagRepository
     /**
      * Find All Tags by timesheet id
      *
-     * @param int $timesheetId
-     * @return array of Tags
+     * @param int  $timesheetId
+     * @param ?int $visible
+     * @return array of Tag entities
      */
-    public function findAllTagsByTimesheetId(int $timesheetId) {
-        $stmt = $this->pdo->prepare('SELECT `tacos_tags`.* FROM `tacos_tags` LEFT JOIN `tacos_timesheet_tags` ON `tacos_timesheet_tags`.`tag_id` = `tacos_tags`.`id` WHERE `tacos_timesheet_tags`.`timesheet_id` = :timesheetId ORDER BY `tacos_tags`.`name` ASC');
-        $stmt->execute([
-            'timesheetId' => $timesheetId,
-        ]);
+    public function findAllByTimesheetId(int $timesheetId, ?int $visible = null): array {
+        $sql  = 'SELECT t.* ';
+        $sql .= 'FROM `tacos_tags` t ';
+        $sql .= 'JOIN `tacos_timesheet_tags` tt ON tt.`tag_id` = t.`id` ';
+        $sql .= 'WHERE tt.`timesheet_id` = :timesheetId ';
+        if (!is_null($visible)) {
+            $sql .= 'AND t.`visible` = :visible ';
+        }
+        $sql .= 'ORDER BY t.`name` ASC';
+
+        $stmt = $this->pdo->prepare($sql);
+        $params = ['timesheetId' => $timesheetId,];
+        if (!is_null($visible)) {
+            $params['visible'] = $visible;
+        }
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
         $tags = array();
@@ -96,8 +103,13 @@ final class TagRepository
      * @param int $timesheetId
      * @return array of Tag ids
      */
-    public function findAllTagIdsByTimesheetId(int $timesheetId) {
-        $stmt = $this->pdo->prepare('SELECT `tacos_tags`.`id` FROM `tacos_tags` LEFT JOIN `tacos_timesheet_tags` ON `tacos_timesheet_tags`.`tag_id` = `tacos_tags`.`id` WHERE `tacos_timesheet_tags`.`timesheet_id` = :timesheetId');
+    public function findAllTagIdsByTimesheetId(int $timesheetId): array {
+        $sql  = 'SELECT t.`id` ';
+        $sql .= 'FROM `tacos_tags` t ';
+        $sql .= 'JOIN `tacos_timesheet_tags` ON tt.`tag_id` = t.`id` ';
+        $sql .= 'WHERE tt.`timesheet_id` = :timesheetId';
+
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'timesheetId' => $timesheetId,
         ]);
@@ -112,8 +124,12 @@ final class TagRepository
      * @param int $id
      * @return bool
      */
-    public function isNameExists(string $name, int $id = 0) {
-        $stmt = $this->pdo->prepare('SELECT count(*) as cnt FROM `tacos_tags` WHERE `tacos_tags`.`name` = :name AND `tacos_tags`.`id` != :id');
+    public function isNameExists(string $name, int $id = 0): bool {
+        $sql  = 'SELECT count(*) as cnt ';
+        $sql .= 'FROM `tacos_tags` t ';
+        $sql .= 'WHERE t.`name` = :name AND t.`id` != :id';
+
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'name' => $name,
             'id' => $id,
@@ -182,5 +198,4 @@ final class TagRepository
 
         return $tag;
     }
-
 }

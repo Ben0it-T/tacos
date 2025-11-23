@@ -200,7 +200,7 @@ final class ProjectsController
                 'users' => $usersIds,
                 'projects' => [$project->getId()],
             );
-            $allTags = $this->tagService->findAllTags();
+            $allTags = $this->tagService->findAll();
             $timesheets = $this->timesheetService->findTimesheetsByCriteria($criteria);
             $duration = 0;
             for ($i=0; $i < count($timesheets); $i++) {

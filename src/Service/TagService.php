@@ -24,22 +24,23 @@ final class TagService
     }
 
     /**
-     * Find Tag
+     * Find Tag by id
      *
      * @param int $id
-     * @return Tag or false
+     * @return Tag entity or false
      */
     public function findTag(int $id) {
         return $this->tagRepository->find($id);
     }
 
     /**
-     * Find all Tags
+     * Find All Tag
      *
-     * @return array of Tag
+     * @param ?int $visible
+     * @return array of Tag entities
      */
-    public function findAllTags() {
-        return $this->tagRepository->findAll();
+    public function findAll(?int $visible = null) {
+        return $this->tagRepository->findAll($visible);
     }
 
     /**
@@ -47,19 +48,20 @@ final class TagService
      *
      * @return array of Tag
      */
-    public function findAllVisibleTags() {
-        return $this->tagRepository->findAllVisibleTags();
+    public function findAllVisible() {
+        return $this->tagRepository->findAll(1);
     }
 
 
     /**
      * Find All Tags by timesheet id
      *
-     * @param int $timesheetId
-     * @return array of Tags
+     * @param int  $timesheetId
+     * @param ?int $visible
+     * @return array of Tag entities
      */
-    public function findAllTagsByTimesheetId(int $timesheetId) {
-        return $this->tagRepository->findAllTagsByTimesheetId($timesheetId);
+    public function findAllByTimesheetId(int $timesheetId, ?int $visible = null) {
+        return $this->tagRepository->findAllByTimesheetId($timesheetId, $visible);
     }
 
     /**

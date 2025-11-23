@@ -34,7 +34,7 @@ final class TagsController
         $routeParser = $routeContext->getRouteParser();
 
         // Get tags
-        $tags = $this->tagService->findAllTags();
+        $tags = $this->tagService->findAll();
         $tagsList = array();
         foreach ($tags as $tag) {
             $tagsList[] = array(
