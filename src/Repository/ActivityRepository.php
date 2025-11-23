@@ -103,12 +103,22 @@ final class ActivityRepository
     /**
      * Find All Activities
      *
+     * @param ?int $visible
      * @return array of Activity entities
      */
-    public function findAll(): array {
-        $sql = 'SELECT a.* FROM `tacos_activities` a ORDER BY a.`name` ASC, `a.`number` ASC';
+    public function findAll(?int $visible = null): array {
+        $sql  = 'SELECT a.* FROM `tacos_activities` a ';
+        if (!is_null($visible)) {
+            $sql .= 'WHERE a.`visible` = :visible ';
+        }
+        $sql .= 'ORDER BY a.`name` ASC, `a.`number` ASC';
+
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute();
+        $params = array();
+        if (!is_null($visible)) {
+            $params['visible'] = $visible;
+        }
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
         $activities = array();

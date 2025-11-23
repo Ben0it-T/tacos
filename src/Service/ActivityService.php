@@ -63,10 +63,11 @@ final class ActivityService
     /**
      * Find All Activities
      *
+     * @param ?int $visible
      * @return array of Activity entities
      */
-    public function findAll() {
-        return $this->activityRepository->findAll();
+    public function findAll(?int $visible = null) {
+        return $this->activityRepository->findAll($visible);
     }
 
     /**
