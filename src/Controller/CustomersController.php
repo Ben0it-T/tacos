@@ -130,7 +130,7 @@ final class CustomersController
             $customer = $this->customerService->findCustomer(intval($args['customerId']));
         }
         else {
-            $customer = $this->customerService->findOneByIdAndUserId(intval($args['customerId']), intval($currentUser->getId()));
+            $customer = $this->customerService->findOneByIdAndTeamleaderId(intval($args['customerId']), intval($currentUser->getId()));
         }
 
         if ($customer) {

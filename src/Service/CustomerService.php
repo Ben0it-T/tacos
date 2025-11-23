@@ -49,6 +49,7 @@ final class CustomerService
 
     /**
      * Find Customer by id and by Teamleader id
+     * Note : accepts customers without a team
      *
      * @param int $id
      * @param int $teamleaderId
@@ -56,6 +57,18 @@ final class CustomerService
      */
     public function findOneByIdAndTeamleaderId(int $customerId, int $teamleaderId) {
         return $this->customerRepository->findOneByIdAndTeamleaderId($customerId, $teamleaderId);
+    }
+
+    /**
+     * Find Customer by id by id user id is teamleader
+     * Note : requires teamlead on at least one team
+     *
+     * @param int $id
+     * @param int $teamleaderId
+     * @return Customer or false
+     */
+    public function findOneByIdAndTeamleaderIdStrict(int $customerId, int $teamleaderId) {
+        return $this->customerRepository->findOneByIdAndTeamleaderIdStrict($customerId, $teamleaderId);
     }
 
 

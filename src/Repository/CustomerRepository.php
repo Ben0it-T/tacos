@@ -71,12 +71,44 @@ final class CustomerRepository
 
     /**
      * Find Customer by id and by Teamleader id
+     * Note : accepts customers without a team
      *
      * @param int $id
      * @param int $teamleaderId
      * @return Customer or false
      */
     public function findOneByIdAndTeamleaderId(int $customerId, int $teamleaderId): Customer|false {
+        $sql  = 'SELECT c.* ';
+        $sql .= 'FROM `tacos_customers` c ';
+        $sql .= 'LEFT JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = ct.`team_id` AND ut.`user_id` = :teamleaderId AND ut.`teamlead` = 1 ';
+        $sql .= 'WHERE c.`id` = :customerId AND (ut.`user_id` IS NOT NULL OR ct.`team_id` IS NULL) ';
+        $sql .= 'LIMIT 1';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'customerId' => $customerId,
+            'teamleaderId' => $teamleaderId
+        ]);
+        $row = $stmt->fetch();
+
+        if ($row) {
+            return $this->buildEntity($row);
+        }
+        else {
+            return false;
+        }
+    }
+
+    /**
+     * Find Customer by id by id user id is teamleader
+     * Note : requires teamlead on at least one team
+     *
+     * @param int $id
+     * @param int $teamleaderId
+     * @return Customer or false
+     */
+    public function findOneByIdAndTeamleaderIdStrict(int $customerId, int $teamleaderId): Customer|false {
         $sql  = 'SELECT c.* ';
         $sql .= 'FROM `tacos_customers` c ';
         $sql .= 'JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ';
