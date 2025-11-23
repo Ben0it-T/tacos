@@ -249,26 +249,30 @@ final class ProjectRepository
     }
 
     /**
-     * Find All Projects by teamleader Id and visibility
+     * Find All Projects by teamleader Id
      *
      * @param int $teamleaderId
-     * @param int $visible
+     * @param ?int $visible
      * @return array of Project entities
      */
-    public function findAllByTeamleaderIdAndVisibility(int $teamleaderId, int $visible) {
+    public function findAllByTeamleaderId(int $teamleaderId, ?int $visible = null): array {
         $sql  = 'SELECT DISTINCT p.* ';
         $sql .= 'FROM `tacos_projects` p ';
         $sql .= 'LEFT JOIN `tacos_projects_teams` pt ON pt.`project_id` = p.`id` ';
         $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = pt.`team_id` AND ut.`user_id` = :teamleaderId AND ut.`teamlead` = 1 ';
         $sql .= 'WHERE (ut.`user_id` IS NOT NULL OR pt.`project_id` IS NULL) ';
-        $sql .= 'AND p.`visible` = :visible ';
+        if (!is_null($visible)) {
+            $sql .= 'AND p.`visible` = :visible ';
+        }
         $sql .= 'ORDER BY p.`name` ASC';
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            'teamleaderId' => $teamleaderId,
-            'visible' => $visible
-        ]);
+        $params = ['teamleaderId' => $teamleaderId];
+        if (!is_null($visible)) {
+            $params['visible'] = $visible;
+        }
+
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
         $sql;
         $projects = array();

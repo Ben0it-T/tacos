@@ -50,7 +50,7 @@ final class ActivitiesController
             $projects = $this->projectService->findAllByVisibility(1);
         }
         else {
-            $projects = $this->projectService->findAllByUserIdAndVisibility($currentUser->getId(), 1);
+            $projects = $this->projectService->findAllByTeamleaderId($currentUser->getId(), 1);
         }
         $projectsList = array();
         foreach ($projects as $entry) {
@@ -145,7 +145,7 @@ final class ActivitiesController
             $activity = $this->activityService->findActivity(intval($args['activityId']));
         }
         else {
-            $activity = $this->activityService->findOneByIdAndUserId(intval($args['activityId']), $currentUser->getId());
+            $activity = $this->activityService->findOneByIdAndTeamleaderId(intval($args['activityId']), $currentUser->getId());
         }
 
         if ($activity) {

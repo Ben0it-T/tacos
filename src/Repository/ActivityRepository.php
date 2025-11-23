@@ -77,9 +77,9 @@ final class ActivityRepository
     public function findOneByIdAndTeamleaderId(int $activityId, int $teamleaderId): Activity|false {
         $sql  = 'SELECT a.* ';
         $sql .= 'FROM `tacos_activities` a ';
-        $sql .= 'JOIN `tacos_activities_teams` at ON at.`activity_id` = a.`id` ';
-        $sql .= 'JOIN `tacos_users_teams` ut ON ut.`team_id` = at.`team_id` AND ut.`user_id` = :teamleaderId AND ut.`teamlead` = 1 ';
-        $sql .= 'WHERE a.`id` = :activityId ';
+        $sql .= 'LEFT JOIN `tacos_activities_teams` at ON at.`activity_id` = a.`id` ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = at.`team_id` AND ut.`user_id` = :teamleaderId AND ut.`teamlead` = 1 ';
+        $sql .= 'WHERE a.`id` = :activityId AND (ut.`user_id` IS NOT NULL OR at.`activity_id` IS NULL) ';
         $sql .= 'LIMIT 1';
 
         $stmt = $this->pdo->prepare($sql);

@@ -215,7 +215,7 @@ final class TimesheetsController
         }
 
         // Get projects.
-        $projects = $this->projectService->findAllByTeamleaderIdAndVisibility($currentUser->getId(), 1);
+        $projects = $this->projectService->findAllByTeamleaderId($currentUser->getId(), 1);
         $projectsList = array();
         foreach ($projects as $entry) {
             $projectsList[] = array(

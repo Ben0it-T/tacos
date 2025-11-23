@@ -128,14 +128,14 @@ final class ProjectService
     }
 
     /**
-     * Find All Projects by teamleader Id and visibility
+     * Find All Projects by teamleader Id
      *
      * @param int $teamleaderId
      * @param int $visible
      * @return array of Project entities
      */
-    public function findAllByTeamleaderIdAndVisibility(int $teamleaderId, int $visible) {
-        return $this->projectRepository->findAllByTeamleaderIdAndVisibility($teamleaderId, $visible);
+    public function findAllByTeamleaderId(int $teamleaderId, ?int $visible = null) {
+        return $this->projectRepository->findAllByTeamleaderId($teamleaderId, $visible);
     }
 
 
