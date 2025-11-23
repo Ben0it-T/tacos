@@ -55,14 +55,12 @@ final class ProjectsController
         $currentUser = $this->userService->findUser($session['auth']['userId']);
 
         // Get customers
-        $customersNotInTeam = $this->customerService->findAllVisibleCustomersNotInTeam();
         if ($currentUser->getRole() === 3) {
-            $customersInTeams = $this->customerService->findAllVisibleCustomersHaveTeams();
+            $customers = $this->customerService->findAll(1);
         }
         else {
-            $customersInTeams = $this->customerService->findAllVisibleCustomersByUserId($currentUser->getId());
+            $customers = $this->customerService->findAllByTeamleaderId($currentUser->getId(), 1);
         }
-        $customers = array_merge($customersNotInTeam, $customersInTeams);
         $customersList = array();
         foreach ($customers as $entry) {
             $customersList[] = array(
@@ -259,14 +257,12 @@ final class ProjectsController
 
         if ($project) {
             // Get customers
-            $customersNotInTeam = $this->customerService->findAllVisibleCustomersNotInTeam();
             if ($currentUser->getRole() === 3) {
-                $customersInTeams = $this->customerService->findAllVisibleCustomersHaveTeams();
+                $customers = $this->customerService->findAll(1);
             }
             else {
-                $customersInTeams = $this->customerService->findAllVisibleCustomersByUserId($currentUser->getId());
+                $customers = $this->customerService->findAllByTeamleaderId($currentUser->getId(), 1);
             }
-            $customers = array_merge($customersNotInTeam, $customersInTeams);
             $customersList = array();
             foreach ($customers as $entry) {
                 $customersList[] = array(

@@ -344,9 +344,7 @@ final class TimesheetsController
         $currentUser = $this->userService->findUser($session['auth']['userId']);
 
         // Get customers
-        $customersNotInTeam = $this->customerService->findAllVisibleCustomersNotInTeam();
-        $customersInTeams = $this->customerService->findAllVisibleCustomersByUserId($currentUser->getId());
-        $customers = array_merge($customersNotInTeam, $customersInTeams);
+        $customers = $this->customerService->findAllByUserId($currentUser->getId(), 1);
         $customersList = array();
         foreach ($customers as $entry) {
             $customersList[] = array(
@@ -354,7 +352,6 @@ final class TimesheetsController
                 'name' => $entry->getName(),
             );
         }
-        usort($customersList, fn($a, $b) => $a['name'] <=> $b['name']);
 
         // Get projects
         $projects = $this->projectService->findAllByUserIdAndVisibility($currentUser->getId(), 1);
@@ -441,9 +438,7 @@ final class TimesheetsController
         if ($timesheet) {
 
             // Get customers
-            $customersNotInTeam = $this->customerService->findAllVisibleCustomersNotInTeam();
-            $customersInTeams = $this->customerService->findAllVisibleCustomersByUserId($currentUser->getId());
-            $customers = array_merge($customersNotInTeam, $customersInTeams);
+            $customers = $this->customerService->findAllByUserId($currentUser->getId(), 1);
             $customersList = array();
             foreach ($customers as $entry) {
                 $customersList[] = array(
@@ -451,7 +446,6 @@ final class TimesheetsController
                     'name' => $entry->getName(),
                 );
             }
-            usort($customersList, fn($a, $b) => $a['name'] <=> $b['name']);
 
             // Get projects
             $projects = $this->projectService->findAllByUserIdAndVisibility($currentUser->getId(), 1);

@@ -50,7 +50,7 @@ final class CustomersController
             $customers = $this->customerService->findAllCustomerswithTeamsCountAndProjectsCount();
         }
         else {
-            $customers = $this->customerService->findCustomersWithTeamsCountAndProjectsCountByUserId($currentUser->getId());
+            $customers = $this->customerService->findAllCustomersWithTeamsCountAndProjectsCountByTeamleaderId($currentUser->getId());
         }
 
         for ($i=0; $i < count($customers); $i++) {
@@ -130,7 +130,7 @@ final class CustomersController
             $customer = $this->customerService->findCustomer(intval($args['customerId']));
         }
         else {
-            $customer = $this->customerService->findOneByCustomerIdAndTeamleaderId(intval($args['customerId']), intval($currentUser->getId()));
+            $customer = $this->customerService->findOneByIdAndUserId(intval($args['customerId']), intval($currentUser->getId()));
         }
 
         if ($customer) {

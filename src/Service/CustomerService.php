@@ -37,23 +37,62 @@ final class CustomerService
     }
 
     /**
-     * Find Customer by id and by Teamleader id
+     * Find Customer by id and by User id
      *
      * @param int $id
+     * @param int $userId
      * @return Customer or false
      */
-    public function findOneByCustomerIdAndTeamleaderId(int $customerId, int $teamleaderId) {
-        return $this->customerRepository->findOneByCustomerIdAndTeamleaderId($customerId, $teamleaderId);
+    public function findOneByIdAndUserId(int $customerId, int $userId) {
+        return $this->customerRepository->findOneByIdAndUserId($customerId, $userId);
     }
 
     /**
-     * Find Customers
+     * Find Customer by id and by Teamleader id
      *
-     * @return array of Customers
+     * @param int $id
+     * @param int $teamleaderId
+     * @return Customer or false
      */
-    public function findAllCustomers() {
-        return $this->customerRepository->findAll();
+    public function findOneByIdAndTeamleaderId(int $customerId, int $teamleaderId) {
+        return $this->customerRepository->findOneByIdAndTeamleaderId($customerId, $teamleaderId);
     }
+
+
+
+    /**
+     * Find All Customers
+     *
+     * @param ?int $visible
+     * @return array of Customer entities
+     */
+    public function findAll(?int $visible = null) {
+        return $this->customerRepository->findAll($visible);
+    }
+
+    /**
+     * Find All Customers by user Id
+     *
+     * @param int $userId
+     * @param ?int $visible
+     * @return array of Customer entities
+     */
+    public function findAllByUserId(int $userId, ?int $visible = null) {
+        return $this->customerRepository->findAllByUserId($userId, $visible);
+    }
+
+    /**
+     * Find All Customers by Teamleader Id
+     *
+     * @param int $teamleaderId
+     * @param ?int $visible
+     * @return array of Customer entities
+     */
+    public function findAllByTeamleaderId(int $teamleaderId, ?int $visible = null) {
+        return $this->customerRepository->findAllByTeamleaderId($teamleaderId, $visible);
+    }
+
+
 
     /**
      * Find Customers with Teams count and Projects count
@@ -67,96 +106,24 @@ final class CustomerService
     /**
      * Find Customers with Teams count and Projects count by User id
      *
+     * @param int $userId
      * @return array of Customers with Teams count and Projects count
      */
-    public function findCustomersWithTeamsCountAndProjectsCountByUserId(int $userId) {
-        return $this->customerRepository->findCustomersWithTeamsCountAndProjectsCountByUserId($userId);
+    public function findAllCustomersWithTeamsCountAndProjectsCountByUserId(int $userId) {
+        return $this->customerRepository->findAllCustomersWithTeamsCountAndProjectsCountByUserId($userId);
     }
 
     /**
-     * Find visible Customers
+     * Find Customers with Teams count and Projects count by Teamleader id
      *
-     * @return array of Customers
+     * @param int $teamleaderId
+     * @return array of Customers with Teams count and Projects count
      */
-    public function findAllVisibleCustomers() {
-        return $this->customerRepository->findAllVisibleCustomers();
+    public function findAllCustomersWithTeamsCountAndProjectsCountByTeamleaderId(int $teamleaderId) {
+        return $this->customerRepository->findAllCustomersWithTeamsCountAndProjectsCountByTeamleaderId($teamleaderId);
     }
 
-    /**
-     * Find All Customers by user Id
-     *
-     * @param int $userId
-     * @return array of Customers
-     */
-    public function findAllCustomersByUserId(int $userId) {
-        return $this->customerRepository->findAllCustomersByUserId($userId);
-    }
 
-    /**
-     * Find All visible Customers by user Id
-     *
-     * @param int $userId
-     * @return array of Customers
-     */
-    public function findAllVisibleCustomersByUserId(int $userId) {
-        return $this->customerRepository->findAllVisibleCustomersByUserId($userId);
-    }
-
-    /**
-     * Find All Customers in Teams
-     *
-     * @param array $teamsIds
-     * @return array of Customers
-     */
-    public function findAllCustomersInTeams($teamsIds) {
-        return $this->customerRepository->findAllCustomersInTeams($teamsIds);
-    }
-
-    /**
-     * Find All visible Customers in Teams
-     *
-     * @param array $teamsIds
-     * @return array of Customers
-     */
-    public function findAllVisibleCustomersInTeams($teamsIds) {
-        return $this->customerRepository->findAllVisibleCustomersInTeams($teamsIds);
-    }
-
-    /**
-     * Find All Customers have a team
-     *
-     * @return array of Customers
-     */
-    public function findAllCustomersHaveTeams() {
-        return $this->customerRepository->findAllCustomersHaveTeams();
-    }
-
-    /**
-     * Find All visible Customers have a team
-     *
-     * @return array of Customers
-     */
-    public function findAllVisibleCustomersHaveTeams() {
-        return $this->customerRepository->findAllVisibleCustomersHaveTeams();
-    }
-
-    /**
-     * Find All Customers not in a team
-     *
-     * @return array of Customers
-     */
-    public function findAllCustomersNotInTeam() {
-        return $this->customerRepository->findAllCustomersNotInTeam();
-    }
-
-    /**
-     * Find All visible Customers not in a team
-     *
-     * @return array of Customers
-     */
-    public function findAllVisibleCustomersNotInTeam() {
-        return $this->customerRepository->findAllVisibleCustomersNotInTeam();
-    }
 
     /**
      * Create new Customer

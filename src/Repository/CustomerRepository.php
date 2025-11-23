@@ -23,9 +23,42 @@ final class CustomerRepository
      * @param int $id
      * @return Customer or false
      */
-    public function find(int $id) {
-        $stmt = $this->pdo->prepare('SELECT `tacos_customers`.* FROM `tacos_customers` WHERE `tacos_customers`.`id` = ? LIMIT 1');
-        $stmt->execute([$id]);
+    public function find(int $id): Customer|false {
+        $sql = 'SELECT c.* FROM `tacos_customers` c WHERE c.`id` = :id LIMIT 1';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'id' => $id
+        ]);
+        $row = $stmt->fetch();
+
+        if ($row) {
+            return $this->buildEntity($row);
+        }
+        else {
+            return false;
+        }
+    }
+
+    /**
+     * Find Customer by id and by User id
+     *
+     * @param int $id
+     * @param int $userId
+     * @return Customer or false
+     */
+    public function findOneByIdAndUserId(int $customerId, int $userId): Customer|false {
+        $sql  = 'SELECT c.* ';
+        $sql .= 'FROM `tacos_customers` c ';
+        $sql .= 'LEFT JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = ct.`team_id` AND ut.`user_id` = :userId ';
+        $sql .= 'WHERE c.`id` = :customerId AND (ut.`user_id` IS NOT NULL OR ct.`team_id` IS NULL) ';
+        $sql .= 'LIMIT 1';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'customerId' => $customerId,
+            'userId' => $userId
+        ]);
         $row = $stmt->fetch();
 
         if ($row) {
@@ -40,14 +73,15 @@ final class CustomerRepository
      * Find Customer by id and by Teamleader id
      *
      * @param int $id
+     * @param int $teamleaderId
      * @return Customer or false
      */
-    public function findOneByCustomerIdAndTeamleaderId(int $customerId, int $teamleaderId) {
-        $sql  = 'SELECT `tacos_customers`.* ';
-        $sql .= 'FROM `tacos_customers` ';
-        $sql .= 'INNER JOIN `tacos_customers_teams` ON `tacos_customers_teams`.`customer_id` = `tacos_customers`.`id` ';
-        $sql .= 'INNER JOIN `tacos_users_teams` ON `tacos_users_teams`.`team_id` = `tacos_customers_teams`.`team_id` AND `tacos_users_teams`.`user_id` = :teamleaderId AND `tacos_users_teams`.`teamlead` = 1 ';
-        $sql .= 'WHERE `tacos_customers`.`id` = :customerId ';
+    public function findOneByIdAndTeamleaderId(int $customerId, int $teamleaderId): Customer|false {
+        $sql  = 'SELECT c.* ';
+        $sql .= 'FROM `tacos_customers` c ';
+        $sql .= 'JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ';
+        $sql .= 'JOIN `tacos_users_teams` ut ON ut.`team_id` = ct.`team_id` AND ut.`user_id` = :teamleaderId AND ut.`teamlead` = 1 ';
+        $sql .= 'WHERE c.`id` = :customerId ';
         $sql .= 'LIMIT 1';
 
         $stmt = $this->pdo->prepare($sql);
@@ -65,14 +99,27 @@ final class CustomerRepository
         }
     }
 
+
+
     /**
-     * Find Customers
+     * Find All Customers
      *
-     * @return array of Customers
+     * @param ?int $visible
+     * @return array of Customer entities
      */
-    public function findAll() {
-        $stmt = $this->pdo->prepare('SELECT `tacos_customers`.* FROM `tacos_customers` ORDER BY `tacos_customers`.`name` ASC');
-        $stmt->execute();
+    public function findAll(?int $visible = null): array {
+        $sql  = 'SELECT c.* FROM `tacos_customers` c ';
+        if (!is_null($visible)) {
+            $sql .= 'WHERE c.`visible` = :visible ';
+        }
+        $sql .= 'ORDER BY c.`name` ASC';
+
+        $stmt = $this->pdo->prepare($sql);
+        $params = array();
+        if (!is_null($visible)) {
+            $params['visible'] = $visible;
+        }
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
         $customers = array();
@@ -84,20 +131,91 @@ final class CustomerRepository
     }
 
     /**
+     * Find All Customers by user Id
+     *
+     * @param int $userId
+     * @param ?int $visible
+     * @return array of Customer entities
+     */
+    public function findAllByUserId(int $userId, ?int $visible = null): array {
+        $sql  = 'SELECT DISTINCT c.* ';
+        $sql .= 'FROM `tacos_customers` c ';
+        $sql .= 'LEFT JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = ct.`team_id` AND ut.`user_id` = :userId ';
+        $sql .= 'WHERE (ut.`user_id` IS NOT NULL OR ct.`team_id` IS NULL) ';
+        if (!is_null($visible)) {
+            $sql .= 'AND c.`visible` = :visible ';
+        }
+        $sql .= 'ORDER BY c.`name` ASC';
+
+        $stmt = $this->pdo->prepare($sql);
+        $params = ['userId' => $userId];
+        if (!is_null($visible)) {
+            $params['visible'] = $visible;
+        }
+
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
+
+        $customers = array();
+        foreach ($rows as $row) {
+            $customers[$row['id']] = $this->buildEntity($row);
+        }
+
+        return $customers;
+    }
+
+    /**
+     * Find All Customers by Teamleader Id
+     *
+     * @param int $teamleaderId
+     * @param ?int $visible
+     * @return array of Customer entities
+     */
+    public function findAllByTeamleaderId(int $teamleaderId, ?int $visible = null): array {
+        $sql  = 'SELECT DISTINCT c.* ';
+        $sql .= 'FROM `tacos_customers` c ';
+        $sql .= 'LEFT JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = ct.`team_id` AND ut.`user_id` = :teamleaderId AND ut.`teamlead` = 1 ';
+        $sql .= 'WHERE (ut.`user_id` IS NOT NULL OR ct.`team_id` IS NULL) ';
+        if (!is_null($visible)) {
+            $sql .= 'AND c.`visible` = :visible ';
+        }
+        $sql .= 'ORDER BY c.`name` ASC';
+
+        $stmt = $this->pdo->prepare($sql);
+        $params = ['teamleaderId' => $teamleaderId];
+        if (!is_null($visible)) {
+            $params['visible'] = $visible;
+        }
+
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
+
+        $customers = array();
+        foreach ($rows as $row) {
+            $customers[$row['id']] = $this->buildEntity($row);
+        }
+
+        return $customers;
+    }
+
+
+
+    /**
      * Find Customers with Teams count and Projects count
      *
      * @return array of Customers with Teams count and Projects count
      */
-    public function findAllCustomersWithTeamsCountAndProjectsCount() {
-        $sql  = "SELECT `tacos_customers`.`id`, `tacos_customers`.`name`, `tacos_customers`.`color`, `tacos_customers`.`number`, `tacos_customers`.`visible`, ";
-        $sql .= "COUNT(DISTINCT `tacos_customers_teams`.`team_id` ) AS teams, ";
-        $sql .= "COUNT(DISTINCT `tacos_projects`.`id`) AS projects ";
-        $sql .= "FROM `tacos_customers` ";
-        $sql .= "LEFT JOIN `tacos_customers_teams` ON `tacos_customers_teams`.`customer_id` = `tacos_customers`.`id` ";
-        $sql .= "LEFT JOIN `tacos_teams` ON `tacos_teams`.`id` = `tacos_customers_teams`.`team_id` ";
-        $sql .= "LEFT JOIN `tacos_projects` ON `tacos_projects`.`customer_id` = `tacos_customers`.`id` ";
-        $sql .= "GROUP BY `tacos_customers`.`id`, `tacos_customers`.`name`, `tacos_customers`.`color`, `tacos_customers`.`number`, `tacos_customers`.`visible` ";
-        $sql .= "ORDER BY `tacos_customers`.`name`";
+    public function findAllCustomersWithTeamsCountAndProjectsCount(): array {
+        $sql  = "SELECT c.`id`, c.`name`, c.`color`, c.`number`, c.`visible`, ";
+        $sql .= "COUNT(DISTINCT ct.`team_id` ) AS teams, ";
+        $sql .= "COUNT(DISTINCT p.`id`) AS projects ";
+        $sql .= "FROM `tacos_customers` c ";
+        $sql .= "LEFT JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ";
+        $sql .= "LEFT JOIN `tacos_projects` p ON p.`customer_id` = c.`id` ";
+        $sql .= "GROUP BY c.`id`, c.`name`, c.`color`, c.`number`, c.`visible` ";
+        $sql .= "ORDER BY c.`name`";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
@@ -105,28 +223,28 @@ final class CustomerRepository
         return $stmt->fetchAll();
     }
 
-
     /**
      * Find Customers with Teams count and Projects count by User id
      *
+     * @param int $userId
      * @return array of Customers with Teams count and Projects count
      */
-    public function findCustomersWithTeamsCountAndProjectsCountByUserId(int $userId) {
-        $sql  = "SELECT `tacos_customers`.`id`, `tacos_customers`.`name`, `tacos_customers`.`color`, `tacos_customers`.`number`, `tacos_customers`.`visible`, ";
-        $sql .= "COUNT(DISTINCT `tacos_users_teams`.`team_id` ) AS teams, ";
-        $sql .= "COUNT(DISTINCT `tacos_projects_teams`.`project_id`) AS projects ";
-        $sql .= "FROM `tacos_customers` ";
+    public function findAllCustomersWithTeamsCountAndProjectsCountByUserId(int $userId): array {
+        $sql  = "SELECT c.`id`, c.`name`, c.`color`, c.`number`, c.`visible`, ";
+        $sql .= "COUNT(DISTINCT ut.`team_id` ) AS teams, ";
+        $sql .= "COUNT(DISTINCT pt.`project_id`) AS projects ";
+        $sql .= "FROM `tacos_customers` c ";
         // Customer teams
-        $sql .= "LEFT JOIN `tacos_customers_teams` ON `tacos_customers_teams`.`customer_id` = `tacos_customers`.`id` ";
+        $sql .= "LEFT JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ";
         // Teams to which the user belongs
-        $sql .= "LEFT JOIN `tacos_users_teams` ON `tacos_users_teams`.`team_id` = `tacos_customers_teams`.`team_id` AND `tacos_users_teams`.`user_id` = :userId ";
+        $sql .= "LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = ct.`team_id` AND ut.`user_id` = :userId ";
         // Projects to which these teams belong
-        $sql .= "LEFT JOIN `tacos_projects_teams` ON `tacos_projects_teams`.`team_id` = `tacos_users_teams`.`team_id` ";
-        $sql .= "LEFT JOIN `tacos_projects` ON `tacos_projects`.`id` = `tacos_projects_teams`.`project_id` AND `tacos_projects`.`customer_id` = `tacos_customers`.`id` ";
+        $sql .= "LEFT JOIN `tacos_projects_teams` pt ON pt.`team_id` = ut.`team_id` ";
+        $sql .= "LEFT JOIN `tacos_projects` p ON p.`id` = pt.`project_id` AND p.`customer_id` = c.`id` ";
 
-        $sql .= "WHERE `tacos_users_teams`.`user_id` IS NOT NULL ";
-        $sql .= "GROUP BY `tacos_customers`.`id`, `tacos_customers`.`name`, `tacos_customers`.`color`, `tacos_customers`.`number`, `tacos_customers`.`visible` ";
-        $sql .= "ORDER BY `tacos_customers`.`name`";
+        $sql .= 'WHERE (ut.`user_id` IS NOT NULL OR ct.`team_id` IS NULL) ';
+        $sql .= "GROUP BY c.`id`, c.`name`, c.`color`, c.`number`, c.`visible` ";
+        $sql .= "ORDER BY c.`name`";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
@@ -137,214 +255,37 @@ final class CustomerRepository
     }
 
     /**
-     * Find Visible Customers
+     * Find Customers with Teams count and Projects count by Teamleader id
      *
-     * @return array of Customers
+     * @param int $teamleaderId
+     * @return array of Customers with Teams count and Projects count
      */
-    public function findAllVisibleCustomers() {
-        $stmt = $this->pdo->prepare('SELECT `tacos_customers`.* FROM `tacos_customers` WHERE `tacos_customers`.`visible` = 1 ORDER BY `tacos_customers`.`name` ASC');
-        $stmt->execute();
-        $rows = $stmt->fetchAll();
+    public function findAllCustomersWithTeamsCountAndProjectsCountByTeamleaderId(int $teamleaderId): array {
+        $sql  = "SELECT c.`id`, c.`name`, c.`color`, c.`number`, c.`visible`, ";
+        $sql .= "COUNT(DISTINCT ut.`team_id` ) AS teams, ";
+        $sql .= "COUNT(DISTINCT pt.`project_id`) AS projects ";
+        $sql .= "FROM `tacos_customers` c ";
+        // Customer teams
+        $sql .= "LEFT JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ";
+        // Teams to which the user belongs
+        $sql .= "LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = ct.`team_id` AND ut.`user_id` = :teamleaderId AND ut.`teamlead` = 1 ";
+        // Projects to which these teams belong
+        $sql .= "LEFT JOIN `tacos_projects_teams` pt ON pt.`team_id` = ut.`team_id` ";
+        $sql .= "LEFT JOIN `tacos_projects` p ON p.`id` = pt.`project_id` AND p.`customer_id` = c.`id` ";
 
-        $customers = array();
-        foreach ($rows as $row) {
-            $customers[$row['id']] = $this->buildEntity($row);
-        }
-
-        return $customers;
-    }
-
-    /**
-     * Find All Customers in Teams. NOTE: unused
-     *
-     * @param array $teamsIds
-     * @return array of Customers
-     */
-    public function findAllCustomersInTeams($teamsIds) {
-        $customers = array();
-
-        if (count($teamsIds) > 0) {
-            [$teamsIN, $pdoParams] = $this->sqlHelper->buildInClause($teamsIds, 'teamsId', '`tacos_customers_teams`.`team_id`');
-
-            $sql  = "SELECT `tacos_customers`.* FROM `tacos_customers` ";
-            $sql .= "LEFT JOIN `tacos_customers_teams` ON `tacos_customers_teams`.`customer_id` = `tacos_customers`.`id` ";
-            $sql .= "WHERE {$teamsIN} ";
-            $sql .= "GROUP BY `tacos_customers`.`id` ";
-            $sql .= "ORDER BY `tacos_customers`.`name` ASC";
-
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute($pdoParams);
-            $rows = $stmt->fetchAll();
-
-            foreach ($rows as $row) {
-                $customers[$row['id']] = $this->buildEntity($row);
-            }
-        }
-
-        return $customers;
-    }
-
-    /**
-     * Find All visible Customers in Teams. NOTE: unused
-     *
-     * @param array $teamsIds
-     * @return array of Customers
-     */
-    public function findAllVisibleCustomersInTeams($teamsIds) {
-        $customers = array();
-
-        if (count($teamsIds) > 0) {
-            [$teamsIN, $pdoParams] = $this->sqlHelper->buildInClause($teamsIds, 'teamsId', '`tacos_customers_teams`.`team_id`');
-
-            $sql  = "SELECT `tacos_customers`.* FROM `tacos_customers` ";
-            $sql .= "LEFT JOIN `tacos_customers_teams` ON `tacos_customers_teams`.`customer_id` = `tacos_customers`.`id` ";
-            $sql .= "WHERE {$teamsIN} ";
-            $sql .= "AND `tacos_customers`.`visible` = 1 ";
-            $sql .= "GROUP BY `tacos_customers`.`id` ";
-            $sql .= "ORDER BY `tacos_customers`.`name` ASC";
-
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute($pdoParams);
-            $rows = $stmt->fetchAll();
-
-            foreach ($rows as $row) {
-                $customers[$row['id']] = $this->buildEntity($row);
-            }
-        }
-
-        return $customers;
-    }
-
-    /**
-     * Find All Customers have teams. NOTE: unused
-     *
-     * @return array of Customers
-     */
-    public function findAllCustomersHaveTeams() {
-        $stmt = $this->pdo->prepare('SELECT `tacos_customers`.* FROM `tacos_customers` LEFT JOIN `tacos_customers_teams` ON `tacos_customers_teams`.`customer_id` = `tacos_customers`.`id` WHERE `tacos_customers_teams`.`team_id` IS NOT NULL GROUP BY `tacos_customers`.`id` ORDER BY `tacos_customers`.`name` ASC');
-        $stmt->execute();
-        $rows = $stmt->fetchAll();
-
-        $customers = array();
-        foreach ($rows as $row) {
-            $customers[$row['id']] = $this->buildEntity($row);
-        }
-
-        return $customers;
-    }
-
-    /**
-     * Find All visible Customers have teams
-     *
-     * @return array of Customers
-     */
-    public function findAllVisibleCustomersHaveTeams() {
-        $stmt = $this->pdo->prepare('SELECT `tacos_customers`.* FROM `tacos_customers` LEFT JOIN `tacos_customers_teams` ON `tacos_customers_teams`.`customer_id` = `tacos_customers`.`id` WHERE `tacos_customers_teams`.`team_id` IS NOT NULL AND `tacos_customers`.`visible` = 1 GROUP BY `tacos_customers`.`id` ORDER BY `tacos_customers`.`name` ASC');
-        $stmt->execute();
-        $rows = $stmt->fetchAll();
-
-        $customers = array();
-        foreach ($rows as $row) {
-            $customers[$row['id']] = $this->buildEntity($row);
-        }
-
-        return $customers;
-    }
-
-    /**
-     * Find All Customers not in a team
-     *
-     * @return array of Customers
-     */
-    public function findAllCustomersNotInTeam() {
-        $stmt = $this->pdo->prepare('SELECT `tacos_customers`.* FROM `tacos_customers` LEFT JOIN `tacos_customers_teams` ON `tacos_customers_teams`.`customer_id` = `tacos_customers`.`id` WHERE `tacos_customers_teams`.`team_id` IS NULL GROUP BY `tacos_customers`.`id` ORDER BY `tacos_customers`.`name` ASC');
-        $stmt->execute();
-        $rows = $stmt->fetchAll();
-
-        $customers = array();
-        foreach ($rows as $row) {
-            $customers[$row['id']] = $this->buildEntity($row);
-        }
-
-        return $customers;
-    }
-
-    /**
-     * Find All Visible Customers not in a team
-     *
-     * @return array of Customers
-     */
-    public function findAllVisibleCustomersNotInTeam() {
-        $stmt = $this->pdo->prepare('SELECT `tacos_customers`.* FROM `tacos_customers` LEFT JOIN `tacos_customers_teams` ON `tacos_customers_teams`.`customer_id` = `tacos_customers`.`id` WHERE `tacos_customers_teams`.`team_id` IS NULL AND `tacos_customers`.`visible` = 1 GROUP BY `tacos_customers`.`id` ORDER BY `tacos_customers`.`name` ASC');
-        $stmt->execute();
-        $rows = $stmt->fetchAll();
-
-        $customers = array();
-        foreach ($rows as $row) {
-            $customers[$row['id']] = $this->buildEntity($row);
-        }
-
-        return $customers;
-    }
-
-    /**
-     * Find All Customers by user Id
-     *
-     * @param int $userId
-     * @return array of Customers
-     */
-    public function findAllCustomersByUserId(int $userId) {
-        $sql  = 'SELECT `tacos_customers`.* ';
-        $sql .= 'FROM `tacos_customers` ';
-        $sql .= 'LEFT JOIN `tacos_customers_teams` ON `tacos_customers_teams`.`customer_id` = `tacos_customers`.`id` ';
-        $sql .= 'LEFT JOIN `tacos_users_teams` ON `tacos_users_teams`.`team_id` = `tacos_customers_teams`.`team_id` ';
-        $sql .= 'LEFT JOIN `tacos_users` ON `tacos_users`.`id` = `tacos_users_teams`.`user_id` ';
-        $sql .= 'WHERE `tacos_users`.`id` = :userId ';
-        $sql .= 'GROUP BY `tacos_customers`.`id` ORDER BY `tacos_customers`.`name` ASC';
+        $sql .= 'WHERE (ut.`user_id` IS NOT NULL OR ct.`team_id` IS NULL) ';
+        $sql .= "GROUP BY c.`id`, c.`name`, c.`color`, c.`number`, c.`visible` ";
+        $sql .= "ORDER BY c.`name`";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
-            'userId' => $userId,
+            'teamleaderId' => $teamleaderId
         ]);
-        $rows = $stmt->fetchAll();
 
-        $customers = array();
-        foreach ($rows as $row) {
-            $customers[$row['id']] = $this->buildEntity($row);
-        }
-
-        return $customers;
+        return $stmt->fetchAll();
     }
 
-    /**
-     * Find All Customers by user Id
-     *
-     * @param int $userId
-     * @return array of Customers
-     */
-    public function findAllVisibleCustomersByUserId(int $userId) {
-        $sql  = 'SELECT `tacos_customers`.* ';
-        $sql .= 'FROM `tacos_customers` ';
-        $sql .= 'LEFT JOIN `tacos_customers_teams` ON `tacos_customers_teams`.`customer_id` = `tacos_customers`.`id` ';
-        $sql .= 'LEFT JOIN `tacos_users_teams` ON `tacos_users_teams`.`team_id` = `tacos_customers_teams`.`team_id` ';
-        $sql .= 'LEFT JOIN `tacos_users` ON `tacos_users`.`id` = `tacos_users_teams`.`user_id` ';
-        $sql .= 'WHERE `tacos_users`.`id` = :userId ';
-        $sql .= 'AND `tacos_customers`.`visible` = 1 ';
-        $sql .= 'GROUP BY `tacos_customers`.`id` ORDER BY `tacos_customers`.`name` ASC';
 
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            'userId' => $userId,
-        ]);
-        $rows = $stmt->fetchAll();
-
-        $customers = array();
-        foreach ($rows as $row) {
-            $customers[$row['id']] = $this->buildEntity($row);
-        }
-
-        return $customers;
-    }
 
     /**
      * Insert Customer

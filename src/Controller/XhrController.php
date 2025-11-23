@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Service\ActivityService;
-use App\Service\CustomerService;
 use App\Service\ProjectService;
 use App\Service\TagService;
 use App\Service\TimesheetService;
@@ -27,17 +26,15 @@ final class XhrController
 {
     private $container;
     private $activityService;
-    private $customerService;
     private $projectService;
     private $tagService;
     private $timesheetService;
     private $userService;
 
-    public function __construct(ContainerInterface $container, ActivityService $activityService, CustomerService $customerService, ProjectService $projectService, TagService $tagService, TimesheetService $timesheetService, UserService $userService)
+    public function __construct(ContainerInterface $container, ActivityService $activityService, ProjectService $projectService, TagService $tagService, TimesheetService $timesheetService, UserService $userService)
     {
         $this->container = $container;
         $this->activityService = $activityService;
-        $this->customerService = $customerService;
         $this->projectService = $projectService;
         $this->tagService = $tagService;
         $this->timesheetService = $timesheetService;
