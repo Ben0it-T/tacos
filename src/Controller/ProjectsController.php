@@ -252,7 +252,7 @@ final class ProjectsController
             $project = $this->projectService->findProject(intval($args['projectId']));
         }
         else {
-            $project = $this->projectService->findOneByIdAndTeamleaderId(intval($args['projectId']), intval($currentUser->getId()));
+            $project = $this->projectService->findOneByIdAndTeamleaderIdStrict(intval($args['projectId']), intval($currentUser->getId()));
         }
 
         if ($project) {
@@ -350,7 +350,7 @@ final class ProjectsController
             $project = $this->projectService->findProject(intval($args['projectId']));
         }
         else {
-            $project = $this->projectService->findOneByIdAndTeamleaderId(intval($args['projectId']), intval($currentUser->getId()));
+            $project = $this->projectService->findOneByIdAndTeamleaderIdStrict(intval($args['projectId']), intval($currentUser->getId()));
         }
 
         if ($project) {

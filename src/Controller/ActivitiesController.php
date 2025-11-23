@@ -47,7 +47,7 @@ final class ActivitiesController
 
         // Get projects
         if ($currentUser->getRole() === 3) {
-            $projects = $this->projectService->findAllByVisibility(1);
+            $projects = $this->projectService->findAll(1);
         }
         else {
             $projects = $this->projectService->findAllByTeamleaderId($currentUser->getId(), 1);

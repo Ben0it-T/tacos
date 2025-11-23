@@ -20,9 +20,12 @@ final class ProjectRepository
      * @param int $id
      * @return Project entity or false
      */
-    public function findOneById(int $id) {
-        $stmt = $this->pdo->prepare('SELECT `tacos_projects`.* FROM `tacos_projects` WHERE `tacos_projects`.`id` = ? LIMIT 1');
-        $stmt->execute([$id]);
+    public function findOneById(int $id): Project|false {
+        $sql = 'SELECT p.* FROM `tacos_projects` p WHERE p.`id` = :id LIMIT 1';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'id' => $id
+        ]);
         $row = $stmt->fetch();
 
         if ($row) {
@@ -35,12 +38,45 @@ final class ProjectRepository
 
     /**
      * Find One Project by id and teamleader id
+     * Note : accepts projects without a team
      *
      * @param int $projectId
      * @param int $teamleaderId
      * @return Project entity or false
      */
-    public function findOneByIdAndTeamleaderId(int $projectId, int $teamleaderId) {
+    public function findOneByIdAndTeamleaderId(int $projectId, int $teamleaderId): Project|false {
+        $sql  = 'SELECT p.* ';
+        $sql .= 'FROM `tacos_projects` p ';
+        $sql .= 'LEFT JOIN `tacos_projects_teams` pt ON pt.`project_id` = p.`id` ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = pt.`team_id` AND ut.`user_id` = :teamleaderId AND ut.`teamlead` = 1 ';
+        $sql .= 'WHERE p.`id` = :projectId AND (pt.`project_id` IS NULL OR ut.`user_id` IS NOT NULL) ';
+        $sql .= 'LIMIT 1';
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->execute([
+            'projectId' => $projectId,
+            'teamleaderId' => $teamleaderId
+        ]);
+        $row = $stmt->fetch();
+
+        if ($row) {
+            return $this->buildEntity($row);
+        }
+        else {
+            return false;
+        }
+    }
+
+    /**
+     * Find One Project by id and user id is teamleader
+     * Note : requires teamlead on at least one team
+     *
+     * @param int $projectId
+     * @param int $teamleaderId
+     * @return Project entity or false
+     */
+    public function findOneByIdAndTeamleaderIdStrict(int $projectId, int $teamleaderId): Project|false {
         $sql  = 'SELECT p.* ';
         $sql .= 'FROM `tacos_projects` p ';
         $sql .= 'JOIN `tacos_projects_teams` pt ON pt.`project_id` = p.`id` ';
@@ -69,32 +105,22 @@ final class ProjectRepository
     /**
      * Find All Projects
      *
+     * @param ?int $visible
      * @return array of Project entities
      */
-    public function findAll() {
-        $stmt = $this->pdo->prepare('SELECT `tacos_projects`.* FROM `tacos_projects` ORDER BY `tacos_projects`.`name` ASC');
-        $stmt->execute();
-        $rows = $stmt->fetchAll();
-
-        $projects = array();
-        foreach ($rows as $row) {
-            $projects[$row['id']] = $this->buildEntity($row);
+    public function findAll(?int $visible = null): array {
+        $sql  = 'SELECT p.* FROM `tacos_projects` p ';
+        if (!is_null($visible)) {
+            $sql .= 'WHERE p.`visible` = :visible ';
         }
+        $sql .= 'ORDER BY p.`name` ASC';
 
-        return $projects;
-    }
-
-    /**
-     * Find All Projects by visibility
-     *
-     * @param int $visible
-     * @return array of Project entities
-     */
-    public function findAllByVisibility(int $visible) {
-        $stmt = $this->pdo->prepare('SELECT `tacos_projects`.* FROM `tacos_projects` WHERE `tacos_projects`.`visible` = :visible ORDER BY `tacos_projects`.`name` ASC');
-        $stmt->execute([
-            'visible' => $visible
-        ]);
+        $stmt = $this->pdo->prepare($sql);
+        $params = array();
+        if (!is_null($visible)) {
+            $params['visible'] = $visible;
+        }
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
         $projects = array();
@@ -108,37 +134,26 @@ final class ProjectRepository
     /**
      * Find All Projects by Customer id
      *
-     * @param int $customerId
+     * @param int  $customerId
+     * @param ?int $visible
      * @return array of Project entities
      */
-    public function findAllByCustomerId(int $customerId) {
-        $stmt = $this->pdo->prepare('SELECT `tacos_projects`.* FROM `tacos_projects` WHERE `tacos_projects`.`customer_id` = :customerId ORDER BY `tacos_projects`.`name` ASC');
-        $stmt->execute([
-            'customerId' => $customerId
-        ]);
-        $rows = $stmt->fetchAll();
+    public function findAllByCustomerId(int $customerId, ?int $visible = null): array {
+        $sql  = 'SELECT p.* FROM `tacos_projects` p ';
+        $sql .= 'WHERE p.`customer_id` = :customerId ';
+        if (!is_null($visible)) {
+            $sql .= 'AND p.`visible` = :visible ';
+        }
+        $sql .= 'ORDER BY p.`name` ASC';
 
-        $projects = array();
-        foreach ($rows as $row) {
-            $projects[$row['id']] = $this->buildEntity($row);
+        $stmt = $this->pdo->prepare($sql);
+
+        $params = ['customerId' => $customerId];
+        if (!is_null($visible)) {
+            $params['visible'] = $visible;
         }
 
-        return $projects;
-    }
-
-    /**
-     * Find All Projects by Customer id and visibility
-     *
-     * @param int $customerId
-     * @param int $visible
-     * @return array of Project entities
-     */
-    public function findAllByCustomerIdAndVisibility(int $customerId, int $visible) {
-        $stmt = $this->pdo->prepare('SELECT `tacos_projects`.* FROM `tacos_projects` WHERE `tacos_projects`.`customer_id` = :customerId AND `tacos_projects`.`visible` = :visible ORDER BY `tacos_projects`.`name` ASC');
-        $stmt->execute([
-            'customerId' => $customerId,
-            'visible' => $visible
-        ]);
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
         $projects = array();
@@ -154,21 +169,29 @@ final class ProjectRepository
      * Note : A project is either linked to at least one team, or linked to none.
      *        A user can see the projects associated/linked with their teams AND projects that are not associated/linked with any team.
      *
-     * @param int $userId
+     * @param int  $userId
+     * @param ?int $visible
      * @return array of Project entities
      */
-    public function findAllByUserId(int $userId) {
+    public function findAllByUserId(int $userId, ?int $visible = null): array {
         $sql  = 'SELECT DISTINCT p.* ';
         $sql .= 'FROM `tacos_projects` p ';
         $sql .= 'LEFT JOIN `tacos_projects_teams` pt ON pt.`project_id` = p.`id` ';
         $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = pt.`team_id` AND ut.`user_id` = :userId ';
         $sql .= 'WHERE (ut.`user_id` IS NOT NULL OR pt.`project_id` IS NULL) ';
+        if (!is_null($visible)) {
+            $sql .= 'AND p.`visible` = :visible ';
+        }
         $sql .= 'ORDER BY p.`name` ASC';
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            'userId' => $userId
-        ]);
+
+        $params = ['userId' => $userId];
+        if (!is_null($visible)) {
+            $params['visible'] = $visible;
+        }
+
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
         $projects = array();
@@ -180,64 +203,38 @@ final class ProjectRepository
     }
 
     /**
-     * Find All Projects by user Id and visibility
+     * Find All Projects by user Id and customer id
      * Note : A project is either linked to at least one team, or linked to none.
      *        A user can see the projects associated/linked with their teams AND projects that are not associated/linked with any team.
      *
-     * @param int $userId
-     * @param int $visible
+     * @param int  $userId
+     * @param int  $customerId
+     * @param ?int $visible
      * @return array of Project entities
      */
-    public function findAllByUserIdAndVisibility(int $userId, int $visible) {
-        $sql  = 'SELECT DISTINCT p.* ';
-        $sql .= 'FROM `tacos_projects` p ';
-        $sql .= 'LEFT JOIN `tacos_projects_teams` pt ON pt.`project_id` = p.`id` ';
-        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = pt.`team_id` AND ut.`user_id` = :userId ';
-        $sql .= 'WHERE (ut.`user_id` IS NOT NULL OR pt.`project_id` IS NULL) ';
-        $sql .= 'AND p.`visible` = :visible ';
-        $sql .= 'ORDER BY p.`name` ASC';
-
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            'userId' => $userId,
-            'visible' => $visible
-        ]);
-        $rows = $stmt->fetchAll();
-
-        $projects = array();
-        foreach ($rows as $row) {
-            $projects[$row['id']] = $this->buildEntity($row);
-        }
-
-        return $projects;
-    }
-
-    /**
-     * Find All Projects by user Id and customer id and visibility
-     * Note : A project is either linked to at least one team, or linked to none.
-     *        A user can see the projects associated/linked with their teams AND projects that are not associated/linked with any team.
-     *
-     * @param int $userId
-     * @param int $customerId
-     * @param int $visible
-     * @return array of Project entities
-     */
-    public function findAllByUserIdAndCustomerIdAndVisibility(int $userId, int $customerId, int $visible) {
+    public function findAllByUserIdAndCustomerId(int $userId, int $customerId, ?int $visible = null): array {
         $sql  = 'SELECT DISTINCT p.* ';
         $sql .= 'FROM `tacos_projects` p ';
         $sql .= 'LEFT JOIN `tacos_projects_teams` pt ON pt.`project_id` = p.`id` ';
         $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = pt.`team_id` AND ut.`user_id` = :userId ';
         $sql .= 'WHERE p.`customer_id` = :customerId ';
         $sql .= 'AND (ut.`user_id` IS NOT NULL OR pt.`project_id` IS NULL) ';
-        $sql .= 'AND p.`visible` = :visible ';
+        if (!is_null($visible)) {
+            $sql .= 'AND p.`visible` = :visible ';
+        }
         $sql .= 'ORDER BY p.`name` ASC';
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
+
+        $params = array(
             'userId' => $userId,
             'customerId' => $customerId,
-            'visible' => $visible
-        ]);
+        );
+        if (!is_null($visible)) {
+            $params['visible'] = $visible;
+        }
+
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
         $projects = array();

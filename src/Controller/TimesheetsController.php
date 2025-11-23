@@ -60,7 +60,7 @@ final class TimesheetsController
         $currentUser = $this->userService->findUser($session['auth']['userId']);
 
         // Get projects
-        $projects = $this->projectService->findAllByUserIdAndVisibility($currentUser->getId(), 1);
+        $projects = $this->projectService->findAllByUserId($currentUser->getId(), 1);
         $projectsIds = array();
         $projectsList = array();
         foreach ($projects as $entry) {
@@ -354,7 +354,7 @@ final class TimesheetsController
         }
 
         // Get projects
-        $projects = $this->projectService->findAllByUserIdAndVisibility($currentUser->getId(), 1);
+        $projects = $this->projectService->findAllByUserId($currentUser->getId(), 1);
         $projectsList = array();
         foreach ($projects as $entry) {
             $projectsList[] = array(
@@ -448,7 +448,7 @@ final class TimesheetsController
             }
 
             // Get projects
-            $projects = $this->projectService->findAllByUserIdAndVisibility($currentUser->getId(), 1);
+            $projects = $this->projectService->findAllByUserId($currentUser->getId(), 1);
             $projectsList = array();
             foreach ($projects as $entry) {
                 $projectsList[] = array(

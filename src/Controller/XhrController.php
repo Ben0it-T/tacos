@@ -53,11 +53,11 @@ final class XhrController
                 case 'projects':
                     if ($key === "") {
                         // Get all
-                        $results = $this->projectService->findAllByUserIdAndVisibility($currentUser->getId(), 1);
+                        $results = $this->projectService->findAllByUserId($currentUser->getId(), 1);
                     }
                     else {
                         // Get by customer id
-                        $results = $this->projectService->findAllByUserIdAndCustomerIdAndVisibility($currentUser->getId(), intval($key), 1);
+                        $results = $this->projectService->findAllByUserIdAndCustomerId($currentUser->getId(), intval($key), 1);
                     }
                     break;
 

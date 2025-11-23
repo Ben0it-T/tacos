@@ -41,6 +41,7 @@ final class ProjectService
 
     /**
      * Find One Project by id and teamleader id
+     * Note : accepts projects without a team
      *
      * @param int $projectId
      * @param int $teamleaderId
@@ -50,81 +51,62 @@ final class ProjectService
         return $this->projectRepository->findOneByIdAndTeamleaderId($projectId, $teamleaderId);
     }
 
+    /**
+     * Find One Project by id and user id is teamleader
+     * Note : requires teamlead on at least one team
+     *
+     * @param int $projectId
+     * @param int $teamleaderId
+     * @return Project entity or false
+     */
+    public function findOneByIdAndTeamleaderIdStrict(int $projectId, int $teamleaderId) {
+        return $this->projectRepository->findOneByIdAndTeamleaderIdStrict($projectId, $teamleaderId);
+    }
+
 
 
     /**
      * Find All Projects
      *
+     * @param ?int $visible
      * @return array of Project entities
      */
-    public function findAll() {
-        return $this->projectRepository->findAll();
-    }
-
-    /**
-     * Find All Projects by visibility
-     *
-     * @param int $visible
-     * @return array of Project entities
-     */
-    public function findAllByVisibility(int $visible) {
-        return $this->projectRepository->findAllByVisibility($visible);
+    public function findAll(?int $visible = null) {
+        return $this->projectRepository->findAll($visible);
     }
 
     /**
      * Find All Projects by Customer id
      *
-     * @param int $customerId
-     * @return array of Projects
-     */
-    public function findAllByCustomerId(int $customerId) {
-        return $this->projectRepository->findAllByCustomerId($customerId);
-    }
-
-    /**
-     * Find All Projects by Customer id and visibility
-     *
-     * @param int $customerId
-     * @param int $visible
+     * @param int  $customerId
+     * @param ?int $visible
      * @return array of Project entities
      */
-    public function findAllByCustomerIdAndVisibility(int $customerId, int $visible) {
-        return $this->projectRepository->findAllByCustomerIdAndVisibility($customerId, $visible);
+    public function findAllByCustomerId(int $customerId, ?int $visible = null) {
+        return $this->projectRepository->findAllByCustomerId($customerId, $visible);
     }
 
     /**
      * Find All Projects by user Id
      *
-     * @param int $userId
+     * @param int  $userId
+     * @param ?int $visible
      * @return array of Project entities
      */
-    public function findAllByUserId(int $userId) {
-        return $this->projectRepository->findAllByUserId($userId);
+    public function findAllByUserId(int $userId, ?int $visible = null) {
+        return $this->projectRepository->findAllByUserId($userId, $visible);
     }
 
-    /**
-     * Find All Projects by user Id and visibility
+   /**
+     * Find All Projects by user Id and customer id
      *
-     * @param int $userId
-     * @param int $visible
+     * @param int  $userId
+     * @param int  $customerId
+     * @param ?int $visible
      * @return array of Project entities
      */
-    public function findAllByUserIdAndVisibility(int $userId, int $visible) {
-        return $this->projectRepository->findAllByUserIdAndVisibility($userId, $visible);
-    }
-
-    /**
-     * Find All Projects by user Id and customer id and visibility
-     * Note : A project is either linked to at least one team, or linked to none.
-     *        A user can see the projects associated/linked with their teams AND projects that are not associated/linked with any team.
-     *
-     * @param int $userId
-     * @param int $customerId
-     * @param int $visible
-     * @return array of Project entities
-     */
-    public function findAllByUserIdAndCustomerIdAndVisibility(int $userId, int $customerId, int $visible) {
-        return $this->projectRepository->findAllByUserIdAndCustomerIdAndVisibility($userId, $customerId, $visible);
+    public function findAllByUserIdAndCustomerId(int $userId, int $customerId, ?int $visible = null) {
+        return $this->projectRepository->findAllByUserIdAndCustomerId($userId, $customerId, $visible);
     }
 
     /**
