@@ -68,7 +68,6 @@ final class ProjectsController
                 'name' => $entry->getName(),
             );
         }
-        usort($customersList, fn($a, $b) => $a['name'] <=> $b['name']);
 
         // Get teams
         $teams = ($currentUser->getRole() === 3) ? $this->teamService->findAllTeams() : $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
@@ -270,7 +269,6 @@ final class ProjectsController
                     'name' => $entry->getName(),
                 );
             }
-            usort($customersList, fn($a, $b) => $a['name'] <=> $b['name']);
 
             // Get teams
             $teams = ($currentUser->getRole() === 3) ? $this->teamService->findAllTeams() : $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
