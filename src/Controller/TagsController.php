@@ -144,12 +144,9 @@ final class TagsController
             }
             else {
                 $flash->addMessage('error', $errors);
+                $url = $routeParser->urlFor('tags_edit', array('tagId' => $args['tagId']));
+                return $response->withStatus(302)->withHeader('Location', $url);
             }
-
-            // redirect
-            $url = $routeParser->urlFor('tags_edit', array('tagId' => $args['tagId']));
-            return $response->withStatus(302)->withHeader('Location', $url);
-
         }
 
         // redirect
