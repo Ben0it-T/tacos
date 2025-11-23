@@ -49,6 +49,7 @@ final class ActivityService
 
     /**
      * Find One Activity by id and teamleader id
+     * Note : accepts activities without a team
      *
      * @param int $activityId
      * @param int $teamleaderId
@@ -56,6 +57,18 @@ final class ActivityService
      */
     public function findOneByIdAndTeamleaderId(int $activityId, int $teamleaderId) {
         return $this->activityRepository->findOneByIdAndTeamleaderId($activityId, $teamleaderId);
+    }
+
+    /**
+     * Find One Activity by id user id is teamleader
+     * Note : requires teamlead on at least one team
+     *
+     * @param int $activityId
+     * @param int $teamleaderId
+     * @return Activity entity or false
+     */
+    public function findOneByIdAndTeamleaderIdStrict(int $activityId, int $teamleaderId) {
+        return $this->activityRepository->findOneByIdAndTeamleaderIdStrict($activityId, $teamleaderId);
     }
 
 

@@ -197,7 +197,7 @@ final class ActivitiesController
             $activity = $this->activityService->findActivity(intval($args['activityId']));
         }
         else {
-            $activity = $this->activityService->findOneByIdAndTeamleaderId(intval($args['activityId']), $currentUser->getId());
+            $activity = $this->activityService->findOneByIdAndTeamleaderIdStrict(intval($args['activityId']), $currentUser->getId());
         }
 
         if ($activity) {
@@ -267,7 +267,7 @@ final class ActivitiesController
             $activity = $this->activityService->findActivity(intval($args['activityId']));
         }
         else {
-            $activity = $this->activityService->findOneByIdAndTeamleaderId(intval($args['activityId']), $currentUser->getId());
+            $activity = $this->activityService->findOneByIdAndTeamleaderIdStrict(intval($args['activityId']), $currentUser->getId());
         }
 
         if ($activity) {
