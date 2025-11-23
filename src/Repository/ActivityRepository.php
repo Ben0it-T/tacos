@@ -243,7 +243,7 @@ final class ActivityRepository
 
         $stmt = $this->pdo->prepare($sql);
 
-         $params = ['userId' => $userId];
+        $params = ['userId' => $userId];
         if (!is_null($visible)) {
             $params['visible'] = $visible;
         }
@@ -279,7 +279,7 @@ final class ActivityRepository
 
         $stmt = $this->pdo->prepare($sql);
 
-         $params = ['teamleaderId' => $teamleaderId];
+        $params = ['teamleaderId' => $teamleaderId];
         if (!is_null($visible)) {
             $params['visible'] = $visible;
         }
@@ -317,10 +317,10 @@ final class ActivityRepository
 
         $stmt = $this->pdo->prepare($sql);
 
-         $params = array(
+        $params = array(
             'projectId' => $projectId,
             'userId' => $userId
-         );
+        );
         if (!is_null($visible)) {
             $params['visible'] = $visible;
         }

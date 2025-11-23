@@ -477,23 +477,11 @@ final class TimesheetsController
                 $selectedTagsIds[] = $selectedTag->getId();
             }
 
-            // Get project activities
-            $project = $this->projectService->findProject($timesheet->getProjectId());
-            $globalActivities = ($project->getGlobalActivities() === 1) ? $this->activityService->findAllGlobalActivities() : array();
-            $projectActivities = $this->activityService->findAllProjectActivitiesByProjectId($timesheet->getProjectId());
-            $projectActivities = array_merge($globalActivities, $projectActivities);
-
-            $allowedActivities = $this->activityService->findAllByProjectId($timesheet->getProjectId());
-            $allowedActivitiesIds = array();
-            foreach ($allowedActivities as $entry) {
-                $allowedActivitiesIds[] = $entry->getId();
-            }
-
+            // Get current project activities
+            $projectActivities = $this->activityService->findAllByProjectId($timesheet->getProjectId());
             $projectActivitiesIds = array();
             foreach ($projectActivities as $projectActivity) {
-                if (in_array($projectActivity->getId(), $allowedActivitiesIds)) {
-                    $projectActivitiesIds[] = $projectActivity->getId();
-                }
+                $projectActivitiesIds[] = $projectActivity->getId();
             }
 
             $viewData = array();
