@@ -106,7 +106,7 @@ final class TagRepository
     public function findAllTagIdsByTimesheetId(int $timesheetId): array {
         $sql  = 'SELECT t.`id` ';
         $sql .= 'FROM `tacos_tags` t ';
-        $sql .= 'JOIN `tacos_timesheet_tags` ON tt.`tag_id` = t.`id` ';
+        $sql .= 'JOIN `tacos_timesheet_tags` tt ON tt.`tag_id` = t.`id` ';
         $sql .= 'WHERE tt.`timesheet_id` = :timesheetId';
 
         $stmt = $this->pdo->prepare($sql);
