@@ -139,7 +139,7 @@ final class TimesheetService
      * Find Timesheet by id
      *
      * @param int $id
-     * @return Timesheet or false
+     * @return Timesheet entity or false
      */
     public function findTimesheet(int $id) {
         return $this->timesheetRepository->find($id);
@@ -162,8 +162,8 @@ final class TimesheetService
      * @param int $userId
      * @return Timesheet or false
      */
-    public function findOneActiveTimesheetByUserId(int $userId) {
-        return $this->timesheetRepository->findOneActiveTimesheetByUserId($userId);
+    public function findOneActiveRecordByUserId(int $userId) {
+        return $this->timesheetRepository->findOneActiveRecordByUserId($userId);
     }
 
     /**
@@ -172,8 +172,8 @@ final class TimesheetService
      * @param int $userId
      * @return array of Timesheets
      */
-    public function findAllActiveTimesheetByUserId(int $userId) {
-        return $this->timesheetRepository->findAllActiveTimesheetByUserId($userId);
+    public function findAllActiveRecordsByUserId(int $userId) {
+        return $this->timesheetRepository->findAllActiveRecordsByUserId($userId);
     }
 
     /**
@@ -201,18 +201,19 @@ final class TimesheetService
      * @param int $userId
      * @return int
      */
-    public function getNbOfActiveRecordsByUserId(int $userId) {
-        return $this->timesheetRepository->getNbOfActiveRecordsByUserId($userId);
+    public function countActiveRecordsByUserId(int $userId) {
+        return $this->timesheetRepository->countActiveRecordsByUserId($userId);
     }
 
     /**
-     * Get working hours by user Id
+     * Get total duration (minutes) for a user in a given time period
      *
-     * @param string $timePeriod
-     * @return int
+     * @param string $timePeriod 'today', 'week', 'lastweek', 'month', 'lastmonth'
+     * @param int $userId
+     * @return int Total duration in minutes
      */
-    public function getWorkingHoursByTimePeriodAndUserId (string $timePeriod, int $userId) {
-        return $this->timesheetRepository->getWorkingHoursByTimePeriodAndUserId($timePeriod, $userId);
+    public function getTotalDurationByUserIdAndPeriod (string $timePeriod, int $userId) {
+        return $this->timesheetRepository->getTotalDurationByUserIdAndPeriod($timePeriod, $userId);
     }
 
     /**
@@ -486,7 +487,7 @@ final class TimesheetService
             $timesheet->setModifiedAt(date("Y-m-d H:i:s"));
 
             // Stop active timesheets
-            $activeTimesheets = $this->timesheetRepository->findAllActiveTimesheetByUserId($userId);
+            $activeTimesheets = $this->timesheetRepository->findAllActiveRecordsByUserId($userId);
             foreach ($activeTimesheets as $activeTimesheet) {
                 $activeTimesheetStart = date("Y-m-d", strtotime($activeTimesheet->getStart()));
                 $activeTimesheetEnd = $activeTimesheetStart < date_format($start,"Y-m-d") ? $activeTimesheetStart." 23:59:00" : date_format($start,"Y-m-d H:i");
@@ -620,7 +621,7 @@ final class TimesheetService
         $ts->setModifiedAt(date("Y-m-d H:i:s"));
 
         // Stop active timesheets
-        $activeTimesheets = $this->timesheetRepository->findAllActiveTimesheetByUserId($timesheet->getUserId());
+        $activeTimesheets = $this->timesheetRepository->findAllActiveRecordsByUserId($timesheet->getUserId());
         foreach ($activeTimesheets as $activeTimesheet) {
             $activeTimesheetStart = date("Y-m-d", strtotime($activeTimesheet->getStart()));
             $activeTimesheetEnd = $activeTimesheetStart < date_format($start,"Y-m-d") ? $activeTimesheetStart." 23:59:00" : date_format($start,"Y-m-d H:i");

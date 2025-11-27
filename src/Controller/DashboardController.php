@@ -40,15 +40,15 @@ final class DashboardController
         $currentUser = $this->userService->findUser($session['auth']['userId']);
 
         // Active records
-        $activeRecords = $this->timesheetService->getNbOfActiveRecordsByUserId($currentUser->getId());
+        $activeRecords = $this->timesheetService->countActiveRecordsByUserId($currentUser->getId());
 
         // Working hours today
         $workingHours = array(
-            'today' => $this->timesheetService->timeToString(intval($this->timesheetService->getWorkingHoursByTimePeriodAndUserId('today', $currentUser->getId()))),
-            'week' => $this->timesheetService->timeToString(intval($this->timesheetService->getWorkingHoursByTimePeriodAndUserId('week', $currentUser->getId()))),
-            'lastweek' => $this->timesheetService->timeToString(intval($this->timesheetService->getWorkingHoursByTimePeriodAndUserId('lastweek', $currentUser->getId()))),
-            'month' => $this->timesheetService->timeToString(intval($this->timesheetService->getWorkingHoursByTimePeriodAndUserId('month', $currentUser->getId()))),
-            'lastmonth' => $this->timesheetService->timeToString(intval($this->timesheetService->getWorkingHoursByTimePeriodAndUserId('lastmonth', $currentUser->getId()))),
+            'today' => $this->timesheetService->timeToString(intval($this->timesheetService->getTotalDurationByUserIdAndPeriod('today', $currentUser->getId()))),
+            'week' => $this->timesheetService->timeToString(intval($this->timesheetService->getTotalDurationByUserIdAndPeriod('week', $currentUser->getId()))),
+            'lastweek' => $this->timesheetService->timeToString(intval($this->timesheetService->getTotalDurationByUserIdAndPeriod('lastweek', $currentUser->getId()))),
+            'month' => $this->timesheetService->timeToString(intval($this->timesheetService->getTotalDurationByUserIdAndPeriod('month', $currentUser->getId()))),
+            'lastmonth' => $this->timesheetService->timeToString(intval($this->timesheetService->getTotalDurationByUserIdAndPeriod('lastmonth', $currentUser->getId()))),
         );
 
         $viewData = array();

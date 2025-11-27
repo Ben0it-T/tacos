@@ -21,11 +21,14 @@ final class TimesheetRepository
      * Find Timesheet by id
      *
      * @param int $id
-     * @return Timesheet or false
+     * @return Timesheet entity or false
      */
-    public function find(int $id) {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_timesheet` WHERE `tacos_timesheet`.`id` = ?');
-        $stmt->execute([$id]);
+    public function find(int $id): Timesheet|false {
+        $sql = 'SELECT t.* FROM `tacos_timesheet` t WHERE t.`id` = :id LIMIT 1';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'id' => $id
+        ]);
         $row = $stmt->fetch();
 
         if ($row) {
@@ -41,10 +44,15 @@ final class TimesheetRepository
      *
      * @param int $id
      * @param int $userId
-     * @return Timesheet or false
+     * @return Timesheet entity or false
      */
-    public function findOneByIdAndUserId(int $id, int $userId) {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_timesheet` WHERE `tacos_timesheet`.`id` = :id AND `tacos_timesheet`.`user_id` = :userId');
+    public function findOneByIdAndUserId(int $id, int $userId): Timesheet|false {
+        $sql  = 'SELECT t.* ';
+        $sql .= 'FROM `tacos_timesheet` t ';
+        $sql .= 'WHERE t.`id` = :id AND t.`user_id` = :userId ';
+        $sql .= 'LIMIT 1';
+
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'id' => $id,
             'userId' => $userId,
@@ -63,10 +71,16 @@ final class TimesheetRepository
      * Find the last active Timesheet by user ID
      *
      * @param int $userId
-     * @return Timesheet or false
+     * @return Timesheet entity or false
      */
-    public function findOneActiveTimesheetByUserId(int $userId) {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_timesheet` WHERE `tacos_timesheet`.`user_id` = :userId AND `tacos_timesheet`.`end` is NULL ORDER BY `tacos_timesheet`.`start` DESC, `tacos_timesheet`.`id` DESC LIMIT 1');
+    public function findOneActiveRecordByUserId(int $userId): Timesheet|false {
+        $sql  = 'SELECT t.* ';
+        $sql .= 'FROM `tacos_timesheet` t ';
+        $sql .= 'WHERE t.`user_id` = :userId AND t.`end` is NULL ';
+        $sql .= 'ORDER BY t.`start` DESC, t.`id` DESC ';
+        $sql .= 'LIMIT 1';
+
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'userId' => $userId,
         ]);
@@ -83,10 +97,12 @@ final class TimesheetRepository
     /**
      * Find all Timesheets
      *
-     * @return array of Timesheet
+     * @return array of Timesheet entities
      */
-    public function findAll() {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_timesheet` ORDER BY `tacos_timesheet`.`start` ASC');
+    public function findAll(): array {
+        $sql = 'SELECT t.* FROM `tacos_timesheet` t ORDER BY t.`start` ASC';
+
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
         $rows = $stmt->fetchAll();
 
@@ -99,7 +115,7 @@ final class TimesheetRepository
     }
 
     /**
-     * Find all Timesheets with filters
+     * Find all Timesheets (with User, Projet, Activity and Tags) by criteria
      *
      * @param array $dates
      * @param array $usersIds
@@ -109,7 +125,7 @@ final class TimesheetRepository
      *
      * @return array of Timesheet with User, Projet, Activity and Tags
      */
-    public function findTimesheetsWithUserAndProjectAndActivityAndTagsByCriteria(array $dates, array $usersIds, array $projectIds, array $activityIds, array $tagIds) {
+    public function findTimesheetsWithUserAndProjectAndActivityAndTagsByCriteria(array $dates, array $usersIds, array $projectIds, array $activityIds, array $tagIds): array {
         $params = array();
         $where = array();
 
@@ -117,55 +133,55 @@ final class TimesheetRepository
         if (count($dates) > 0) {
             $params['date1'] = $dates[0];
             $params['date2'] = $dates[1];
-            $where[] = "(`tacos_timesheet`.`start` >= :date1 AND `tacos_timesheet`.`start` < DATE_ADD(:date2, INTERVAL 1 DAY))";
+            $where[] = "(t.`start` >= :date1 AND t.`start` < DATE_ADD(:date2, INTERVAL 1 DAY))";
         }
 
         // usersIds
-        [$clause, $pdoParams] = $this->sqlHelper->buildInClause($usersIds, 'usersId', '`tacos_timesheet`.`user_id`');
+        [$clause, $pdoParams] = $this->sqlHelper->buildInClause($usersIds, 'usersId', 't.`user_id`');
         if ($clause !== '') {
             $where[] = $clause;
             $params = array_merge($params, $pdoParams);
         }
 
         // projectIds
-        [$clause, $pdoParams] = $this->sqlHelper->buildInClause($projectIds, 'projectId', '`tacos_timesheet`.`project_id`');
+        [$clause, $pdoParams] = $this->sqlHelper->buildInClause($projectIds, 'projectId', 't.`project_id`');
         if ($clause !== '') {
             $where[] = $clause;
             $params = array_merge($params, $pdoParams);
         }
 
         // activityIds
-        [$clause, $pdoParams] = $this->sqlHelper->buildInClause($activityIds, 'activityId', '`tacos_timesheet`.`activity_id`');
+        [$clause, $pdoParams] = $this->sqlHelper->buildInClause($activityIds, 'activityId', 't.`activity_id`');
         if ($clause !== '') {
             $where[] = $clause;
             $params = array_merge($params, $pdoParams);
         }
 
         // tagIds
-        [$clause, $pdoParams] = $this->sqlHelper->buildInClause($tagIds, 'tagId', '`tacos_timesheet_tags`.`tag_id`');
+        [$clause, $pdoParams] = $this->sqlHelper->buildInClause($tagIds, 'tagId', 'ttt.`tag_id`');
         if ($clause !== '') {
             $where[] = $clause;
             $params = array_merge($params, $pdoParams);
         }
 
-        $sql  = 'SELECT `tacos_timesheet`.*, ';
-        $sql .= '`tacos_users`.`name` as userName, ';
-        $sql .= '`tacos_projects`.`name` as projectName, `tacos_projects`.`color` as projectColor, `tacos_projects`.`number` as projectNumber, ';
-        $sql .= '`tacos_activities`.`name` as activityName, `tacos_activities`.`color` as activityColor, `tacos_activities`.`number` as activityNumber, ';
-        $sql .= 'GROUP_CONCAT(DISTINCT `tacos_tags`.`id`) as tagIds ';
-        $sql .= 'FROM `tacos_timesheet` ';
-        $sql .= 'LEFT JOIN `tacos_users` ON `tacos_users`.`id` = `tacos_timesheet`.`user_id` ';
-        $sql .= 'LEFT JOIN `tacos_projects` ON `tacos_projects`.`id` = `tacos_timesheet`.`project_id` ';
-        $sql .= 'LEFT JOIN `tacos_activities` ON `tacos_activities`.`id` = `tacos_timesheet`.`activity_id` ';
-        $sql .= 'LEFT JOIN `tacos_timesheet_tags` ON `tacos_timesheet_tags`.`timesheet_id` = `tacos_timesheet`.`id` ';
-        $sql .= 'LEFT JOIN `tacos_tags` ON `tacos_tags`.`id` = `tacos_timesheet_tags`.`tag_id` ';
+        $sql  = 'SELECT t.*, ';
+        $sql .= 'u.`name` as userName, ';
+        $sql .= 'p.`name` as projectName, p.`color` as projectColor, p.`number` as projectNumber, ';
+        $sql .= 'a.`name` as activityName, a.`color` as activityColor, a.`number` as activityNumber, ';
+        $sql .= 'GROUP_CONCAT(DISTINCT tt.`id`) as tagIds ';
+        $sql .= 'FROM `tacos_timesheet` t ';
+        $sql .= 'LEFT JOIN `tacos_users` u ON u.`id` = t.`user_id` ';
+        $sql .= 'LEFT JOIN `tacos_projects` p ON p.`id` = t.`project_id` ';
+        $sql .= 'LEFT JOIN `tacos_activities` a ON a.`id` = t.`activity_id` ';
+        $sql .= 'LEFT JOIN `tacos_timesheet_tags` ttt ON ttt.`timesheet_id` = t.`id` ';
+        $sql .= 'LEFT JOIN `tacos_tags` tt ON tt.`id` = ttt.`tag_id` ';
 
         if (!empty($where)) {
             $sql .= 'WHERE ' . implode(' AND ', $where) . ' ';
         }
 
-        $sql .= "GROUP BY `tacos_timesheet`.`id` ";
-        $sql .= "ORDER BY `tacos_timesheet`.`start` DESC, `tacos_timesheet`.`id` DESC";
+        $sql .= "GROUP BY t.`id` ";
+        $sql .= "ORDER BY t.`start` DESC, t.`id` DESC";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
@@ -178,10 +194,15 @@ final class TimesheetRepository
      * Find all active Timesheets by user Id
      *
      * @param int $userId
-     * @return array of Timesheets
+     * @return array of Timesheets entities
      */
-    public function findAllActiveTimesheetByUserId(int $userId) {
-        $stmt = $this->pdo->prepare('SELECT * FROM `tacos_timesheet` WHERE `tacos_timesheet`.`user_id` = :userId AND `tacos_timesheet`.`end` is null ORDER BY `tacos_timesheet`.`start` DESC, `tacos_timesheet`.`id` DESC');
+    public function findAllActiveRecordsByUserId(int $userId): array {
+        $sql  = 'SELECT t.* ';
+        $sql .= 'FROM `tacos_timesheet` t ';
+        $sql .= 'WHERE t.`user_id` = :userId AND t.`end` is null ';
+        $sql .= 'ORDER BY t.`start` DESC, t.`id` DESC';
+
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'userId' => $userId,
         ]);
@@ -201,22 +222,29 @@ final class TimesheetRepository
      * @param int $userId
      * @return int
      */
-    public function getNbOfActiveRecordsByUserId(int $userId) {
-        $stmt = $this->pdo->prepare('SELECT count(*) as cnt FROM `tacos_timesheet` WHERE `tacos_timesheet`.`user_id` = :userId AND `tacos_timesheet`.`end` is null');
+    public function countActiveRecordsByUserId(int $userId): int {
+        $sql  = 'SELECT count(*) as cnt ';
+        $sql .= 'FROM `tacos_timesheet` t ';
+        $sql .= 'WHERE t.`user_id` = :userId AND t.`end` is null';
+
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'userId' => $userId,
         ]);
 
-        return $stmt->fetchColumn();
+        $result = $stmt->fetchColumn();
+
+        return (int) $result;
     }
 
     /**
-     * Get working hours by user Id
+     * Get total duration (minutes) for a user in a given time period
      *
-     * @param string $timePeriod
-     * @return int
+     * @param string $timePeriod 'today', 'week', 'lastweek', 'month', 'lastmonth'
+     * @param int $userId
+     * @return int Total duration in minutes
      */
-    public function getWorkingHoursByTimePeriodAndUserId(string $timePeriod, int $userId) {
+    public function getTotalDurationByUserIdAndPeriod(string $timePeriod, int $userId): int {
         $today = new \DateTimeImmutable('today');
 
         switch ($timePeriod) {
@@ -248,10 +276,10 @@ final class TimesheetRepository
         }
 
         $sql  = "SELECT SUM(duration) as duration ";
-        $sql .= "FROM `tacos_timesheet` ";
-        $sql .= "WHERE `tacos_timesheet`.`user_id` = :userId ";
-        $sql .= "AND `tacos_timesheet`.`start` >= :start AND `tacos_timesheet`.`start` < :end ";
-        $sql .= "AND `tacos_timesheet`.`end` is not null";
+        $sql .= "FROM `tacos_timesheet` t ";
+        $sql .= "WHERE t.`user_id` = :userId ";
+        $sql .= "AND t.`start` >= :start AND t.`start` < :end ";
+        $sql .= "AND t.`end` is not null";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
@@ -260,19 +288,21 @@ final class TimesheetRepository
             'end' => $end->format('Y-m-d H:i:s')
         ]);
 
-        return $stmt->fetchColumn();
+        $result = $stmt->fetchColumn();
+
+        return (int) $result;
     }
 
     /**
      * Get report data
      *
      * @param int $userId
-     * @param $date1
-     * @param $date2
+     * @param string $date1 Y-m-d
+     * @param string $date2 Y-m-d
      * @param int $report
      * @return array
      */
-    public function getReportData(int $userId, $date1, $date2, int $report) {
+    public function getReportData(int $userId, string $date1, string $date2, int $report): array {
 
         switch ($report) {
             case 1:

@@ -155,7 +155,7 @@ final class PermissionMiddleware implements MiddlewareInterface
         // Get active timesheet
         $activeTimesheet = array();
         if ($user) {
-            $activeTs = $this->timesheetRepository->findOneActiveTimesheetByUserId($user->getId());
+            $activeTs = $this->timesheetRepository->findOneActiveRecordByUserId($user->getId());
             if ($activeTs) {
                 $activeTimesheet = array(
                     'id' => $activeTs->getId(),
