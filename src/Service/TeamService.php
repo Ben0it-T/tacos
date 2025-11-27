@@ -44,7 +44,7 @@ final class TeamService
      * @return Team or false
      */
     public function findTeamByIdAndTeamleader(int $teamId, int $teamleaderId) {
-        return $this->teamRepository->findOneByIdAndTeamleader($teamId, $teamleaderId);
+        return $this->teamRepository->findOneByIdAndTeamleaderId($teamId, $teamleaderId);
     }
 
     /**
@@ -63,7 +63,7 @@ final class TeamService
      * @return array of Teams
      */
     public function findAllTeamsByActivityId(int $activityId) {
-        return $this->teamRepository->findAllTeamsByActivityId($activityId);
+        return $this->teamRepository->findAllByActivityId($activityId);
     }
 
     /**
@@ -73,7 +73,7 @@ final class TeamService
      * @return array of Teams
      */
     public function findAllTeamsByCustomerId(int $customerId) {
-        return $this->teamRepository->findAllTeamsByCustomerId($customerId);
+        return $this->teamRepository->findAllByCustomerId($customerId);
     }
 
     /**
@@ -83,7 +83,7 @@ final class TeamService
      * @return array of Teams
      */
     public function findAllTeamsByProjectId(int $projectId) {
-        return $this->teamRepository->findAllTeamsByProjectId($projectId);
+        return $this->teamRepository->findAllByProjectId($projectId);
     }
 
     /**
@@ -100,11 +100,13 @@ final class TeamService
      * Find Teamleader's Teams
      *
      * @param int $teamleaderId
-     * @return array of of Teams
+     * @return array of Teams
      */
     public function findAllTeamsByTeamleaderId(int $teamleaderId) {
         return $this->teamRepository->findAllByTeamleaderId($teamleaderId);
     }
+
+
 
     /**
      * Find all Teams with Users count and Teamleaders
@@ -122,26 +124,6 @@ final class TeamService
      */
     public function findAllTeamsWithUserCountAndTeamleadsByTeamleaderId(int $teamleaderId) {
         return $this->teamRepository->findAllTeamsWithUserCountAndTeamleadsByTeamleaderId($teamleaderId);
-    }
-
-    /**
-     * Get Team members
-     *
-     * @param int teamId
-     * @return array list of Members
-     */
-    public function getTeamMembers(int $teamId) {
-        return $this->teamRepository->getTeamMembers($teamId);
-    }
-
-    /**
-     * Get Team Teamleaders
-     *
-     * @param int teamId
-     * @return array list of Members
-     */
-    public function getTeamTeamleaders(int $teamId) {
-        return $this->teamRepository->getTeamTeamleaders($teamId);
     }
 
 

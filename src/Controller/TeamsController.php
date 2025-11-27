@@ -113,8 +113,8 @@ final class TeamsController
 
         $team = ($currentUser->getRole() === 3) ? $this->teamService->findTeam(intval($args['teamId'])) : $this->teamService->findTeamByIdAndTeamleader(intval($args['teamId']), $currentUser->getId());
         if ($team) {
-            $teamMembers = $this->teamService->getTeamMembers($team->getId());
-            $teamleaders = $this->teamService->getTeamTeamleaders($team->getId());
+            $teamMembers = $this->userService->findAllUsersByTeamId($team->getId());
+            $teamleaders = $this->userService->findAllTeamleadersByTeamId($team->getId());
             $teamleadersList = array();
             foreach ($teamleaders as $teamleader) {
                 $teamleadersList[] = $teamleader['name'];
@@ -157,13 +157,13 @@ final class TeamsController
                 );
             }
 
-            $teamMembers = $this->teamService->getTeamMembers($team->getId());
+            $teamMembers = $this->userService->findAllUsersByTeamId($team->getId());
             $teamMembersIds = array();
             foreach ($teamMembers as $teamMember) {
-                $teamMembersIds[] = $teamMember['userId'];
+                $teamMembersIds[] = $teamMember['id'];
             }
 
-            $teamleaders = $this->teamService->getTeamTeamleaders($team->getId());
+            $teamleaders = $this->userService->findAllTeamleadersByTeamId($team->getId());
             $teamleadersList = array();
             foreach ($teamleaders as $teamleader) {
                 $teamleadersList[] = $teamleader['name'];

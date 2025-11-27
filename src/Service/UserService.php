@@ -74,6 +74,30 @@ final class UserService
         return $this->userRepository->findAllEnabledUsersInTeams($teamsIds);
     }
 
+
+
+    /**
+     * Find all Users by Team Id
+     *
+     * @param $teamId
+     * @param $enabled
+     * @return array of Users
+     */
+    public function findAllUsersByTeamId(int $teamId, ?int $enabled = null) {
+        return $this->userRepository->findAllUsersByTeamId($teamId, $enabled);
+    }
+
+    /**
+     * Find all Teamleaders by Team Id
+     *
+     * @param $teamId
+     * @param $enabled
+     * @return array of Teamleaders
+     */
+    public function findAllTeamleadersByTeamId(int $teamId, ?int $enabled = null) {
+        return $this->userRepository->findAllTeamleadersByTeamId($teamId, $enabled);
+    }
+
     /**
      * Find all Users with Teams count
      *

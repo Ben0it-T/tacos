@@ -170,6 +170,66 @@ final class UserRepository
         return $users;
     }
 
+
+
+    /**
+     * Find all Users by Team Id
+     *
+     * @param $teamId
+     * @param $enabled
+     * @return array of Users
+     */
+    public function findAllUsersByTeamId(int $teamId, ?int $enabled = null): array {
+        $sql  = 'SELECT u.`id`, u.`name`, u.`enabled`, ut.`teamlead` ';
+        $sql .= 'FROM `tacos_users` u ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`user_id` = u.`id` ';
+        $sql .= 'WHERE ut.`team_id` = :teamId ';
+        if (!is_null($enabled)) {
+            $sql .= 'AND u.`enabled` = :enabled ';
+        }
+        $sql .= 'ORDER BY u.`name`';
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $params = ['teamId' => $teamId];
+        if (!is_null($enabled)) {
+            $params['enabled'] = $enabled;
+        }
+
+        $stmt->execute($params);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Find all Teamleaders by Team Id
+     *
+     * @param $teamId
+     * @param $enabled
+     * @return array of Teamleaders
+     */
+    public function findAllTeamleadersByTeamId(int $teamId, ?int $enabled = null): array {
+        $sql  = 'SELECT u.`id`, u.`name`, u.`enabled` ';
+        $sql .= 'FROM `tacos_users` u ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`user_id` = u.`id` ';
+        $sql .= 'WHERE ut.`team_id` = :teamId AND ut.`teamlead` = 1 ';
+        if (!is_null($enabled)) {
+            $sql .= 'AND u.`enabled` = :enabled ';
+        }
+        $sql .= 'ORDER BY u.`name`';
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $params = ['teamId' => $teamId];
+        if (!is_null($enabled)) {
+            $params['enabled'] = $enabled;
+        }
+
+        $stmt->execute($params);
+
+        return $stmt->fetchAll();
+    }
+
     /**
      * Find all Users with Teams count
      *
