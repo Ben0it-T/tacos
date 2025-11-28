@@ -40,8 +40,6 @@ final class ProfileController
 
         $user = $this->userService->findUser($session['auth']['userId']);
         $role = $this->userService->findRole($user->getRole());
-        $teams = $this->userService->getTeamsForUser($user->getId());
-
         $teams = $this->teamService->findAllTeamsWithTeamleadByUserId($user->getId());
 
         $viewData = array();
