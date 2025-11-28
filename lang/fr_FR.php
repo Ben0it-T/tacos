@@ -1,4 +1,5 @@
 <?php
+// fr_FR
 
 return array(
 
@@ -135,6 +136,7 @@ return array(
     'table_row_color' => "Couleur",
     'table_row_customer' => "Client",
     'table_row_customer_number' => "Numéro de client",
+    'table_row_customers' => "Clients",
     'table_row_date' => "Date",
     'table_row_date_begin' => "Début",
     'table_row_date_duration' => "Durée",
@@ -152,6 +154,7 @@ return array(
     'table_row_projects' => "Projets",
     'table_row_registrationDate' => "Inscription",
     'table_row_role' => "Rôle",
+    'table_row_status' => "Statut",
     'table_row_tags' => "Étiquettes",
     'table_row_teamleaders' => "Chefs d'équipe",
     'table_row_teams' => "Equipes",

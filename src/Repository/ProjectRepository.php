@@ -287,7 +287,7 @@ final class ProjectRepository
      *
      * @return array of Projects with Teams count and Customer
      */
-    public function findAllProjectsWithTeamsCountAndCustomer() {
+    public function findAllProjectsWithTeamsCountAndCustomer(): array {
         $sql  = 'SELECT p.`id`, p.`name`, p.`color`, p.`number`, p.`comment`, p.`visible`, ';
         $sql .= 'c.`name` as customerName , c.`color` as customerColor, ';
         $sql .= 'COUNT(DISTINCT pt.`team_id`) AS teamsCount ';
@@ -310,7 +310,7 @@ final class ProjectRepository
      * @param int $teamleaderId
      * @return array of Projects with Teams count and Customer
      */
-    public function findAllProjectsWithTeamsCountAndCustomerByTeamleaderId(int $teamleaderId) {
+    public function findAllProjectsWithTeamsCountAndCustomerByTeamleaderId(int $teamleaderId): array {
         $sql  = 'SELECT p.`id`, p.`name`, p.`color`, p.`number`, p.`comment`, p.`visible`, ';
         $sql .= 'c.`name` as customerName , c.`color` as customerColor, ';
         $sql .= 'COUNT(DISTINCT pt2.`team_id`) AS teamsCount ';
@@ -329,6 +329,32 @@ final class ProjectRepository
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'teamleaderId' => $teamleaderId,
+        ]);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Find All Projects with Customer by User id
+     *
+     * @param int $userid
+     * @return array of Projects with Customer
+     */
+    public function findAllProjectsWithCustomerByUserId(int $userId): array {
+        $sql  = 'SELECT p.`id`, p.`name`, p.`color`, p.`number`, p.`comment`, p.`visible`, ';
+        $sql .= 'c.`name` as customerName , c.`color` as customerColor ';
+        $sql .= 'FROM `tacos_projects` p ';
+        $sql .= 'LEFT JOIN `tacos_customers` c ON c.`id` = p.`customer_id` ';
+        $sql .= 'LEFT JOIN `tacos_projects_teams` pt ON pt.`project_id` = p.`id` ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = pt.`team_id` AND ut.`user_id` = :userId ';
+
+        $sql .= 'WHERE ut.`user_id` IS NOT NULL OR pt.`project_id` IS NULL ';
+        $sql .= 'GROUP BY p.`id` ';
+        $sql .= 'ORDER BY p.`name` ASC';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'userId' => $userId,
         ]);
 
         return $stmt->fetchAll();

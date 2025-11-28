@@ -141,6 +141,16 @@ final class ProjectService
         return $this->projectRepository->findAllProjectsWithTeamsCountAndCustomerByTeamleaderId($teamleaderId);
     }
 
+    /**
+     * Find All Projects with Customer by User id
+     *
+     * @param int $userid
+     * @return array of Projects with Customer
+     */
+    public function findAllProjectsWithCustomerByUserId(int $userId) {
+        return $this->projectRepository->findAllProjectsWithCustomerByUserId($userId);
+    }
+
 
 
     /**
