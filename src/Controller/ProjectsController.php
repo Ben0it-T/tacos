@@ -184,7 +184,7 @@ final class ProjectsController
             }
 
             // Get users in teams
-            $users = $this->userService->findAllEnabledUsersInTeams($teamsIds);
+            $users = $this->userService->findAllUsersInTeams($teamsIds);
             $usersIds = array();
             if (count($users) > 0) {
                 foreach ($users as $usr) {

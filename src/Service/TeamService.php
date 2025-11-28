@@ -109,6 +109,16 @@ final class TeamService
 
 
     /**
+     * Find all Teams with teamlead by user id
+     *
+     * @param int $userId
+     * @return array of Team entities
+     */
+    public function findAllTeamsWithTeamleadByUserId(int $userId) {
+        return $this->teamRepository->findAllTeamsWithTeamleadByUserId($userId);
+    }
+
+    /**
      * Find all Teams with Users count and Teamleaders
      *
      * @return array of Teams with Users count and Teamleaders

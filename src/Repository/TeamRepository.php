@@ -254,6 +254,27 @@ final class TeamRepository
 
 
     /**
+     * Find all Teams with teamlead by user id
+     *
+     * @param int $userId
+     * @return array of Team entities
+     */
+    public function findAllTeamsWithTeamleadByUserId(int $userId): array {
+        $sql  = 'SELECT t.`id`, t.`name`, t.`color`, ut.`teamlead` ';
+        $sql .= 'FROM `tacos_teams` t ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = t.`id` ';
+        $sql .= 'WHERE ut.`user_id` = :userId ';
+        $sql .= 'ORDER BY t.`name` ASC';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'userId' => $userId,
+        ]);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
      * Find all Teams with Users count and Teamleaders
      *
      * @return array of Teams with Users count and Teamleaders

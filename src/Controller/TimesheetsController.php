@@ -201,7 +201,7 @@ final class TimesheetsController
         }
 
         // Get users in teams
-        $users = $this->userService->findAllEnabledUsersInTeams($teamsIds);
+        $users = $this->userService->findAllUsersInTeams($teamsIds, 1);
         $usersIds = array();
         $usersList = array();
         if (count($users) > 0) {
@@ -768,7 +768,7 @@ final class TimesheetsController
         }
 
         // Get users in teams
-        $users = $this->userService->findAllEnabledUsersInTeams($teamsIds);
+        $users = $this->userService->findAllUsersInTeams($teamsIds, 1);
         $usersIds = array();
         $usersList = array();
         if (count($users) > 0) {

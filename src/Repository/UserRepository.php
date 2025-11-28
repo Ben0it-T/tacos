@@ -18,14 +18,17 @@ final class UserRepository
     }
 
     /**
-     * Find User by id
+     * Find (enabled) User by id
      *
      * @param int $id
-     * @return User or false
+     * @return User entity or false
      */
-    public function find(int $id) {
-        $stmt = $this->pdo->prepare('SELECT `tacos_users`.* FROM `tacos_users` WHERE `tacos_users`.`id` = ? AND `tacos_users`.`enabled` = 1 LIMIT 1');
-        $stmt->execute([$id]);
+    public function find(int $id): User|false {
+        $sql = 'SELECT u.* FROM `tacos_users` u WHERE u.`id` = :id AND u.`enabled` = 1 LIMIT 1';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'id' => $id
+        ]);
         $row = $stmt->fetch();
 
         if ($row) {
@@ -37,13 +40,19 @@ final class UserRepository
     }
 
     /**
-     * Find User by identifier
+     * Find (enabled) User by identifier
      *
      * @param string $identifier
-     * @return User or false
+     * @return User entity or false
      */
-    public function findOneByIdentifier(string $identifier) {
-        $stmt = $this->pdo->prepare('SELECT `tacos_users`.* FROM `tacos_users` WHERE (`tacos_users`.`username` = :username OR `tacos_users`.`email` = :email) AND `tacos_users`.`enabled` = 1 LIMIT 1');
+    public function findOneByIdentifier(string $identifier): User|false {
+        $sql  = 'SELECT u.* ';
+        $sql .= 'FROM `tacos_users` u ';
+        $sql .= 'WHERE (u.`username` = :username OR u.`email` = :email) ';
+        $sql .= 'AND u.`enabled` = 1 ';
+        $sql .= 'LIMIT 1';
+
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'username' => $identifier,
             'email' => $identifier
@@ -59,15 +68,22 @@ final class UserRepository
     }
 
     /**
-     * Find User by token
+     * Find (enabled) User by token
      *
      * @param string $token
      * @param int $tokenLifetime
-     * @return User or false
+     * @return User entity or false
      */
-    public function findOneByToken(string $token, int $tokenLifetime) {
+    public function findOneByToken(string $token, int $tokenLifetime): User|false {
         $threshold = date("Y-m-d H:i:s", intval(time() - $tokenLifetime));
-        $stmt = $this->pdo->prepare('SELECT `tacos_users`.* FROM `tacos_users` WHERE `tacos_users`.`password_request_token` = :token AND `tacos_users`.`password_request_date` > :threshold AND `tacos_users`.`enabled` = 1 LIMIT 1');
+
+        $sql  = 'SELECT u.* ';
+        $sql .= 'FROM `tacos_users` u ';
+        $sql .= 'WHERE u.`password_request_token` = :token AND u.`password_request_date` > :threshold ';
+        $sql .= 'AND u.`enabled` = 1 ';
+        $sql .= 'LIMIT 1';
+
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'threshold' => $threshold,
             'token'     => $token,
@@ -86,10 +102,15 @@ final class UserRepository
      * Find User by username
      *
      * @param string $username
-     * @return User or false
+     * @return User entity or false
      */
-    public function findOneByUsername(string $username) {
-        $stmt = $this->pdo->prepare('SELECT `tacos_users`.* FROM `tacos_users` WHERE `tacos_users`.`username` = :username LIMIT 1');
+    public function findOneByUsername(string $username): User|false {
+        $sql  = 'SELECT u.* ';
+        $sql .= 'FROM `tacos_users` u ';
+        $sql .= 'WHERE u.`username` = :username ';
+        $sql .= 'LIMIT 1';
+
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'username' => $username,
         ]);
@@ -106,11 +127,23 @@ final class UserRepository
     /**
      * Find all Users
      *
-     * @return array of Users
+     * @param ?int $enabled
+     * @return array of User entities
      */
-    public function findAll() {
-        $stmt = $this->pdo->prepare('SELECT `tacos_users`.* FROM `tacos_users` ORDER BY `tacos_users`.`name` ASC');
-        $stmt->execute();
+    public function findAll(?int $enabled = null): array {
+        $sql  = 'SELECT u.* ';
+        $sql .= 'FROM `tacos_users` u ';
+        if (!is_null($enabled)) {
+            $sql .= 'WHERE u.`enabled` = :enabled ';
+        }
+        $sql .= 'ORDER BY u.`name` ASC';
+
+        $stmt = $this->pdo->prepare($sql);
+        $params = array();
+        if (!is_null($enabled)) {
+            $params['enabled'] = $enabled;
+        }
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
 
         $users = array();
@@ -122,42 +155,31 @@ final class UserRepository
     }
 
     /**
-     * Find all enabled Users
-     *
-     * @return array of Users
-     */
-    public function findAllEnabled() {
-        $stmt = $this->pdo->prepare('SELECT `tacos_users`.* FROM `tacos_users` WHERE `tacos_users`.`enabled` = 1 ORDER BY `tacos_users`.`name` ASC');
-        $stmt->execute();
-        $rows = $stmt->fetchAll();
-
-        $users = array();
-        foreach ($rows as $row) {
-            $users[$row['id']] = $this->buildEntity($row);
-        }
-
-        return $users;
-    }
-
-    /**
-     * Find all enabled Users in Teams
+     * Find all Users in Teams
      *
      * @param array list of teamsIds
-     * @return array of Users
+     * @param ?int $enabled
+     * @return array of User entities
      */
-    public function findAllEnabledUsersInTeams(array $teamsIds) {
+    public function findAllUsersInTeams(array $teamsIds, ?int $enabled = null): array {
         $users = array();
 
         if (count($teamsIds) > 0) {
-            [$teamsIN, $pdoParams] = $this->sqlHelper->buildInClause($teamsIds, 'teamsId', '`tacos_users_teams`.`team_id`');
+            [$teamsIN, $pdoParams] = $this->sqlHelper->buildInClause($teamsIds, 'teamsId', 't.`team_id`');
 
-            $sql  = "SELECT DISTINCT `tacos_users`.* FROM `tacos_users_teams` ";
-            $sql .= "INNER JOIN `tacos_users` ON `tacos_users`.`id` = `tacos_users_teams`.`user_id` ";
-            $sql .= "WHERE {$teamsIN} ";
-            $sql .= "AND `tacos_users`.`enabled` = 1 ";
-            $sql .= "ORDER BY `tacos_users`.`name`";
+            $sql  = 'SELECT DISTINCT u.* ';
+            $sql .= 'FROM `tacos_users` u ';
+            $sql .= 'INNER JOIN `tacos_users_teams` t ON t.`user_id` = u.`id` ';
+            $sql .= 'WHERE '.$teamsIN.' ';
+            if (!is_null($enabled)) {
+                $sql .= 'AND u.`enabled` = :enabled ';
+            }
+            $sql .= 'ORDER BY u.`name`';
 
             $stmt = $this->pdo->prepare($sql);
+            if (!is_null($enabled)) {
+                $pdoParams['enabled'] = $enabled;
+            }
             $stmt->execute($pdoParams);
             $rows = $stmt->fetchAll();
 
@@ -169,8 +191,6 @@ final class UserRepository
 
         return $users;
     }
-
-
 
     /**
      * Find all Users by Team Id
@@ -235,13 +255,15 @@ final class UserRepository
      *
      * @return array of Users with Role and Teams count
      */
-    public function findAllUsersWithTeamCount() {
-        $sql  = "SELECT `tacos_users`.`id`, `tacos_users`.`username`, `tacos_users`.`name`, `tacos_users`.`enabled` as enable, `tacos_roles`.`name` as role, `tacos_users`.`last_login` as lastLogin, COUNT(`tacos_users_teams`.`team_id`) AS teams ";
-        $sql .= "FROM `tacos_users` ";
-        $sql .= "LEFT JOIN `tacos_users_teams` ON `tacos_users_teams`.`user_id` = `tacos_users`.`id` ";
-        $sql .= "LEFT JOIN `tacos_roles` ON `tacos_roles`.`id` = `tacos_users`.`role_id` ";
-        $sql .= "GROUP BY `tacos_users`.`id` ";
-        $sql .= "ORDER BY `tacos_users`.`name`";
+    public function findAllUsersWithTeamCount(): array {
+        $sql  = 'SELECT u.`id`, u.`username`, u.`name`, u.`enabled` as enable, u.`last_login` as lastLogin, ';
+        $sql .= 'r.`name` as role,  ';
+        $sql .= 'COUNT(ut.`team_id`) AS teams ';
+        $sql .= 'FROM `tacos_users` u ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`user_id` = u.`id` ';
+        $sql .= 'LEFT JOIN `tacos_roles` r ON r.`id` = u.`role_id` ';
+        $sql .= 'GROUP BY u.`id` ';
+        $sql .= 'ORDER BY u.`name`';
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
@@ -249,19 +271,7 @@ final class UserRepository
         return $stmt->fetchAll();
     }
 
-    /**
-     * Get teams for user
-     *
-     * @param int userId
-     * @return array list of Teams
-     */
-    public function getTeamsForUser(int $userId) {
-        $stmt = $this->pdo->prepare('SELECT `tacos_teams`.`id` as teamId, `tacos_teams`.`name` as teamName, `tacos_teams`.`color` as teamColor, `tacos_users_teams`.`teamlead` as teamlead FROM `tacos_users_teams` LEFT JOIN `tacos_teams` ON `tacos_teams`.`id` = `tacos_users_teams`.`team_id` WHERE `tacos_users_teams`.`user_id` = :userId ORDER BY name');
-        $stmt->execute([
-            'userId' => $userId,
-        ]);
-        return $stmt->fetchAll();
-    }
+
 
     /**
      * Check if token exists
@@ -270,10 +280,14 @@ final class UserRepository
      * @param int $tokenLifetime
      * @return bool
      */
-    public function isTokenExists(string $token, int $tokenLifetime) {
+    public function isTokenExists(string $token, int $tokenLifetime): bool {
         $threshold = date("Y-m-d H:i:s", intval(time() - $tokenLifetime));
-        $stmt = $this->pdo->prepare('SELECT count(*) as cnt FROM `tacos_users` WHERE `tacos_users`.`password_request_token` = :token AND `tacos_users`.`password_request_date` > :threshold AND `tacos_users`.`enabled` = 1');
 
+        $sql  = 'SELECT count(*) as cnt ';
+        $sql .= 'FROM `tacos_users` u ';
+        $sql .= 'WHERE u.`password_request_token` = :token AND u.`password_request_date` > :threshold AND u.`enabled` = 1';
+
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'threshold' => $threshold,
             'token'     => $token,
@@ -293,8 +307,12 @@ final class UserRepository
      * @param int $id
      * @return bool
      */
-    public function isUsernameExists(string $username, int $id = 0) {
-        $stmt = $this->pdo->prepare('SELECT count(*) as cnt FROM `tacos_users` WHERE `tacos_users`.`username` = :username AND `tacos_users`.`id` != :id');
+    public function isUsernameExists(string $username, int $id = 0): bool {
+        $sql  = 'SELECT count(*) as cnt ';
+        $sql .= 'FROM `tacos_users` u ';
+        $sql .= 'WHERE u.`username` = :username AND u.`id` != :id';
+
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'username' => $username,
             'id' => $id,
@@ -314,8 +332,12 @@ final class UserRepository
      * @param int $id
      * @return bool
      */
-    public function isEmailExists(string $email, int $id = 0) {
-        $stmt = $this->pdo->prepare('SELECT count(*) as cnt FROM `tacos_users` WHERE `tacos_users`.`email` = :email AND `tacos_users`.`id` != :id');
+    public function isEmailExists(string $email, int $id = 0): bool {
+        $sql  = 'SELECT count(*) as cnt ';
+        $sql .= 'FROM `tacos_users` u ';
+        $sql .= 'WHERE u.`email` = :email AND u.`id` != :id';
+
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'email' => $email,
             'id' => $id,

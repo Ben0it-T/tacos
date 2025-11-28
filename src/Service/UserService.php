@@ -47,31 +47,24 @@ final class UserService
     }
 
     /**
-     * Find Users
+     * Find all Users
      *
-     * @return array of all Users
+     * @param ?int $enabled
+     * @return array of User entities
      */
-    public function findAllUsers() {
-        return $this->userRepository->findAll();
+    public function findAllUsers(?int $enabled = null) {
+        return $this->userRepository->findAll($enabled);
     }
 
     /**
-     * Find all enabled Users
-     *
-     * @return array of all Users
-     */
-    public function findAllUsersEnabled() {
-        return $this->userRepository->findAllEnabled();
-    }
-
-    /**
-     * Find all enabled Users in Teams
+     * Find all Users in Teams
      *
      * @param array list of teamsIds
-     * @return array of Users
+     * @param ?int $enabled
+     * @return array of User entities
      */
-    public function findAllEnabledUsersInTeams($teamsIds) {
-        return $this->userRepository->findAllEnabledUsersInTeams($teamsIds);
+    public function findAllUsersInTeams($teamsIds, ?int $enabled = null) {
+        return $this->userRepository->findAllUsersInTeams($teamsIds, $enabled);
     }
 
 
@@ -101,7 +94,7 @@ final class UserService
     /**
      * Find all Users with Teams count
      *
-     * @return array of Users
+     * @return array of Users with Role and Teams count
      */
     public function findAllUsersWithTeamCount() {
         return $this->userRepository->findAllUsersWithTeamCount();
@@ -124,28 +117,6 @@ final class UserService
      */
     public function findAllRoles() {
         return $this->roleRepository->findAll();
-    }
-
-
-
-    /**
-     * Get number of teams for user
-     *
-     * @param int $userId
-     * @return int number of teams
-     */
-    public function getNbOfTeamsForUser(int $userId) {
-        return $this->userRepository->getNbOfTeamsForUser($userId);
-    }
-
-    /**
-     * Get User Teams
-     *
-     * @param int $userId
-     * @return array of all user Teams
-     */
-    public function getTeamsForUser(int $userId) {
-        return $this->userRepository->getTeamsForUser($userId);
     }
 
 

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Service\TeamService;
 use App\Service\UserService;
 
 use Psr\Container\ContainerInterface;
@@ -17,11 +18,13 @@ use Slim\Views\Twig;
 final class UsersController
 {
     private $container;
+    private $teamService;
     private $userService;
 
-    public function __construct(ContainerInterface $container, UserService $userService)
+    public function __construct(ContainerInterface $container, TeamService $teamService, UserService $userService)
     {
         $this->container = $container;
+        $this->teamService = $teamService;
         $this->userService = $userService;
     }
 
@@ -34,7 +37,7 @@ final class UsersController
         $routeContext = RouteContext::fromRequest($request);
         $routeParser = $routeContext->getRouteParser();
 
-        $users = $this->userService->findAllUsers();
+        $users = $this->userService->findAllUsers(null);
 
         $users = $this->userService->findAllUsersWithTeamCount();
         for ($i=0; $i < count($users); $i++) {
@@ -91,7 +94,7 @@ final class UsersController
         if ($user) {
             $role = $this->userService->findRole($user->getRole());
             $roles = $this->userService->findAllRoles();
-            $teams = $this->userService->getTeamsForUser($user->getId());
+            $teams = $this->teamService->findAllTeamsWithTeamleadByUserId($user->getId());
 
             $viewData = array();
             $viewData['user'] = array(
@@ -127,7 +130,7 @@ final class UsersController
         if ($user) {
             $role = $this->userService->findRole($user->getRole());
             $roles = $this->userService->findAllRoles();
-            $teams = $this->userService->getTeamsForUser($user->getId());
+            $teams = $this->teamService->findAllTeamsWithTeamleadByUserId($user->getId());
 
             $viewData = array();
             $viewData['form'] = array(

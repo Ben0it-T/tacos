@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Service\TeamService;
 use App\Service\UserService;
 
 use Psr\Container\ContainerInterface;
@@ -16,12 +17,14 @@ use Slim\Views\Twig;
 final class ProfileController
 {
     private $container;
+    private $teamService;
     private $userService;
 
 
-    public function __construct(ContainerInterface $container, UserService $userService)
+    public function __construct(ContainerInterface $container, TeamService $teamService, UserService $userService)
     {
         $this->container = $container;
+        $this->teamService = $teamService;
         $this->userService = $userService;
     }
 
@@ -38,6 +41,8 @@ final class ProfileController
         $user = $this->userService->findUser($session['auth']['userId']);
         $role = $this->userService->findRole($user->getRole());
         $teams = $this->userService->getTeamsForUser($user->getId());
+
+        $teams = $this->teamService->findAllTeamsWithTeamleadByUserId($user->getId());
 
         $viewData = array();
         $viewData['form'] = array(

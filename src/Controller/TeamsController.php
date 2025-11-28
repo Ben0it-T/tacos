@@ -46,7 +46,7 @@ final class TeamsController
             $teams[$i]['viewLink'] = $routeParser->urlFor('teams_details', array('teamId' => $teams[$i]['id']));
         }
 
-        $users = $this->userService->findAllUsersEnabled();
+        $users = $this->userService->findAllUsers(1);
         $usersList = array();
         foreach ($users as $user) {
             $usersList[] = array(
@@ -148,7 +148,7 @@ final class TeamsController
 
         $team = ($currentUser->getRole() === 3) ? $this->teamService->findTeam(intval($args['teamId'])) : $this->teamService->findTeamByIdAndTeamleader(intval($args['teamId']), $currentUser->getId());
         if ($team) {
-            $users = $this->userService->findAllUsersEnabled();
+            $users = $this->userService->findAllUsers(1);
             $usersList = array();
             foreach ($users as $user) {
                 $usersList[] = array(
