@@ -37,8 +37,6 @@ final class UsersController
         $routeContext = RouteContext::fromRequest($request);
         $routeParser = $routeContext->getRouteParser();
 
-        $users = $this->userService->findAllUsers(null);
-
         $users = $this->userService->findAllUsersWithTeamCount();
         for ($i=0; $i < count($users); $i++) {
             $users[$i]['role'] = $translations[strtolower($users[$i]['role'])];
