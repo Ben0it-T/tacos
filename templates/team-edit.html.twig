@@ -31,7 +31,15 @@
                     <tbody>
                         <tr>
                             <th scope="row">{{ trans.card_teamleaders }}</th>
-                            <td>{{ teamleaders is empty ? trans.card_none : teamleaders }}</td>
+                            <td>
+                                {% if teamleaders is empty %}
+                                    {{ trans.card_none }}
+                                {% else %}
+                                    {% for member in teamleaders %}
+                                        <span class="{% if member.enabled == 0 %}text-secondary fst-italic{% endif %}">{{ member.name }}</span>{% if not loop.last %},{% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                            </td>
                         </tr>
                     </tbody>
                 </table>

@@ -115,15 +115,11 @@ final class TeamsController
         if ($team) {
             $teamMembers = $this->userService->findAllUsersByTeamId($team->getId());
             $teamleaders = $this->userService->findAllTeamleadersByTeamId($team->getId());
-            $teamleadersList = array();
-            foreach ($teamleaders as $teamleader) {
-                $teamleadersList[] = $teamleader['name'];
-            }
 
             $viewData = array();
             $viewData['team'] = $team;
             $viewData['teamMembers'] = $teamMembers;
-            $viewData['teamleaders'] = $teamleadersList ? implode(", ", $teamleadersList) : "";
+            $viewData['teamleaders'] = $teamleaders;
 
             return $twig->render($response, 'team-details.html.twig', $viewData);
         }
@@ -164,10 +160,6 @@ final class TeamsController
             }
 
             $teamleaders = $this->userService->findAllTeamleadersByTeamId($team->getId());
-            $teamleadersList = array();
-            foreach ($teamleaders as $teamleader) {
-                $teamleadersList[] = $teamleader['name'];
-            }
 
             $colorChoices = $this->container->get('settings')['theme']['colorChoices'];
             $colorsList = array();
@@ -186,7 +178,7 @@ final class TeamsController
             $viewData['users'] = $usersList;
             $viewData['teamMembers'] = $teamMembers;
             $viewData['teamMembersIds'] = $teamMembersIds;
-            $viewData['teamleaders'] = $teamleadersList ? implode(", ", $teamleadersList) : "";
+            $viewData['teamleaders'] = $teamleaders;
 
             $viewData['flashMsgSuccess'] = $flash->getFirstMessage('success');
             $viewData['flashMsgError'] = $flash->getFirstMessage('error');
