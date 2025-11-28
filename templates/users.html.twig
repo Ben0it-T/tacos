@@ -34,8 +34,8 @@
                 <tbody>
                     {% for user in users %}
                         <tr>
-                            <td>{{ user.name }}</td>
-                            <td>{{ user.username }}</td>
+                            <td {% if user.enable == false %}class="text-secondary fst-italic"{% endif %}>{{ user.name }}</td>
+                            <td {% if user.enable == false %}class="text-secondary fst-italic"{% endif %}>{{ user.username }}</td>
                             <td>
                                 {% if user.role == trans.role_admin %}
                                     <span class="badge text-bg-danger">{{ user.role }}</span>
