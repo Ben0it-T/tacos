@@ -140,6 +140,7 @@ return array(
     'table_row_date_duration' => "Durée",
     'table_row_date_end' => "Fin",
     'table_row_description' => "Description",
+    'table_row_email' => "Email",
     'table_row_enable' => "Actif",
     'table_row_globalActivities' => "Activités globales",
     'table_row_lastlogin' => "Dernière connexion",

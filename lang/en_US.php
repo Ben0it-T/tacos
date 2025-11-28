@@ -141,6 +141,7 @@ return array(
     'table_row_date_duration' => "Duration",
     'table_row_date_end' => "End",
     'table_row_description' => "Description",
+    'table_row_email' => "Email",
     'table_row_enable' => "Active",
     'table_row_globalActivities' => "Global activities",
     'table_row_lastlogin' => "Last login",

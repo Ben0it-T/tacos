@@ -55,6 +55,10 @@
                             <td>{{ user.lastLogin is empty ? "" : user.lastLogin|date(trans.dateFormats_datetime) }}</td>
                         </tr>
                         <tr>
+                            <th scope="row">{{ trans.table_row_email }}</th>
+                            <td>{{ user.email is empty ? "" : user.email }}</td>
+                        </tr>
+                        <tr>
                             <th scope="row">{{ trans.view_teams }}</th>
                             <td>
                                 {% if user.teams|length > 0 %}
