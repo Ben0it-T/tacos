@@ -337,7 +337,7 @@ final class ProjectRepository
     /**
      * Find All Projects with Customer by User id
      *
-     * @param int $userid
+     * @param int $userId
      * @return array of Projects with Customer
      */
     public function findAllProjectsWithCustomerByUserId(int $userId): array {
@@ -355,6 +355,31 @@ final class ProjectRepository
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'userId' => $userId,
+        ]);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Find All Projects with Customer by Team id
+     *
+     * @param int $teamId
+     * @return array of Projects with Customer
+     */
+    public function findAllProjectsWithCustomerByTeamId(int $teamId): array {
+        $sql  = 'SELECT p.`id`, p.`name`, p.`color`, p.`number`, p.`comment`, p.`visible`, ';
+        $sql .= 'c.`name` as customerName , c.`color` as customerColor ';
+        $sql .= 'FROM `tacos_projects` p ';
+        $sql .= 'LEFT JOIN `tacos_customers` c ON c.`id` = p.`customer_id` ';
+        $sql .= 'LEFT JOIN `tacos_projects_teams` pt ON pt.`project_id` = p.`id` ';
+
+        $sql .= 'WHERE pt.`team_id` = :teamId OR pt.`project_id` IS NULL ';
+        $sql .= 'GROUP BY p.`id` ';
+        $sql .= 'ORDER BY p.`name` ASC';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'teamId' => $teamId
         ]);
 
         return $stmt->fetchAll();

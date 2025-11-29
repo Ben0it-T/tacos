@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Service\CustomerService;
+use App\Service\ProjectService;
 use App\Service\TeamService;
 use App\Service\UserService;
 
@@ -18,12 +20,16 @@ use Slim\Views\Twig;
 final class TeamsController
 {
     private $container;
+    private $customerService;
+    private $projectService;
     private $teamService;
     private $userService;
 
-    public function __construct(ContainerInterface $container, TeamService $teamService, UserService $userService)
+    public function __construct(ContainerInterface $container, CustomerService $customerService, ProjectService $projectService, TeamService $teamService, UserService $userService)
     {
         $this->container = $container;
+        $this->customerService = $customerService;
+        $this->projectService = $projectService;
         $this->teamService = $teamService;
         $this->userService = $userService;
     }
@@ -115,11 +121,15 @@ final class TeamsController
         if ($team) {
             $teamMembers = $this->userService->findAllUsersByTeamId($team->getId());
             $teamleaders = $this->userService->findAllTeamleadersByTeamId($team->getId());
+            $customers = $this->customerService->findAllByTeamId($team->getId());
+            $projects = $this->projectService->findAllProjectsWithCustomerByTeamId($team->getId());
 
             $viewData = array();
             $viewData['team'] = $team;
             $viewData['teamMembers'] = $teamMembers;
             $viewData['teamleaders'] = $teamleaders;
+            $viewData['customers'] = $customers;
+            $viewData['projects'] = $projects;
 
             return $twig->render($response, 'team-details.html.twig', $viewData);
         }

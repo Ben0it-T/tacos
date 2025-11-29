@@ -105,6 +105,17 @@ final class CustomerService
         return $this->customerRepository->findAllByTeamleaderId($teamleaderId, $visible);
     }
 
+    /**
+     * Find All Customers by team Id
+     *
+     * @param int $teamId
+     * @param ?int $visible
+     * @return array of Customer entities
+     */
+    public function findAllByTeamId(int $teamId, ?int $visible = null) {
+        return $this->customerRepository->findAllByTeamId($teamId, $visible);
+    }
+
 
 
     /**

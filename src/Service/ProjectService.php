@@ -144,11 +144,21 @@ final class ProjectService
     /**
      * Find All Projects with Customer by User id
      *
-     * @param int $userid
+     * @param int $userId
      * @return array of Projects with Customer
      */
     public function findAllProjectsWithCustomerByUserId(int $userId) {
         return $this->projectRepository->findAllProjectsWithCustomerByUserId($userId);
+    }
+
+    /**
+     * Find All Projects with Customer by Team id
+     *
+     * @param int $teamId
+     * @return array of Projects with Customer
+     */
+    public function findAllProjectsWithCustomerByTeamId(int $teamId) {
+        return $this->projectRepository->findAllProjectsWithCustomerByTeamId($teamId);
     }
 
 

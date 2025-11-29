@@ -232,6 +232,40 @@ final class CustomerRepository
         return $customers;
     }
 
+    /**
+     * Find All Customers by team Id
+     *
+     * @param int $teamId
+     * @param ?int $visible
+     * @return array of Customer entities
+     */
+    public function findAllByTeamId(int $teamId, ?int $visible = null): array {
+        $sql  = 'SELECT c.* ';
+        $sql .= 'FROM `tacos_customers` c ';
+        $sql .= 'LEFT JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ';
+        $sql .= 'WHERE (ct.`team_id` = :teamId OR ct.`team_id` IS NULL) ';
+        if (!is_null($visible)) {
+            $sql .= 'AND c.`visible` = :visible ';
+        }
+        $sql .= 'ORDER BY c.`name` ASC';
+
+        $stmt = $this->pdo->prepare($sql);
+        $params = ['teamId' => $teamId];
+        if (!is_null($visible)) {
+            $params['visible'] = $visible;
+        }
+
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
+
+        $customers = array();
+        foreach ($rows as $row) {
+            $customers[$row['id']] = $this->buildEntity($row);
+        }
+
+        return $customers;
+    }
+
 
 
     /**
