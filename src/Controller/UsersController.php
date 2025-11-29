@@ -97,7 +97,6 @@ final class UsersController
         $user = $this->userService->findUserByUsername($args['username']);
         if ($user) {
             $role = $this->userService->findRole($user->getRole());
-            $roles = $this->userService->findAllRoles();
             $teams = $this->teamService->findAllTeamsWithTeamleadByUserId($user->getId());
             $customers = $this->customerService->findAllByUserId($user->getId());
             $projects = $this->projectService->findAllProjectsWithCustomerByUserId($user->getId());
@@ -137,7 +136,6 @@ final class UsersController
         $user = $this->userService->findUserByUsername($args['username']);
         if ($user) {
             $role = $this->userService->findRole($user->getRole());
-            $roles = $this->userService->findAllRoles();
             $teams = $this->teamService->findAllTeamsWithTeamleadByUserId($user->getId());
 
             $viewData = array();
@@ -155,7 +153,6 @@ final class UsersController
                 'registrationDate' => $user->getRegistrationDate(),
                 'status' => $user->getEnabled(),
                 'teams' => $teams,
-
             );
 
             $viewData['flashMsgSuccess'] = $flash->getFirstMessage('success');
