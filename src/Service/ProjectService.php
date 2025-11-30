@@ -36,7 +36,7 @@ final class ProjectService
      * @return Project entity or false
      */
     public function findProject(int $id) {
-        return $this->projectRepository->findOneById($id);
+        return $this->projectRepository->find($id);
     }
 
     /**

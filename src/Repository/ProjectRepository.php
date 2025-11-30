@@ -20,7 +20,7 @@ final class ProjectRepository
      * @param int $id
      * @return Project entity or false
      */
-    public function findOneById(int $id): Project|false {
+    public function find(int $id): Project|false {
         $sql = 'SELECT p.* FROM `tacos_projects` p WHERE p.`id` = :id LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
@@ -38,25 +38,39 @@ final class ProjectRepository
 
     /**
      * Find One Project by id and teamleader id
-     * Note : accepts projects without a team
+     * Accepts projects without a team
+     *
+     * Visibility rules:
+     *  - customer without team + project without team => visible to all
+     *  - customer without team + project with team    => visible if user is member of a project team
+     *  - customer with team    + project without team => visible if user is member of a customer team
+     *  - customer with team    + project with team    => visible if user is member of at least one customer team AND at least one project team
      *
      * @param int $projectId
      * @param int $teamleaderId
      * @return Project entity or false
      */
     public function findOneByIdAndTeamleaderId(int $projectId, int $teamleaderId): Project|false {
-        $sql  = 'SELECT p.* ';
+        $sql  = 'SELECT DISTINCT p.* ';
         $sql .= 'FROM `tacos_projects` p ';
+         // customer teams + whether current teamleader is member of one of them
+        $sql .= 'LEFT JOIN `tacos_customers` c ON c.`id` = p.`customer_id` ';
+        $sql .= 'LEFT JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` utc ON utc.`team_id` = ct.`team_id` AND utc.`user_id` = :teamleaderId1 AND utc.`teamlead` = 1 ';
+        // project teams + whether current user is member of one of them
         $sql .= 'LEFT JOIN `tacos_projects_teams` pt ON pt.`project_id` = p.`id` ';
-        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = pt.`team_id` AND ut.`user_id` = :teamleaderId AND ut.`teamlead` = 1 ';
-        $sql .= 'WHERE p.`id` = :projectId AND (pt.`project_id` IS NULL OR ut.`user_id` IS NOT NULL) ';
-        $sql .= 'LIMIT 1';
+        $sql .= 'LEFT JOIN `tacos_users_teams` utp ON utp.`team_id` = pt.`team_id` AND utp.`user_id` = :teamleaderId2 AND utp.`teamlead` = 1 ';
+
+        $sql .= 'WHERE p.`id` = :projectId ';
+        $sql .= 'AND (ct.`team_id` IS NULL OR utc.`user_id` IS NOT NULL) ';    // customer: either customer has no team OR user is member of a customer team
+        $sql .= 'AND (pt.`project_id` IS NULL OR utp.`user_id` IS NOT NULL) '; // project: either project has no team OR user is member of a project team
 
         $stmt = $this->pdo->prepare($sql);
 
         $stmt->execute([
             'projectId' => $projectId,
-            'teamleaderId' => $teamleaderId
+            'teamleaderId1' => $teamleaderId,
+            'teamleaderId2' => $teamleaderId
         ]);
         $row = $stmt->fetch();
 
@@ -70,25 +84,36 @@ final class ProjectRepository
 
     /**
      * Find One Project by id and user id is teamleader
-     * Note : requires teamlead on at least one team
+     * Requires teamlead on at least one team
+     *
+     * Visibility rules:
+     *  - customer without team + project with team    => visible if user is member of a project team
+     *  - customer with team    + project with team    => visible if user is member of at least one customer team AND at least one project team
      *
      * @param int $projectId
      * @param int $teamleaderId
      * @return Project entity or false
      */
     public function findOneByIdAndTeamleaderIdStrict(int $projectId, int $teamleaderId): Project|false {
-        $sql  = 'SELECT p.* ';
+        $sql  = 'SELECT DISTINCT p.* ';
         $sql .= 'FROM `tacos_projects` p ';
+         // customer teams + whether current teamleader is member of one of them
+        $sql .= 'LEFT JOIN `tacos_customers` c ON c.`id` = p.`customer_id` ';
+        $sql .= 'LEFT JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` utc ON utc.`team_id` = ct.`team_id` AND utc.`user_id` = :teamleaderId1 AND utc.`teamlead` = 1 ';
+        // project teams + whether current user is member of one of them
         $sql .= 'JOIN `tacos_projects_teams` pt ON pt.`project_id` = p.`id` ';
-        $sql .= 'JOIN `tacos_users_teams` ut ON ut.`team_id` = pt.`team_id` AND ut.`user_id` = :teamleaderId AND ut.`teamlead` = 1 ';
+        $sql .= 'JOIN `tacos_users_teams` utp ON utp.`team_id` = pt.`team_id` AND utp.`user_id` = :teamleaderId2 AND utp.`teamlead` = 1 ';
+
         $sql .= 'WHERE p.`id` = :projectId ';
-        $sql .= 'LIMIT 1';
+        $sql .= 'AND (ct.`customer_id` IS NULL OR utc.`user_id` IS NOT NULL) ';
 
         $stmt = $this->pdo->prepare($sql);
 
         $stmt->execute([
             'projectId' => $projectId,
-            'teamleaderId' => $teamleaderId
+            'teamleaderId1' => $teamleaderId,
+            'teamleaderId2' => $teamleaderId
         ]);
         $row = $stmt->fetch();
 
@@ -166,8 +191,12 @@ final class ProjectRepository
 
     /**
      * Find All Projects by user Id
-     * Note : A project is either linked to at least one team, or linked to none.
-     *        A user can see the projects associated/linked with their teams AND projects that are not associated/linked with any team.
+     *
+     * Visibility rules:
+     *  - customer without team + project without team => visible to all
+     *  - customer without team + project with team    => visible if user is member of a project team
+     *  - customer with team    + project without team => visible if user is member of a customer team
+     *  - customer with team    + project with team    => visible if user is member of at least one customer team AND at least one project team
      *
      * @param int  $userId
      * @param ?int $visible
@@ -176,9 +205,17 @@ final class ProjectRepository
     public function findAllByUserId(int $userId, ?int $visible = null): array {
         $sql  = 'SELECT DISTINCT p.* ';
         $sql .= 'FROM `tacos_projects` p ';
+         // customer teams + whether current user is member of one of them
+        $sql .= 'LEFT JOIN `tacos_customers` c ON c.`id` = p.`customer_id` ';
+        $sql .= 'LEFT JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` utc ON utc.`team_id` = ct.`team_id` AND utc.`user_id` = :userId1 ';
+        // project teams + whether current user is member of one of them
         $sql .= 'LEFT JOIN `tacos_projects_teams` pt ON pt.`project_id` = p.`id` ';
-        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = pt.`team_id` AND ut.`user_id` = :userId ';
-        $sql .= 'WHERE (ut.`user_id` IS NOT NULL OR pt.`project_id` IS NULL) ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` utp ON utp.`team_id` = pt.`team_id` AND utp.`user_id` = :userId2 ';
+
+        $sql .= 'WHERE (ct.`team_id` IS NULL OR utc.`user_id` IS NOT NULL) ';  // customer: either customer has no team OR user is member of a customer team
+        $sql .= 'AND (pt.`project_id` IS NULL OR utp.`user_id` IS NOT NULL) '; // project: either project has no team OR user is member of a project team
+
         if (!is_null($visible)) {
             $sql .= 'AND p.`visible` = :visible ';
         }
@@ -186,7 +223,10 @@ final class ProjectRepository
 
         $stmt = $this->pdo->prepare($sql);
 
-        $params = ['userId' => $userId];
+        $params = array(
+            'userId1' => $userId,
+            'userId2' => $userId
+        );
         if (!is_null($visible)) {
             $params['visible'] = $visible;
         }
@@ -204,8 +244,12 @@ final class ProjectRepository
 
     /**
      * Find All Projects by user Id and customer id
-     * Note : A project is either linked to at least one team, or linked to none.
-     *        A user can see the projects associated/linked with their teams AND projects that are not associated/linked with any team.
+     *
+     * Visibility rules:
+     *  - customer without team + project without team => visible to all
+     *  - customer without team + project with team    => visible if user is member of a project team
+     *  - customer with team    + project without team => visible if user is member of a customer team
+     *  - customer with team    + project with team    => visible if user is member of at least one customer team AND at least one project team
      *
      * @param int  $userId
      * @param int  $customerId
@@ -215,10 +259,18 @@ final class ProjectRepository
     public function findAllByUserIdAndCustomerId(int $userId, int $customerId, ?int $visible = null): array {
         $sql  = 'SELECT DISTINCT p.* ';
         $sql .= 'FROM `tacos_projects` p ';
+         // customer teams + whether current user is member of one of them
+        $sql .= 'LEFT JOIN `tacos_customers` c ON c.`id` = p.`customer_id` ';
+        $sql .= 'LEFT JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` utc ON utc.`team_id` = ct.`team_id` AND utc.`user_id` = :userId1 ';
+        // project teams + whether current user is member of one of them
         $sql .= 'LEFT JOIN `tacos_projects_teams` pt ON pt.`project_id` = p.`id` ';
-        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = pt.`team_id` AND ut.`user_id` = :userId ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` utp ON utp.`team_id` = pt.`team_id` AND utp.`user_id` = :userId2 ';
+
         $sql .= 'WHERE p.`customer_id` = :customerId ';
-        $sql .= 'AND (ut.`user_id` IS NOT NULL OR pt.`project_id` IS NULL) ';
+        $sql .= 'AND (ct.`team_id` IS NULL OR utc.`user_id` IS NOT NULL) ';  // customer: either customer has no team OR user is member of a customer team
+        $sql .= 'AND (pt.`project_id` IS NULL OR utp.`user_id` IS NOT NULL) '; // project: either project has no team OR user is member of a project team
+
         if (!is_null($visible)) {
             $sql .= 'AND p.`visible` = :visible ';
         }
@@ -227,7 +279,8 @@ final class ProjectRepository
         $stmt = $this->pdo->prepare($sql);
 
         $params = array(
-            'userId' => $userId,
+            'userId1' => $userId,
+            'userId2' => $userId,
             'customerId' => $customerId,
         );
         if (!is_null($visible)) {
@@ -248,6 +301,12 @@ final class ProjectRepository
     /**
      * Find All Projects by teamleader Id
      *
+     * Visibility rules:
+     *  - customer without team + project without team => visible to all
+     *  - customer without team + project with team    => visible if user is member of a project team
+     *  - customer with team    + project without team => visible if user is member of a customer team
+     *  - customer with team    + project with team    => visible if user is member of at least one customer team AND at least one project team
+     *
      * @param int $teamleaderId
      * @param ?int $visible
      * @return array of Project entities
@@ -255,16 +314,27 @@ final class ProjectRepository
     public function findAllByTeamleaderId(int $teamleaderId, ?int $visible = null): array {
         $sql  = 'SELECT DISTINCT p.* ';
         $sql .= 'FROM `tacos_projects` p ';
+         // customer teams + whether current user is teamlead of one of them
+        $sql .= 'LEFT JOIN `tacos_customers` c ON c.`id` = p.`customer_id` ';
+        $sql .= 'LEFT JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` utc ON utc.`team_id` = ct.`team_id` AND utc.`user_id` = :teamleaderId1 AND utc.`teamlead` = 1 ';
+        // project teams + whether current user is teamlead of one of them
         $sql .= 'LEFT JOIN `tacos_projects_teams` pt ON pt.`project_id` = p.`id` ';
-        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = pt.`team_id` AND ut.`user_id` = :teamleaderId AND ut.`teamlead` = 1 ';
-        $sql .= 'WHERE (ut.`user_id` IS NOT NULL OR pt.`project_id` IS NULL) ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` utp ON utp.`team_id` = pt.`team_id` AND utp.`user_id` = :teamleaderId2 AND utp.`teamlead` = 1 ';
+
+        $sql .= 'WHERE (ct.`team_id` IS NULL OR utc.`user_id` IS NOT NULL) ';  // customer: either customer has no team OR user is member of a customer team
+        $sql .= 'AND (pt.`project_id` IS NULL OR utp.`user_id` IS NOT NULL) '; // project: either project has no team OR user is member of a project team
+
         if (!is_null($visible)) {
             $sql .= 'AND p.`visible` = :visible ';
         }
         $sql .= 'ORDER BY p.`name` ASC';
 
         $stmt = $this->pdo->prepare($sql);
-        $params = ['teamleaderId' => $teamleaderId];
+        $params = array(
+            'teamleaderId1' => $teamleaderId,
+            'teamleaderId2' => $teamleaderId
+        );
         if (!is_null($visible)) {
             $params['visible'] = $visible;
         }
@@ -307,6 +377,12 @@ final class ProjectRepository
     /**
      * Find All Projects with Teams count and Customer by Teamleader id
      *
+     * Visibility rules:
+     *  - customer without team + project without team => visible to all
+     *  - customer without team + project with team    => visible if user is member of a project team
+     *  - customer with team    + project without team => visible if user is member of a customer team
+     *  - customer with team    + project with team    => visible if user is member of at least one customer team AND at least one project team
+     *
      * @param int $teamleaderId
      * @return array of Projects with Teams count and Customer
      */
@@ -315,20 +391,26 @@ final class ProjectRepository
         $sql .= 'c.`name` as customerName , c.`color` as customerColor, ';
         $sql .= 'COUNT(DISTINCT pt2.`team_id`) AS teamsCount ';
         $sql .= 'FROM `tacos_projects` p ';
+        // customer teams + whether current user is teamlead of one of them
         $sql .= 'LEFT JOIN `tacos_customers` c ON c.`id` = p.`customer_id` ';
+        $sql .= 'LEFT JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` utc ON utc.`team_id` = ct.`team_id` AND utc.`user_id` = :teamleaderId1 AND utc.`teamlead` = 1 ';
+        // project teams + whether current user is teamlead of one of them
         $sql .= 'LEFT JOIN `tacos_projects_teams` pt ON pt.`project_id` = p.`id` ';
-        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = pt.`team_id` AND ut.`user_id` = :teamleaderId AND ut.`teamlead` = 1 ';
-
-        // Count all teams
+        $sql .= 'LEFT JOIN `tacos_users_teams` utp ON utp.`team_id` = pt.`team_id` AND utp.`user_id` = :teamleaderId2 AND utp.`teamlead` = 1 ';
+        // count all teams linked to the project
         $sql .= 'LEFT JOIN `tacos_projects_teams` pt2 ON pt2.`project_id` = p.`id` ';
 
-        $sql .= 'WHERE ut.`user_id` IS NOT NULL OR pt.`project_id` IS NULL ';
+        $sql .= 'WHERE (ct.`team_id` IS NULL OR utc.`user_id` IS NOT NULL) ';  // customer: either customer has no team OR user is member of a customer team
+        $sql .= 'AND (pt.`project_id` IS NULL OR utp.`user_id` IS NOT NULL) '; // project: either project has no team OR user is member of a project team
+
         $sql .= 'GROUP BY p.`id` ';
         $sql .= 'ORDER BY p.`name` ASC';
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
-            'teamleaderId' => $teamleaderId,
+            'teamleaderId1' => $teamleaderId,
+            'teamleaderId2' => $teamleaderId,
         ]);
 
         return $stmt->fetchAll();
@@ -337,24 +419,36 @@ final class ProjectRepository
     /**
      * Find All Projects with Customer by User id
      *
+     * Visibility rules:
+     *  - customer without team + project without team => visible to all
+     *  - customer without team + project with team    => visible if user is member of a project team
+     *  - customer with team    + project without team => visible if user is member of a customer team
+     *  - customer with team    + project with team    => visible if user is member of at least one customer team AND at least one project team
+     *
      * @param int $userId
      * @return array of Projects with Customer
      */
     public function findAllProjectsWithCustomerByUserId(int $userId): array {
-        $sql  = 'SELECT p.`id`, p.`name`, p.`color`, p.`number`, p.`comment`, p.`visible`, ';
+        $sql  = 'SELECT DISTINCT p.`id`, p.`name`, p.`color`, p.`number`, p.`comment`, p.`visible`, ';
         $sql .= 'c.`name` as customerName , c.`color` as customerColor ';
         $sql .= 'FROM `tacos_projects` p ';
+        // customer teams + whether current user is member of one of them
         $sql .= 'LEFT JOIN `tacos_customers` c ON c.`id` = p.`customer_id` ';
+        $sql .= 'LEFT JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` utc ON utc.`team_id` = ct.`team_id` AND utc.`user_id` = :userId1 ';
+        // project teams + whether current user is member of one of them
         $sql .= 'LEFT JOIN `tacos_projects_teams` pt ON pt.`project_id` = p.`id` ';
-        $sql .= 'LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = pt.`team_id` AND ut.`user_id` = :userId ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` utp ON utp.`team_id` = pt.`team_id` AND utp.`user_id` = :userId2 ';
 
-        $sql .= 'WHERE ut.`user_id` IS NOT NULL OR pt.`project_id` IS NULL ';
-        $sql .= 'GROUP BY p.`id` ';
+        $sql .= 'WHERE (ct.`team_id` IS NULL OR utc.`user_id` IS NOT NULL) ';  // customer: either customer has no team OR user is member of a customer team
+        $sql .= 'AND (pt.`project_id` IS NULL OR utp.`user_id` IS NOT NULL) '; // project: either project has no team OR user is member of a project team
+
         $sql .= 'ORDER BY p.`name` ASC';
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
-            'userId' => $userId,
+            'userId1' => $userId,
+            'userId2' => $userId
         ]);
 
         return $stmt->fetchAll();
@@ -363,23 +457,34 @@ final class ProjectRepository
     /**
      * Find All Projects with Customer by Team id
      *
+     * Visibility rules:
+     *  - customer without team + project without team => visible to all
+     *  - customer without team + project with team    => visible if user is member of a project team
+     *  - customer with team    + project without team => visible if user is member of a customer team
+     *  - customer with team    + project with team    => visible if user is member of at least one customer team AND at least one project team
+     *
      * @param int $teamId
      * @return array of Projects with Customer
      */
     public function findAllProjectsWithCustomerByTeamId(int $teamId): array {
-        $sql  = 'SELECT p.`id`, p.`name`, p.`color`, p.`number`, p.`comment`, p.`visible`, ';
+        $sql  = 'SELECT DISTINCT p.`id`, p.`name`, p.`color`, p.`number`, p.`comment`, p.`visible`, ';
         $sql .= 'c.`name` as customerName , c.`color` as customerColor ';
         $sql .= 'FROM `tacos_projects` p ';
+        // customer teams
         $sql .= 'LEFT JOIN `tacos_customers` c ON c.`id` = p.`customer_id` ';
+        $sql .= 'LEFT JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ';
+        // project teams
         $sql .= 'LEFT JOIN `tacos_projects_teams` pt ON pt.`project_id` = p.`id` ';
 
-        $sql .= 'WHERE pt.`team_id` = :teamId OR pt.`project_id` IS NULL ';
-        $sql .= 'GROUP BY p.`id` ';
+        $sql .= 'WHERE (ct.`team_id` IS NULL OR ct.`team_id` = :teamId1) ';  // customer: either customer has no team OR this team is attached to the customer
+        $sql .= 'AND (pt.`project_id` IS NULL OR pt.`team_id` = :teamId2) '; // project: either project has no team OR this team is attached to the project
+
         $sql .= 'ORDER BY p.`name` ASC';
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
-            'teamId' => $teamId
+            'teamId1' => $teamId,
+            'teamId2' => $teamId
         ]);
 
         return $stmt->fetchAll();
