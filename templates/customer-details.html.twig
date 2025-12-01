@@ -86,7 +86,7 @@
             <ul class="list-unstyled ms-1">
                 {% for project in projects %}
                     <li>
-                        <div class="d-inline-flex align-items-center">
+                        <div class="d-inline-flex align-items-center {% if project.visible == 0 %}text-secondary fst-italic{% endif %}">
                             <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ project.color }};"><span class="visually-hidden">color</span></span>
                             <span class="ms-1">{{ project.name }}</span>
                         </div>
