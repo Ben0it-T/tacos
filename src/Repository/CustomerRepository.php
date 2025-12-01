@@ -275,8 +275,8 @@ final class CustomerRepository
      */
     public function findAllCustomersWithTeamsCountAndProjectsCount(): array {
         $sql  = "SELECT c.`id`, c.`name`, c.`color`, c.`number`, c.`visible`, ";
-        $sql .= "COUNT(DISTINCT ct.`team_id` ) AS teams, ";
-        $sql .= "COUNT(DISTINCT p.`id`) AS projects ";
+        $sql .= "COUNT(DISTINCT ct.`team_id` ) AS teamsCount, ";
+        $sql .= "COUNT(DISTINCT p.`id`) AS projectsCount ";
         $sql .= "FROM `tacos_customers` c ";
         $sql .= "LEFT JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ";
         $sql .= "LEFT JOIN `tacos_projects` p ON p.`customer_id` = c.`id` ";
@@ -292,29 +292,39 @@ final class CustomerRepository
     /**
      * Find Customers with Teams count and Projects count by User id
      *
+     * Visibility rules:
+     *  - customer without teams => visible to all
+     *  - customer with team     => visible only if user is member of at least one customer team
+     *
      * @param int $userId
      * @return array of Customers with Teams count and Projects count
      */
     public function findAllCustomersWithTeamsCountAndProjectsCountByUserId(int $userId): array {
         $sql  = "SELECT c.`id`, c.`name`, c.`color`, c.`number`, c.`visible`, ";
-        $sql .= "COUNT(DISTINCT ut.`team_id` ) AS teams, ";
-        $sql .= "COUNT(DISTINCT pt.`project_id`) AS projects ";
+        $sql .= "COUNT(DISTINCT ct.`team_id`) AS teamsCount, ";
+        $sql .= "COUNT(DISTINCT p.`id`) AS projectsCount ";
         $sql .= "FROM `tacos_customers` c ";
-        // Customer teams
-        $sql .= "LEFT JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ";
-        // Teams to which the user belongs
-        $sql .= "LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = ct.`team_id` AND ut.`user_id` = :userId ";
-        // Projects to which these teams belong
-        $sql .= "LEFT JOIN `tacos_projects_teams` pt ON pt.`team_id` = ut.`team_id` ";
-        $sql .= "LEFT JOIN `tacos_projects` p ON p.`id` = pt.`project_id` AND p.`customer_id` = c.`id` ";
 
-        $sql .= 'WHERE (ut.`user_id` IS NOT NULL OR ct.`team_id` IS NULL) ';
+        // customer teams + whether current user is member of one of them
+        $sql .= "LEFT JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ";
+        $sql .= "LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = ct.`team_id` AND ut.`user_id` = :userId1 ";
+
+        // projets of the customer
+        $sql .= "LEFT JOIN `tacos_projects` p ON p.`customer_id` = c.`id` ";
+
+        // project teams + whether current user is member of one of them
+        $sql .= 'LEFT JOIN `tacos_projects_teams` pt ON pt.`project_id` = p.`id` ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` utp ON utp.`team_id` = pt.`team_id` AND utp.`user_id` = :userId2 ';
+
+        $sql .= 'WHERE (ct.`team_id` IS NULL OR ut.`user_id` IS NOT NULL) ';  // customer: either customer has no team OR user is member of a customer team
+
         $sql .= "GROUP BY c.`id`, c.`name`, c.`color`, c.`number`, c.`visible` ";
         $sql .= "ORDER BY c.`name`";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
-            'userId' => $userId
+            'userId1' => $userId,
+            'userId2' => $userId
         ]);
 
         return $stmt->fetchAll();
@@ -323,29 +333,39 @@ final class CustomerRepository
     /**
      * Find Customers with Teams count and Projects count by Teamleader id
      *
+     * Visibility rules:
+     *  - customer without teams => visible to all
+     *  - customer with team     => visible only if user is teamlead of at least one customer team
+     *
      * @param int $teamleaderId
      * @return array of Customers with Teams count and Projects count
      */
     public function findAllCustomersWithTeamsCountAndProjectsCountByTeamleaderId(int $teamleaderId): array {
         $sql  = "SELECT c.`id`, c.`name`, c.`color`, c.`number`, c.`visible`, ";
-        $sql .= "COUNT(DISTINCT ut.`team_id` ) AS teams, ";
-        $sql .= "COUNT(DISTINCT pt.`project_id`) AS projects ";
+        $sql .= "COUNT(DISTINCT ct.`team_id`) AS teamsCount, ";
+        $sql .= "COUNT(DISTINCT p.`id`) AS projectsCount ";
         $sql .= "FROM `tacos_customers` c ";
-        // Customer teams
-        $sql .= "LEFT JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ";
-        // Teams to which the user belongs
-        $sql .= "LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = ct.`team_id` AND ut.`user_id` = :teamleaderId AND ut.`teamlead` = 1 ";
-        // Projects to which these teams belong
-        $sql .= "LEFT JOIN `tacos_projects_teams` pt ON pt.`team_id` = ut.`team_id` ";
-        $sql .= "LEFT JOIN `tacos_projects` p ON p.`id` = pt.`project_id` AND p.`customer_id` = c.`id` ";
 
-        $sql .= 'WHERE (ut.`user_id` IS NOT NULL OR ct.`team_id` IS NULL) ';
+        // customer teams + whether current teamleader is member of one of them
+        $sql .= "LEFT JOIN `tacos_customers_teams` ct ON ct.`customer_id` = c.`id` ";
+        $sql .= "LEFT JOIN `tacos_users_teams` ut ON ut.`team_id` = ct.`team_id` AND ut.`user_id` = :teamleaderId1 AND ut.`teamlead` = 1 ";
+
+        // projets of the customer
+        $sql .= "LEFT JOIN `tacos_projects` p ON p.`customer_id` = c.`id` ";
+
+        // project teams + whether current teamleader is member of one of them
+        $sql .= 'LEFT JOIN `tacos_projects_teams` pt ON pt.`project_id` = p.`id` ';
+        $sql .= 'LEFT JOIN `tacos_users_teams` utp ON utp.`team_id` = pt.`team_id` AND utp.`user_id` = :teamleaderId2 AND utp.`teamlead` = 1 ';
+
+        $sql .= 'WHERE (ct.`team_id` IS NULL OR ut.`user_id` IS NOT NULL) ';  // customer: either customer has no team OR user is teamlead of a customer team
+
         $sql .= "GROUP BY c.`id`, c.`name`, c.`color`, c.`number`, c.`visible` ";
         $sql .= "ORDER BY c.`name`";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
-            'teamleaderId' => $teamleaderId
+            'teamleaderId1' => $teamleaderId,
+            'teamleaderId2' => $teamleaderId
         ]);
 
         return $stmt->fetchAll();
