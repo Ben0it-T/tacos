@@ -35,6 +35,7 @@ final class CSPMiddleware implements MiddlewareInterface
             ->withHeader('X-Frame-Options', 'DENY')
             ->withHeader('X-XSS-Protection', '1; mode=block;')
             ->withHeader('X-Content-Type-Options', 'nosniff')
+            ->withHeader('X-Robots-Tag', 'noindex, nofollow')
             ->withHeader('Content-Security-Policy', $policy)
             ->withHeader('Strict-Transport-Security', 'max-age=31536000; includeSubdomains;');
 
