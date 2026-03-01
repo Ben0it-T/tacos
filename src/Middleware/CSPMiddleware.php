@@ -37,7 +37,12 @@ final class CSPMiddleware implements MiddlewareInterface
             ->withHeader('X-Content-Type-Options', 'nosniff')
             ->withHeader('X-Robots-Tag', 'noindex, nofollow')
             ->withHeader('Content-Security-Policy', $policy)
-            ->withHeader('Strict-Transport-Security', 'max-age=31536000; includeSubdomains;');
+            ->withHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
+            ->withHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
+            ->withHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()')
+            ->withHeader('Cross-Origin-Opener-Policy', 'same-origin')
+            ->withHeader('Cross-Origin-Embedder-Policy', 'require-corp')
+            ->withHeader('Cross-Origin-Resource-Policy', 'same-origin');
 
         return $response;
     }
