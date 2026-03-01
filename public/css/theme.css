@@ -3,7 +3,7 @@ html {
 }
 
 body {
-    background-color: #f6f8fb;
+    /* background-color: #f6f8fb; */
     padding-top: 70px;
     font-size: 1rem;
 }
@@ -32,11 +32,11 @@ input.form-control::placeholder {
 }
 
 .bg-navbar {
-    background-color: #222;
-    background-image: -webkit-linear-gradient(top, #3c3c3c 0%, #222 100%);
-    background-image:      -o-linear-gradient(top, #3c3c3c 0%, #222 100%);
-    background-image: -webkit-gradient(linear, left top, left bottom, from(#3c3c3c), to(#222));
-    background-image:         linear-gradient(to bottom, #3c3c3c 0%, #222 100%);
+    background-color: #212529;
+    background-image: -webkit-linear-gradient(top, #3c3c3c 0%, #212529 100%);
+    background-image:      -o-linear-gradient(top, #3c3c3c 0%, #212529 100%);
+    background-image: -webkit-gradient(linear, left top, left bottom, from(#3c3c3c), to(#212529));
+    background-image:         linear-gradient(to bottom, #3c3c3c 0%, #212529 100%);
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff3c3c3c', endColorstr='#ff222222', GradientType=0);
     filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
     background-repeat: repeat-x;
@@ -90,7 +90,7 @@ input.form-control::placeholder {
 }
 
 .login-box {
-    background-color: #ffffff;
+    /* background-color: #ffffff; */
     max-width: 460px;
 }
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-bs-theme="auto">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,6 +19,7 @@
     <link href="{{ basePath }}/lib/datatables/dataTables.bootstrap5.min.css" rel="stylesheet">
     {% block css %}{% endblock %}
     <link href="{{ basePath }}/css/theme.css" rel="stylesheet">
+    <script nonce="{{ nonce }}" src="{{ basePath }}/lib/bootstrap/bootstrap-auto-dark-mode.js"></script>
 </head>
 <body class="border-top border-primary" basepath="{{ basePath is empty ? "" : basePath }}" >
     {% block navbar %}{% endblock %}

@@ -12,4 +12,4 @@ const tempusIcons = {
     close: 'bi bi-x-lg'
 };
 
-const tempusTheme = 'light';
+const tempusTheme = 'auto';
