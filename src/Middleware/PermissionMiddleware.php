@@ -165,13 +165,13 @@ final class PermissionMiddleware implements MiddlewareInterface
             }
         }
 
-
         $twig = $this->container->get(Twig::class);
         $twig->getEnvironment()->addGlobal('navLinks', $navbarLinks);
         $twig->getEnvironment()->addGlobal('activeTimesheet', $activeTimesheet);
         $twig->getEnvironment()->addGlobal('currentUser', array(
             'isLoggedIn' => $isLoggedIn,
             'role' => $role,
+            'name' => $user ? $user->getName() : ''
         ));
 
         $response = $handler->handle($request);
