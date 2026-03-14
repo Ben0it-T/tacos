@@ -138,11 +138,11 @@ $app->addRoutingMiddleware();
 $app->addBodyParsingMiddleware();
 $app->add('csrf');
 $app->add(SessionMiddleware::class);
+$app->add(CSPMiddleware::class);
 // Error Handling Middleware
 $settings = $container->get('settings')['error'];
 $errorMiddleware = $app->addErrorMiddleware((bool)$settings['displayErrorDetails'], (bool)$settings['logErrors'], (bool)$settings['logErrorDetails']);
 // TODO: not Found Handler
-$app->add(CSPMiddleware::class);
 // ----------
 
 
