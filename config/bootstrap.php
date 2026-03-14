@@ -13,6 +13,7 @@ use Monolog\Handler\RotatingFileHandler;
 use Monolog\Logger;
 
 use Psr\Container\ContainerInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -20,9 +21,12 @@ use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
 use Slim\Csrf\Guard;
+use Slim\Exception\HttpNotFoundException;
 use Slim\Factory\AppFactory;
 use Slim\Flash\Messages;
 use Slim\Views\Twig;
+
+use Slim\Psr7\Response;
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -142,8 +146,15 @@ $app->add(CSPMiddleware::class);
 // Error Handling Middleware
 $settings = $container->get('settings')['error'];
 $errorMiddleware = $app->addErrorMiddleware((bool)$settings['displayErrorDetails'], (bool)$settings['logErrors'], (bool)$settings['logErrorDetails']);
-// TODO: not Found Handler
-// ----------
+// Not Found Handler
+$errorMiddleware->setErrorHandler(
+    HttpNotFoundException::class,
+    function (ServerRequestInterface $request, Throwable $exception, bool $displayErrorDetails) use ($app) {
+        $twig = $app->getContainer()->get(Twig::class);
+        $response = new Response();
+        return $twig->render($response->withStatus(404), 'not-found.html.twig', array());
+    }
+);
 
 
 // Get routes
