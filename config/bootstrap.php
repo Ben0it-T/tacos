@@ -33,7 +33,7 @@ require __DIR__ . '/../vendor/autoload.php';
 // Create container
 $containerBuilder = new ContainerBuilder();
 $containerBuilder->addDefinitions([
-    'settings' => fn () => require __DIR__ . '//settings.php',
+    'settings' => fn () => require __DIR__ . '/settings.php',
 
     'translations' => function(ContainerInterface $container) {
         $settings = $container->get('settings')['lang'];
