@@ -141,7 +141,7 @@ return function (ContainerInterface $container): void {
 
     $container->set(TwigCsrfMiddleware::class, function (ContainerInterface $c) {
         return new TwigCsrfMiddleware(
-            $c->get('csrf'), // ou Guard::class si tu l’as typé ainsi
+            $c->get('csrf'), // Guard::class
             $c->get(Twig::class)
         );
     });
