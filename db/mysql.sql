@@ -55,6 +55,19 @@ CREATE TABLE `tacos_customers_teams` (
 -- --------------------------------------------------------
 
 --
+-- Structure for table `tacos_login_attempts`
+--
+
+CREATE TABLE `tacos_login_attempts` (
+  `tracking_id` bigint UNSIGNED NOT NULL,
+  `attempts` int NOT NULL DEFAULT '0',
+  `first_attempt_at` datetime NOT NULL,
+  `blocked_until` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Structure for table `tacos_projects`
 --
 
@@ -241,6 +254,15 @@ ALTER TABLE `tacos_customers_teams`
   ADD PRIMARY KEY (`customer_id`,`team_id`),
   ADD KEY `idx-customers_id` (`customer_id`) USING BTREE,
   ADD KEY `idx-team_id` (`team_id`) USING BTREE;
+
+--
+-- Index for table `tacos_login_attempts`
+--
+
+ALTER TABLE `tacos_login_attempts`
+  ADD PRIMARY KEY (`tracking_id`),
+  ADD KEY `idx_first_attempt_at` (`first_attempt_at`),
+  ADD KEY `idx_blocked_until` (`blocked_until`);
 
 --
 -- Index for table `tacos_projects`

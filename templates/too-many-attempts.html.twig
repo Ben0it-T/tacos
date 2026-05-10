@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Too many login attempts{% endblock %}
+
+{% block content %}
+    <div class="text-center my-4">
+        <img src="{{ basePath }}/img/tacos.png" class="img-fluid rounded-circle mb-2" alt="tacos">
+    </div>
+
+    <div class="too-many-requests  mx-auto d-block px-4 py-4">
+        <h1>Too many requests</h1>
+        <p>
+            For security reasons, access is temporarily restricted.<br>
+            Please try again in a few minutes.
+        </p>
+    </div>
+
+{% endblock %}

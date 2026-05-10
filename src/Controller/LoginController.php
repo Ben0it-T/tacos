@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Service\AuthService;
+use App\Security\AuthResult;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -15,12 +16,12 @@ use Slim\Views\Twig;
 final class LoginController
 {
     private $container;
-    private $auth;
+    private $authService;
 
-    public function __construct(ContainerInterface $container, AuthService $auth)
+    public function __construct(ContainerInterface $container, AuthService $authService)
     {
         $this->container = $container;
-        $this->auth = $auth;
+        $this->authService = $authService;
     }
 
     public function loginForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -45,28 +46,45 @@ final class LoginController
 
     public function loginAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $data = $request->getParsedBody();
+        $identifier = $request->getParsedBody()['_login'] ?? '';
+        $password   = $request->getParsedBody()['_password'] ?? '';
+
         $routeParser = RouteContext::fromRequest($request)->getRouteParser();
 
-        if( !empty($data['_login']) && !empty($data['_password'])) {
-            if ($this->auth->authUser($data['_login'], $data['_password'])) {
+        $result = $this->authService->authenticate($identifier, $password);
+
+
+        switch ($result) {
+            case AuthResult::BLOCKED:
+                $url = $routeParser->urlFor('too_many_attempts');
+                return $response->withStatus(302)->withHeader('Location', $url);
+
+            case AuthResult::SUCCESS:
                 $url = $routeParser->urlFor('timesheets');
                 return $response->withStatus(302)->withHeader('Location', $url);
-            }
-        }
 
-        $translations = $this->container->get('translations');
-        $this->container->get('flash')->addMessage('login-error', $translations['form_error_credentials']);
-        $url = $routeParser->urlFor('login');
-        return $response->withStatus(302)->withHeader('Location', $url);
+            case AuthResult::INVALID_CREDENTIALS:
+            default:
+                $translations = $this->container->get('translations');
+                $this->container->get('flash')->addMessage('login-error', $translations['form_error_credentials']);
+                $url = $routeParser->urlFor('login');
+                return $response->withStatus(302)->withHeader('Location', $url);
+        }
     }
 
     public function logoutAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         session_unset();
-        session_regenerate_id();
+        session_regenerate_id(true);
         $routeParser = RouteContext::fromRequest($request)->getRouteParser();
         $url = $routeParser->urlFor('login');
         return $response->withStatus(302)->withHeader('Location', $url);
+    }
+
+    public function tooManyAttempts(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    {
+        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+        $twig = $this->container->get(Twig::class);
+        return $twig->render($response->withStatus(429), 'too-many-attempts.html.twig', array());
     }
 }

@@ -43,7 +43,7 @@ final class PermissionMiddleware implements MiddlewareInterface
         $arguments = $route->getArguments();
 
         $publicRoutes = array(
-            'login', 'login_attempt',
+            'login', 'login_attempt', 'too_many_attempts',
             'logout',
             'forgot_password', 'forgot_password_attempt',
             'change_password', 'change_password_attempt',

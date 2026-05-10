@@ -94,6 +94,11 @@ input.form-control::placeholder {
     max-width: 460px;
 }
 
+.too-many-requests {
+    /* background-color: #ffffff; */
+    max-width: 460px;
+}
+
 .form-title {
     font-size: 1.2rem;
 }

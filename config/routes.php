@@ -9,6 +9,8 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 $app->get( '/login', \App\Controller\LoginController::class . ':loginForm')->setName('login');
 $app->post('/login', \App\Controller\LoginController::class . ':loginAction')->setName('login_attempt');
 
+$app->get( '/too-many-attempts', \App\Controller\LoginController::class . ':tooManyAttempts')->setName('too_many_attempts');
+
 $app->get('/logout', \App\Controller\LoginController::class . ':logoutAction')->setName('logout');
 
 $app->get( '/forgot-password', \App\Controller\PasswordResetController::class . ':requestForm')->setName('forgot_password');
