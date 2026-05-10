@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+use App\Middleware\CSPMiddleware;
+
 use DI\Container;
 
 use Monolog\Formatter\LineFormatter;
@@ -112,5 +114,15 @@ return function (ContainerInterface $container): void {
 
         return $logger;
     });
+
+
+    //
+    // Middlewares
+    //
+    $container->set(CSPMiddleware::class, function (ContainerInterface $c) {
+    return new CSPMiddleware(
+        $c->get(Twig::class)
+    );
+});
 
 };

@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Middleware;
 
-use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -12,25 +11,32 @@ use Slim\Views\Twig;
 
 final class CSPMiddleware implements MiddlewareInterface
 {
-    private $container;
+    private Twig $twig;
 
-    public function __construct(ContainerInterface $container)
+    public function __construct(Twig $twig)
     {
-        $this->container = $container;
+        $this->twig = $twig;
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $nonce = base64_encode(random_bytes(20));
-
-        $twig = $this->container->get(Twig::class);
-        //$twig->offsetSet('nonce', $nonce);
-        $twig->getEnvironment()->addGlobal('nonce', $nonce);
-
-        $policy = "default-src 'none'; script-src 'nonce-" . $nonce . "'; connect-src 'self'; img-src 'self' data:; style-src 'self'; font-src 'self'; base-uri 'self'; form-action 'self'; manifest-src 'self'; style-src-attr 'unsafe-inline';";
+        $this->twig->getEnvironment()->addGlobal('nonce', $nonce);
+        $policy = implode('; ', [
+            "default-src 'none'",
+            "script-src 'nonce-{$nonce}'",
+            "connect-src 'self'",
+            "img-src 'self' data:",
+            "style-src 'self'",
+            "style-src-attr 'unsafe-inline'",
+            "font-src 'self'",
+            "base-uri 'self'",
+            "form-action 'self'",
+            "manifest-src 'self'",
+        ]);
         $response = $handler->handle($request);
 
-        $response = $response
+        return $response
             ->withHeader('X-Powered-By', '')
             ->withHeader('X-Frame-Options', 'DENY')
             ->withHeader('X-XSS-Protection', '1; mode=block;')
@@ -43,7 +49,5 @@ final class CSPMiddleware implements MiddlewareInterface
             ->withHeader('Cross-Origin-Opener-Policy', 'same-origin')
             ->withHeader('Cross-Origin-Embedder-Policy', 'require-corp')
             ->withHeader('Cross-Origin-Resource-Policy', 'same-origin');
-
-        return $response;
     }
 }
