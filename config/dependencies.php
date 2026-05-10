@@ -2,6 +2,8 @@
 declare(strict_types=1);
 
 use App\Middleware\CSPMiddleware;
+use App\Repository\TimesheetRepository;
+use App\Repository\UserRepository;
 
 use DI\Container;
 
@@ -123,6 +125,14 @@ return function (ContainerInterface $container): void {
     return new CSPMiddleware(
         $c->get(Twig::class)
     );
+
+    $container->set(PermissionMiddleware::class, function (ContainerInterface $c) {
+    return new PermissionMiddleware(
+        $c->get(TimesheetRepository::class),
+        $c->get(UserRepository::class),
+        $c->get(Twig::class)
+    );
+});
 });
 
 };

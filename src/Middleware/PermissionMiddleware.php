@@ -3,33 +3,27 @@ declare(strict_types=1);
 
 namespace App\Middleware;
 
-use App\Repository\UserRepository;
 use App\Repository\TimesheetRepository;
-
-use Psr\Container\ContainerInterface;
-use Psr\Http\Message\ResponseFactoryInterface;
+use App\Repository\UserRepository;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-
 use Slim\Psr7\Response;
 use Slim\Routing\RouteContext;
 use Slim\Views\Twig;
 
-use PDO;
-
 final class PermissionMiddleware implements MiddlewareInterface
 {
-    private $container;
-    private $userRepository;
-    private $timesheetRepository;
+    private TimesheetRepository $timesheetRepository;
+    private UserRepository $userRepository;
+    private Twig $twig;
 
-    public function __construct(ContainerInterface $container, TimesheetRepository $timesheetRepository, UserRepository $userRepository)
+    public function __construct(TimesheetRepository $timesheetRepository, UserRepository $userRepository, Twig $twig)
     {
-        $this->container = $container;
         $this->timesheetRepository = $timesheetRepository;
         $this->userRepository = $userRepository;
+        $this->twig = $twig;
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
@@ -165,10 +159,9 @@ final class PermissionMiddleware implements MiddlewareInterface
             }
         }
 
-        $twig = $this->container->get(Twig::class);
-        $twig->getEnvironment()->addGlobal('navLinks', $navbarLinks);
-        $twig->getEnvironment()->addGlobal('activeTimesheet', $activeTimesheet);
-        $twig->getEnvironment()->addGlobal('currentUser', array(
+        $this->twig->getEnvironment()->addGlobal('navLinks', $navbarLinks);
+        $this->twig->getEnvironment()->addGlobal('activeTimesheet', $activeTimesheet);
+        $this->twig->getEnvironment()->addGlobal('currentUser', array(
             'isLoggedIn' => $isLoggedIn,
             'role' => $role,
             'name' => $user ? $user->getName() : ''
