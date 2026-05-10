@@ -2,6 +2,9 @@
 declare(strict_types=1);
 
 use App\Middleware\CSPMiddleware;
+use App\Middleware\PermissionMiddleware;
+use App\Middleware\TwigCsrfMiddleware;
+
 use App\Repository\TimesheetRepository;
 use App\Repository\UserRepository;
 
@@ -16,6 +19,7 @@ use PHPMailer\PHPMailer\PHPMailer;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
+use Slim\Csrf\Guard;
 use Slim\Flash\Messages;
 use Slim\Views\Twig;
 
@@ -122,17 +126,26 @@ return function (ContainerInterface $container): void {
     // Middlewares
     //
     $container->set(CSPMiddleware::class, function (ContainerInterface $c) {
-    return new CSPMiddleware(
-        $c->get(Twig::class)
-    );
+        return new CSPMiddleware(
+            $c->get(Twig::class)
+        );
+    });
 
     $container->set(PermissionMiddleware::class, function (ContainerInterface $c) {
-    return new PermissionMiddleware(
-        $c->get(TimesheetRepository::class),
-        $c->get(UserRepository::class),
-        $c->get(Twig::class)
-    );
-});
-});
+        return new PermissionMiddleware(
+            $c->get(TimesheetRepository::class),
+            $c->get(UserRepository::class),
+            $c->get(Twig::class)
+        );
+    });
+
+    $container->set(TwigCsrfMiddleware::class, function (ContainerInterface $c) {
+        return new TwigCsrfMiddleware(
+            $c->get('csrf'), // ou Guard::class si tu l’as typé ainsi
+            $c->get(Twig::class)
+        );
+    });
+
+
 
 };

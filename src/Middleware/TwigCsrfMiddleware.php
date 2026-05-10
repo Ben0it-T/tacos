@@ -3,37 +3,37 @@ declare(strict_types=1);
 
 namespace App\Middleware;
 
-use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Slim\Csrf\Guard;
 use Slim\Views\Twig;
 
 final class TwigCsrfMiddleware implements MiddlewareInterface
 {
-    private $container;
+    private Guard $csrf;
+    private Twig $twig;
 
-    public function __construct(ContainerInterface $container)
+    public function __construct(Guard $csrf, Twig $twig)
     {
-        $this->container = $container;
+        $this->csrf = $csrf;
+        $this->twig = $twig;
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $twig = $this->container->get(Twig::class);
-        $csrf  = $this->container->get('csrf');
+        $csrfNameKey  = $this->csrf->getTokenNameKey();
+        $csrfValueKey = $this->csrf->getTokenValueKey();
 
-        $csrfNameKey = $csrf->getTokenNameKey();
-        $csrfValueKey = $csrf->getTokenValueKey();
-        $csrfName = $request->getAttribute($csrfNameKey);
+        $csrfName  = $request->getAttribute($csrfNameKey);
         $csrfValue = $request->getAttribute($csrfValueKey);
 
-        $twig->getEnvironment()->addGlobal('csrf', array(
-            'nameKey' => $csrfNameKey,
+        $this->twig->getEnvironment()->addGlobal('csrf', array(
+            'nameKey'  => $csrfNameKey,
             'valueKey' => $csrfValueKey,
-            'name' => $csrfName,
-            'value' => $csrfValue,
+            'name'     => $csrfName,
+            'value'    => $csrfValue,
         ));
 
         return $handler->handle($request);
