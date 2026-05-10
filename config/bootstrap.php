@@ -158,6 +158,6 @@ $errorMiddleware->setErrorHandler(
 
 
 // Get routes
-require __DIR__ . '//routes.php';
+require __DIR__ . '/routes.php';
 
 return $app;
