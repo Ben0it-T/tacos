@@ -27,7 +27,10 @@ use Slim\Views\Twig;
 
 return function (ContainerInterface $container): void {
 
-    // Translations
+    //
+    // Infra
+    //
+
     $container->set('translations', function (ContainerInterface $c) {
         $settings = $c->get('settings')['lang'];
         $translations = require sprintf("%s/%s.php", $settings['path'], 'en_US');
@@ -42,17 +45,6 @@ return function (ContainerInterface $container): void {
         return $translations;
     });
 
-    // Flash messages
-    // Moved to SessionMiddleware
-    // Flash must be start after session
-    /*
-    $container->set('flash', function () {
-        $storage = [];
-        return new Messages($storage);
-    });
-    */
-
-    // PDO
     $container->set(PDO::class, function (ContainerInterface $c) {
         $db = $c->get('settings')['db'];
         $dsn = sprintf(
@@ -65,7 +57,6 @@ return function (ContainerInterface $container): void {
         return new PDO($dsn, $db['user'], $db['pass'], $db['options']);
     });
 
-    // Twig
     $container->set(Twig::class, function (ContainerInterface $c) {
         $settings = $c->get('settings')['twig'];
         $cache = is_bool($settings['cache']) === true ? (bool)$settings['cache'] : sprintf("%s", $settings['cache']);
@@ -84,7 +75,6 @@ return function (ContainerInterface $container): void {
         return $twig;
     });
 
-    // PHPMailer
     $container->set(PHPMailer::class, function (ContainerInterface $c) {
         $settings = $c->get('settings')['mailer'];
         $mailer = new PHPMailer();
@@ -108,7 +98,6 @@ return function (ContainerInterface $container): void {
         return $mailer;
     });
 
-    // Logger
     $container->set(LoggerInterface::class, function (ContainerInterface $c) {
         $settings = $c->get('settings')['logger'];
 
@@ -127,10 +116,10 @@ return function (ContainerInterface $container): void {
         return $logger;
     });
 
-
     //
     // Middlewares
     //
+
     $container->set(CSPMiddleware::class, function (ContainerInterface $c) {
         return new CSPMiddleware(
             $c->get(Twig::class)
@@ -152,10 +141,10 @@ return function (ContainerInterface $container): void {
         );
     });
 
-
     //
     // Session
     //
+
     $container->set(SessionManager::class, function (ContainerInterface $c) {
         $settings = $c->get('settings');
 
