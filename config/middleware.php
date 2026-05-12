@@ -10,7 +10,6 @@ use Slim\App;
 use Slim\Csrf\Guard;
 use Slim\Exception\HttpNotFoundException;
 use Slim\Psr7\Response;
-use Slim\Routing\RouteContext;
 use Slim\Views\Twig;
 
 return function (App $app): void {
@@ -19,14 +18,16 @@ return function (App $app): void {
     $responseFactory = $app->getResponseFactory();
 
     // CSRF
-    $container->set('csrf', fn () => new Guard($responseFactory, '_csrf'));
+    $container->set(Guard::class, function () use ($responseFactory) {
+        return new Guard($responseFactory, '_csrf');
+    });
 
-    // Register Middleware
+    // Register Middlewares
     $app->add(TwigCsrfMiddleware::class);
     $app->add(PermissionMiddleware::class);
     $app->addRoutingMiddleware();
     $app->addBodyParsingMiddleware();
-    $app->add('csrf');
+    $app->add(Guard::class);
     $app->add(SessionMiddleware::class);
     $app->add(CSPMiddleware::class);
 
@@ -36,8 +37,8 @@ return function (App $app): void {
         (bool)$settings['displayErrorDetails'],
         (bool)$settings['logErrors'],
         (bool)$settings['logErrorDetails']);
-    // Not Found Handler
 
+    // Not Found Handler
     $errorMiddleware->setErrorHandler(
         HttpNotFoundException::class,
         function ($request, Throwable $exception) use ($container) {

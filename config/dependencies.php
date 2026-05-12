@@ -4,11 +4,14 @@ declare(strict_types=1);
 use App\Middleware\CSPMiddleware;
 use App\Middleware\PermissionMiddleware;
 use App\Middleware\TwigCsrfMiddleware;
+use App\Middleware\SessionMiddleware;
+
+use App\Session\SessionManager;
+use App\Session\Handler\LocalSessionHandlerFactory;
+use App\Session\Handler\DatabaseSessionHandler;
 
 use App\Repository\TimesheetRepository;
 use App\Repository\UserRepository;
-
-use DI\Container;
 
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\RotatingFileHandler;
@@ -20,7 +23,6 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 use Slim\Csrf\Guard;
-use Slim\Flash\Messages;
 use Slim\Views\Twig;
 
 return function (ContainerInterface $container): void {
@@ -41,10 +43,14 @@ return function (ContainerInterface $container): void {
     });
 
     // Flash messages
+    // Moved to SessionMiddleware
+    // Flash must be start after session
+    /*
     $container->set('flash', function () {
         $storage = [];
         return new Messages($storage);
     });
+    */
 
     // PDO
     $container->set(PDO::class, function (ContainerInterface $c) {
@@ -141,11 +147,53 @@ return function (ContainerInterface $container): void {
 
     $container->set(TwigCsrfMiddleware::class, function (ContainerInterface $c) {
         return new TwigCsrfMiddleware(
-            $c->get('csrf'), // Guard::class
+            $c->get(Guard::class), // 'csrf'
             $c->get(Twig::class)
         );
     });
 
 
+    //
+    // Session
+    //
+    $container->set(SessionManager::class, function (ContainerInterface $c) {
+        $settings = $c->get('settings');
+
+        return new SessionManager(
+            $c->get(SessionHandlerInterface::class),
+            [
+                'name' => $settings['session']['name'],
+                'use_strict_mode' => true,
+                'use_cookies' => 1,
+                'use_only_cookies' => 1,
+                'cookie_lifetime' => (int) $settings['session']['lifetime'],
+                'cookie_path' => '/',
+                'cookie_domain' => $settings['app']['domain'],
+                'cookie_secure' => true,
+                'cookie_httponly' => true,
+                'cookie_samesite' => 'Strict',
+            ]
+        );
+    });
+
+    $container->set(SessionHandlerInterface::class, function (ContainerInterface $c) {
+        $settings = $c->get('settings')['session'];
+
+        return match ($settings['handler']) {
+            'db' => new DatabaseSessionHandler(
+                $c->get(PDO::class),
+                (int) $settings['lifetime']
+            ),
+            'local' => LocalSessionHandlerFactory::create($settings),
+            default => new SessionHandler(), // stockage fichiers PHP natif
+        };
+    });
+
+    $container->set(SessionMiddleware::class, function (ContainerInterface $c) {
+        return new SessionMiddleware(
+            $c->get(SessionManager::class),
+            $c
+        );
+    });
 
 };
