@@ -37,9 +37,9 @@ final class SessionManager
                 'expires'  => time() + ($this->options['cookie_lifetime'] ?? 0),
                 'path'     => $cookieParams['path'],
                 'domain'   => $cookieParams['domain'],
-                'secure'   => $cookieParams['secure'],
+                'secure'   => $this->options['cookie_secure'] ?? true,
                 'httponly' => $cookieParams['httponly'],
-                'samesite' => $this->options['cookie_samesite'] ?? 'Lax',
+                'samesite' => $this->options['cookie_samesite'] ?? 'Strict',
             ]
         );
     }

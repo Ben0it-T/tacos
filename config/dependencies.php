@@ -151,16 +151,16 @@ return function (ContainerInterface $container): void {
         return new SessionManager(
             $c->get(SessionHandlerInterface::class),
             [
-                'name' => $settings['session']['name'],
-                'use_strict_mode' => true,
-                'use_cookies' => 1,
+                'name'             => $settings['session']['name'],
+                'use_strict_mode'  => true,
+                'use_cookies'      => 1,
                 'use_only_cookies' => 1,
-                'cookie_lifetime' => (int) $settings['session']['lifetime'],
-                'cookie_path' => '/',
-                'cookie_domain' => $settings['app']['domain'],
-                'cookie_secure' => true,
-                'cookie_httponly' => true,
-                'cookie_samesite' => 'Strict',
+                'cookie_lifetime'  => (int) $settings['session']['lifetime'],
+                'cookie_path'      => '/',
+                'cookie_domain'    => $settings['app']['domain'],
+                'cookie_secure'    => $settings['session']['cookie_secure']   ?? true,
+                'cookie_httponly'  => true,
+                'cookie_samesite'  => $settings['session']['cookie_samesite'] ?? 'Strict',
             ]
         );
     });

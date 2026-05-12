@@ -3,15 +3,11 @@
 // Example environment
 
 return function (array $settings): array {
-    $lifetime = 60*60*12;
 
     // Error reporting
     error_reporting(E_ALL);                 // Should be set to 0 in production
     ini_set('display_errors', '1');         // Should be set to 0 in production
     ini_set('display_startup_errors', '1'); // Should be set to 0 in production
-
-    // Session lifetime
-    ini_set('session.gc_maxlifetime', $lifetime);
 
     // App settings
     $settings['app']['basepath'] = '/yourbasepath';
@@ -53,7 +49,9 @@ return function (array $settings): array {
     // 'db'     - db storage
     $settings['session']['handler'] = 'local';
     $settings['session']['path'] = dirname(__DIR__) . '/var/sessions';
-    $settings['session']['lifetime'] = $lifetime;
+    $settings['session']['lifetime'] = 60 * 60 * 12;
+    $settings['session']['cookie_secure'] = true;    // Set to false if using HTTP in local dev
+    $settings['session']['cookie_samesite'] = 'Lax';
 
     // Timesheet
     // rounding mode : ceil, floor, closest, none

@@ -2,15 +2,11 @@
 
 // Application default settings
 $settings = [];
-$lifetime = 60*60*24;
 
 // Error reporting
 error_reporting(0);
 ini_set('display_errors', '0');
 ini_set('display_startup_errors', '0');
-
-// Session lifetime
-ini_set('session.gc_maxlifetime', $lifetime);
 
 // Timezone
 date_default_timezone_set('Europe/Paris');
@@ -65,7 +61,9 @@ $settings['db'] = [
 $settings['session'] = [
     'handler'  => 'files',
     'name'     => 'tacos_sid',
-    'lifetime' => $lifetime,
+    'lifetime' =>  60 * 60 * 24,
+    'cookie_secure'   => true,
+    'cookie_samesite' => 'Strict'
 ];
 
 // Language settings
