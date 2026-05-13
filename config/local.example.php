@@ -53,6 +53,13 @@ return function (array $settings): array {
     $settings['session']['cookie_secure'] = true;    // Set to false if using HTTP in local dev
     $settings['session']['cookie_samesite'] = 'Lax';
 
+    // Auth settings
+    $settings['auth']['loginMinLength'] = 7;
+    $settings['auth']['pwdMinLength'] = 16;
+    $settings['auth']['pwdRequestSalt'] = '|----set-your-unique-phrase----|';
+    $settings['auth']['loginAttempts']['maxAttempts'] = 3;
+    $settings['auth']['loginAttempts']['blockDelay'] = 900; // seconds
+
     // Timesheet
     // rounding mode : ceil, floor, closest, none
     $settings['timesheet']['rounding']['start']['mode'] = 'floor';

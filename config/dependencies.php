@@ -10,6 +10,9 @@ use App\Session\SessionManager;
 use App\Session\Handler\LocalSessionHandlerFactory;
 use App\Session\Handler\DatabaseSessionHandler;
 
+use App\Service\AuthService;
+
+use App\Repository\LoginAttemptsRepository;
 use App\Repository\TimesheetRepository;
 use App\Repository\UserRepository;
 
@@ -184,5 +187,27 @@ return function (ContainerInterface $container): void {
             $c
         );
     });
+
+    //
+    // Services
+    //
+
+    $container->set(AuthService::class, function (ContainerInterface $c) {
+        $settings = $c->get('settings')['auth']['loginAttempts'] ?? [
+            'maxAttempts' => 5,
+            'blockDelay'  => 300,
+        ];
+
+        return new AuthService(
+            $c->get(LoginAttemptsRepository::class),
+            $c->get(UserRepository::class),
+            $c->get(LoggerInterface::class),
+            [
+                'maxAttempts' => $settings['maxAttempts'],
+                'blockDelay'  => $settings['blockDelay'],
+            ]
+        );
+    });
+
 
 };

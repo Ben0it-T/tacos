@@ -72,13 +72,17 @@ $settings['lang'] = [
     'path'     => dirname(__DIR__) . '/lang',
 ];
 
-// Auth setings
+// Auth settings
 $settings['auth'] = [
     'loginMinLength' => 5,
     'pwdMinLength'   => 12,
     'pwdRequestSalt' => '|----unique-phrase----|',
     'pwdRequestRetryLifetime' => 3600,
     'pwdRequestTokenLifetime' => 86400,
+    'loginAttempts' => [
+        'maxAttempts' => 5,
+        'blockDelay'  => 300,
+    ]
 ];
 
 // Theme

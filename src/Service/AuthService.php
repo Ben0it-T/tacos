@@ -14,16 +14,17 @@ final class AuthService
 {
     private LoginAttemptsRepository $loginAttemptsRepository;
     private UserRepository $userRepository;
-    private int $maxAttempts;
-    private int $blockDelay;
     private LoggerInterface $logger;
+    private array $options;
 
-    public function __construct(LoginAttemptsRepository $loginAttemptsRepository, UserRepository $userRepository, LoggerInterface $logger) {
+    public function __construct(LoginAttemptsRepository $loginAttemptsRepository, UserRepository $userRepository, LoggerInterface $logger, array $options) {
         $this->loginAttemptsRepository = $loginAttemptsRepository;
         $this->userRepository = $userRepository;
-        $this->maxAttempts = 5;
-        $this->blockDelay = 300;
         $this->logger = $logger;
+        $this->options = [
+            'maxAttempts' => max(1, (int)($options['maxAttempts'] ?? 5)),
+            'blockDelay'  => max(1, (int)($options['blockDelay']  ?? 300)),
+        ];
     }
 
     /**
@@ -89,8 +90,8 @@ final class AuthService
             ]
         );
 
-        if ($attempts && $attempts->getAttempts() >= $this->maxAttempts) {
-            $blockedUntil = (new DateTimeImmutable())->modify('+' . $this->blockDelay . ' seconds');
+        if ($attempts && $attempts->getAttempts() >= $this->options['maxAttempts']) {
+            $blockedUntil = (new DateTimeImmutable())->modify('+' . $this->options['blockDelay'] . ' seconds');
             $this->loginAttemptsRepository->block($trackingId, $blockedUntil);
             $this->logger->warning(
                 '[AuthService] User has been blocked',
