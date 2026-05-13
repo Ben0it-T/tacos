@@ -79,7 +79,7 @@ final class PermissionMiddleware implements MiddlewareInterface
             if ($session['auth']['isLoggedIn'] === true && $session['auth']['app'] === "tacos") {
                 $user = $this->userRepository->find($session['auth']['userId']);
                 if ($user) {
-                    $isLoggedIn = ($user->getLastLogin() == $session['auth']['lastLogin'] ? true : false);
+                    $isLoggedIn = ($user->getLastLogin() == $session['auth']['loginAt'] ? true : false);
                 }
             }
         }

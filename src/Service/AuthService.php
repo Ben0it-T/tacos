@@ -71,7 +71,7 @@ final class AuthService
                     'isLoggedIn'  => true,
                     'app'         => 'tacos',
                     'userId'      => $user->getId(),
-                    'lastLogin'   => $lastLogin->format('Y-m-d H:i:s'),
+                    'loginAt'   => $lastLogin->format('Y-m-d H:i:s'),
                 );
 
                 return AuthResult::SUCCESS;
