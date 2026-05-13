@@ -74,8 +74,7 @@ final class LoginController
 
     public function logoutAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        session_unset();
-        session_regenerate_id(true);
+        $this->authService->logout();
         $routeParser = RouteContext::fromRequest($request)->getRouteParser();
         $url = $routeParser->urlFor('login');
         return $response->withStatus(302)->withHeader('Location', $url);

@@ -66,7 +66,6 @@ final class AuthService
                 $this->userRepository->unsetUserPasswordRequest($user);
                 $this->loginAttemptsRepository->remove($trackingId);
 
-                session_unset();
                 session_regenerate_id(true);
                 $_SESSION['auth'] = array(
                     'isLoggedIn'  => true,
@@ -140,5 +139,17 @@ final class AuthService
         }
 
         return true;
+    }
+
+    /**
+     * Logout User
+     *
+     */
+    public function logout(): void
+    {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_regenerate_id(true);
+            $_SESSION = [];
+        }
     }
 }
