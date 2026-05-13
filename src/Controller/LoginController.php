@@ -28,8 +28,7 @@ final class LoginController
     {
         $routeParser = RouteContext::fromRequest($request)->getRouteParser();
         $session = $request->getAttribute('session');
-        $isLoggedIn = (isset($session['auth']) && $session['auth']['isLoggedIn'] === true) ? true : false;
-        if ($isLoggedIn) {
+        if ($this->authService->isAuthenticated()) {
             $url = $routeParser->urlFor('logout');
             return $response->withStatus(302)->withHeader('Location', $url);
         }

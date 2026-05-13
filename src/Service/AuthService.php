@@ -142,11 +142,23 @@ final class AuthService
     }
 
     /**
+     * Check if user is authenticated
+     *
+     * @return bool
+     */
+    public function isAuthenticated(): bool {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            return false;
+        }
+
+        return !empty($_SESSION['auth']['isLoggedIn']);
+    }
+
+    /**
      * Logout User
      *
      */
-    public function logout(): void
-    {
+    public function logout(): void {
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_regenerate_id(true);
             $_SESSION = [];
