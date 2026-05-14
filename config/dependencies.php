@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+use App\Helper\SqlHelper;
+
 use App\Middleware\CSPMiddleware;
 use App\Middleware\PermissionMiddleware;
 use App\Middleware\TwigCsrfMiddleware;
@@ -12,7 +14,13 @@ use App\Session\Handler\DatabaseSessionHandler;
 
 use App\Service\AuthService;
 
+use App\Repository\ActivityRepository;
+use App\Repository\CustomerRepository;
 use App\Repository\LoginAttemptsRepository;
+use App\Repository\ProjectRepository;
+use App\Repository\RoleRepository;
+use App\Repository\TagRepository;
+use App\Repository\TeamRepository;
 use App\Repository\TimesheetRepository;
 use App\Repository\UserRepository;
 
@@ -120,6 +128,14 @@ return function (ContainerInterface $container): void {
     });
 
     //
+    // Helpers
+    //
+
+    $container->set(SqlHelper::class, function () {
+        return new SqlHelper();
+    });
+
+    //
     // Middlewares
     //
 
@@ -152,7 +168,7 @@ return function (ContainerInterface $container): void {
         $settings = $c->get('settings');
 
         return new SessionManager(
-            $c->get(SessionHandlerInterface::class),
+            $c->get(\SessionHandlerInterface::class),
             [
                 'name'             => $settings['session']['name'],
                 'use_strict_mode'  => true,
@@ -168,7 +184,7 @@ return function (ContainerInterface $container): void {
         );
     });
 
-    $container->set(SessionHandlerInterface::class, function (ContainerInterface $c) {
+    $container->set(\SessionHandlerInterface::class, function (ContainerInterface $c) {
         $settings = $c->get('settings')['session'];
 
         return match ($settings['handler']) {
@@ -208,6 +224,76 @@ return function (ContainerInterface $container): void {
             ]
         );
     });
+
+    //
+    // Repositories
+    //
+
+    $container->set(ActivityRepository::class, function (ContainerInterface $c) {
+        return new ActivityRepository(
+            $c->get(PDO::class),
+            $c->get(LoggerInterface::class)
+        );
+    });
+
+    $container->set(CustomerRepository::class, function (ContainerInterface $c) {
+        return new CustomerRepository(
+            $c->get(PDO::class),
+            $c->get(SqlHelper::class),
+            $c->get(LoggerInterface::class)
+        );
+    });
+
+    $container->set(LoginAttemptsRepository::class, function (ContainerInterface $c) {
+        return new LoginAttemptsRepository(
+            $c->get(PDO::class),
+            $c->get(LoggerInterface::class)
+        );
+    });
+
+    $container->set(ProjectRepository::class, function (ContainerInterface $c) {
+        return new ProjectRepository(
+            $c->get(PDO::class),
+            $c->get(LoggerInterface::class)
+        );
+    });
+
+    $container->set(RoleRepository::class, function (ContainerInterface $c) {
+        return new RoleRepository(
+            $c->get(PDO::class)
+        );
+    });
+
+    $container->set(TagRepository::class, function (ContainerInterface $c) {
+        return new TagRepository(
+            $c->get(PDO::class),
+            $c->get(LoggerInterface::class)
+        );
+    });
+
+    $container->set(TeamRepository::class, function (ContainerInterface $c) {
+        return new TeamRepository(
+            $c->get(PDO::class),
+            $c->get(LoggerInterface::class)
+        );
+    });
+
+    $container->set(TimesheetRepository::class, function (ContainerInterface $c) {
+        return new TimesheetRepository(
+            $c->get(PDO::class),
+            $c->get(SqlHelper::class),
+            $c->get(LoggerInterface::class)
+        );
+    });
+
+    $container->set(UserRepository::class, function (ContainerInterface $c) {
+        return new UserRepository(
+            $c->get(PDO::class),
+            $c->get(SqlHelper::class),
+            $c->get(LoggerInterface::class)
+        );
+    });
+
 
 
 };
