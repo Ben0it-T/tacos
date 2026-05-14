@@ -144,7 +144,7 @@ final class ActivityRepository
         if (!is_null($visible)) {
             $sql .= 'WHERE a.`visible` = :visible ';
         }
-        $sql .= 'ORDER BY a.`name` ASC, `a.`number` ASC';
+        $sql .= 'ORDER BY a.`name` ASC, a.`number` ASC';
 
         $stmt = $this->pdo->prepare($sql);
         $params = array();
