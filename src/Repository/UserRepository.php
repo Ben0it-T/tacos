@@ -5,16 +5,20 @@ namespace App\Repository;
 
 use App\Entity\User;
 use App\Helper\SqlHelper;
+use Psr\Log\LoggerInterface;
+
 use PDO;
 
 final class UserRepository
 {
-    private $pdo;
-    private $sqlHelper;
+    private PDO $pdo;
+    private SqlHelper $sqlHelper;
+    private LoggerInterface $logger;
 
-    public function __construct(PDO $pdo, SqlHelper $sqlHelper) {
+    public function __construct(PDO $pdo, SqlHelper $sqlHelper, LoggerInterface $logger) {
         $this->pdo = $pdo;
         $this->sqlHelper = $sqlHelper;
+        $this->logger = $logger;
     }
 
     /**
@@ -294,10 +298,7 @@ final class UserRepository
         ]);
         $cnt = $stmt->fetchColumn();
 
-        if ($cnt === 1) {
-            return true;
-        }
-        return false;
+        return (int)$cnt === 1;
     }
 
     /**
@@ -355,40 +356,124 @@ final class UserRepository
     /**
      * Create User password request
      *
-     * @param User
+     * @param User $user
+     * @return bool
      */
-    public function setUserPasswordRequest(User $user): void {
-        $stmt = $this->pdo->prepare('UPDATE `tacos_users` SET `tacos_users`.`password_request_date` = :requestDate, `tacos_users`.`password_request_token` = :requestToken WHERE `tacos_users`.`id` = :userId AND `tacos_users`.`enabled` = 1');
-        $stmt->execute([
-            'requestDate'  => $user->getRequestDate(),
-            'requestToken' => $user->getRequestToken(),
-            'userId'       => $user->getId()
-        ]);
+    public function setUserPasswordRequest(User $user): bool {
+        try {
+            $stmt = $this->pdo->prepare('UPDATE `tacos_users` SET `tacos_users`.`password_request_date` = :requestDate, `tacos_users`.`password_request_token` = :requestToken WHERE `tacos_users`.`id` = :userId AND `tacos_users`.`enabled` = 1');
+            $res = $stmt->execute([
+                'requestDate'  => $user->getRequestDate(),
+                'requestToken' => $user->getRequestToken(),
+                'userId'       => $user->getId()
+            ]);
+
+            if (!$res) {
+                $this->logger->error(
+                    '[UserRepository] Failed to set user password request (execute returned false)',
+                    [
+                        'userId'    => $user->getId(),
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[UserRepository] Failed to set user password request (exception)',
+                [
+                    'userId'            => $user->getId(),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
+            return false;
+        }
     }
 
     /**
      * Unset User password request
      *
-     * @param User
+     * @param User $user
+     * @return bool
      */
-    public function unsetUserPasswordRequest(User $user): void {
-        $stmt = $this->pdo->prepare('UPDATE `tacos_users` SET `tacos_users`.`password_request_date` = NULL, `tacos_users`.`password_request_token` = NULL WHERE `tacos_users`.`id` = :id AND `tacos_users`.`enabled` = 1');
-        $stmt->execute([
-            'id' => $user->getId()
-        ]);
+    public function unsetUserPasswordRequest(User $user): bool {
+        try {
+            $stmt = $this->pdo->prepare('UPDATE `tacos_users` SET `tacos_users`.`password_request_date` = NULL, `tacos_users`.`password_request_token` = NULL WHERE `tacos_users`.`id` = :id AND `tacos_users`.`enabled` = 1');
+            $res = $stmt->execute([
+                'id' => $user->getId()
+            ]);
+
+            if (!$res) {
+                $this->logger->error(
+                    '[UserRepository] Failed to unset user password request (execute returned false)',
+                    [
+                        'userId'    => $user->getId(),
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[UserRepository] Failed to unset user password request (exception)',
+                [
+                    'userId'            => $user->getId(),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
+            return false;
+        }
     }
 
     /**
      * Unset Users password requests
      *
      * @param int $lifetime
+     * @return bool
      */
-    public function unsetUsersPasswordRequests(int $lifetime): void {
-        $threshold = date("Y-m-d H:i:s", time() - intval($lifetime));
-        $stmt = $this->pdo->prepare('UPDATE `tacos_users` SET `tacos_users`.`password_request_date` = NULL, `tacos_users`.`password_request_token` = NULL WHERE `tacos_users`.`password_request_date` < :threshold AND `tacos_users`.`password_request_token` IS NOT NULL');
-        $stmt->execute([
-            'threshold' => $threshold
-        ]);
+    public function unsetUsersPasswordRequests(int $lifetime): bool {
+        try {
+            $threshold = date("Y-m-d H:i:s", time() - intval($lifetime));
+            $stmt = $this->pdo->prepare('UPDATE `tacos_users` SET `tacos_users`.`password_request_date` = NULL, `tacos_users`.`password_request_token` = NULL WHERE `tacos_users`.`password_request_date` < :threshold AND `tacos_users`.`password_request_token` IS NOT NULL');
+            $res = $stmt->execute([
+                'threshold' => $threshold
+            ]);
+
+            if (!$res) {
+                $this->logger->error(
+                    '[UserRepository] Failed to unset users password requests (execute returned false)',
+                    [
+                        'threshold' => $threshold,
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[UserRepository] Failed to unset users password requests (exception)',
+                [
+                    'threshold'         => $threshold,
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
+            return false;
+        }
     }
 
 
@@ -399,20 +484,42 @@ final class UserRepository
      * @param User $user
      * @return bool
      */
-    public function insert(User $user) {
+    public function insert(User $user): bool {
         try {
             $stmt = $this->pdo->prepare('INSERT INTO `tacos_users` (`id`, `username`, `name`, `email`, `password`, `enabled`, `registration_date`, `role_id`, `last_login`, `password_request_token`, `password_request_date`) VALUES (NULL, :username, :name, :email, :password, :enabled, :registrationDate, :role, NULL, NULL, NULL)');
             $res = $stmt->execute([
-                'username' => $user->getUsername(),
-                'name' => $user->getName(),
-                'email' => $user->getEmail(),
-                'password' => $user->getPassword(),
-                'enabled' => '1',
+                'username'         => $user->getUsername(),
+                'name'             => $user->getName(),
+                'email'            => $user->getEmail(),
+                'password'         => $user->getPassword(),
+                'enabled'          => 1,
                 'registrationDate' => $user->getRegistrationDate(),
-                'role' => $user->getRole()
+                'role'             => $user->getRole()
             ]);
+
+            if (!$res) {
+                $this->logger->error(
+                    '[UserRepository] Failed to insert user (execute returned false)',
+                    [
+                        'name'      => $user->getName(),
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[UserRepository] Failed to insert user (exception)',
+                [
+                    'name'              => $user->getName(),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
             return false;
         }
     }
@@ -423,7 +530,7 @@ final class UserRepository
      * @param User $user
      * @return bool
      */
-    public function updateUserProfile(User $user) {
+    public function updateUserProfile(User $user): bool {
         try {
             $stmt = $this->pdo->prepare('UPDATE `tacos_users` SET `tacos_users`.`name` = :name, `tacos_users`.`username` = :username, `tacos_users`.`email` = :email WHERE `tacos_users`.`id` = :id AND `tacos_users`.`enabled` = 1');
             $res = $stmt->execute([
@@ -432,8 +539,32 @@ final class UserRepository
                 'email' => $user->getEmail(),
                 'id' => $user->getId()
             ]);
+
+            if (!$res) {
+                $this->logger->error(
+                    '[UserRepository] Failed to update user profile (execute returned false)',
+                    [
+                        'id'        => $user->getId(),
+                        'name'      => $user->getName(),
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[UserRepository] Failed to update user profile (exception)',
+                [
+                    'id'                => $user->getId(),
+                    'name'              => $user->getName(),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
             return false;
         }
     }
@@ -444,19 +575,43 @@ final class UserRepository
      * @param User $user
      * @return bool
      */
-    public function updateUser(User $user) {
+    public function updateUser(User $user): bool {
         try {
             $stmt = $this->pdo->prepare('UPDATE `tacos_users` SET `tacos_users`.`name` = :name, `tacos_users`.`username` = :username, `tacos_users`.`email` = :email, `tacos_users`.`enabled` = :enabled, `tacos_users`.`role_id` = :roleId WHERE `tacos_users`.`id` = :id');
             $res = $stmt->execute([
-                'name' => $user->getName(),
+                'name'     => $user->getName(),
                 'username' => $user->getUsername(),
-                'email' => $user->getEmail(),
-                'enabled' => $user->getEnabled(),
-                'roleId' => $user->getRole(),
-                'id' => $user->getId()
+                'email'    => $user->getEmail(),
+                'enabled'  => $user->getEnabled(),
+                'roleId'   => $user->getRole(),
+                'id'       => $user->getId()
             ]);
+
+            if (!$res) {
+                $this->logger->error(
+                    '[UserRepository] Failed to update user (execute returned false)',
+                    [
+                        'id'        => $user->getId(),
+                        'name'      => $user->getName(),
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[UserRepository] Failed to update user (exception)',
+                [
+                    'id'                => $user->getId(),
+                    'name'              => $user->getName(),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
             return false;
         }
     }
@@ -465,26 +620,86 @@ final class UserRepository
      * Update User password hash
      *
      * @param User
+     * @return bool
      */
-    public function updatePasswordHash(User $user): void {
-        $stmt = $this->pdo->prepare('UPDATE `tacos_users` SET `tacos_users`.`password` = :password WHERE `tacos_users`.`id` = :id AND `tacos_users`.`enabled` = 1');
-        $stmt->execute([
-            'password' => $user->getPassword(),
-            'id' => $user->getId()
-        ]);
+    public function updatePasswordHash(User $user): bool {
+        try {
+            $stmt = $this->pdo->prepare('UPDATE `tacos_users` SET `tacos_users`.`password` = :password WHERE `tacos_users`.`id` = :id AND `tacos_users`.`enabled` = 1');
+            $res = $stmt->execute([
+                'password' => $user->getPassword(),
+                'id'       => $user->getId()
+            ]);
+
+            if (!$res) {
+                $this->logger->error(
+                    '[UserRepository] Failed to update user password hash (execute returned false)',
+                    [
+                        'id'        => $user->getId(),
+                        'name'      => $user->getName(),
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[UserRepository] Failed to update user password hash (exception)',
+                [
+                    'id'                => $user->getId(),
+                    'name'              => $user->getName(),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
+            return false;
+        }
     }
 
     /**
      * Update User last login
      *
      * @param User
+     * @return bool
      */
-    public function updateUserLastLogin(User $user): void {
-        $stmt = $this->pdo->prepare('UPDATE `tacos_users` SET `tacos_users`.`last_login` = :lastLogin WHERE `tacos_users`.`id` = :id AND `tacos_users`.`enabled` = 1');
-        $stmt->execute([
-            'lastLogin' => $user->getLastLogin(),
-            'id' => $user->getId()
-        ]);
+    public function updateUserLastLogin(User $user): bool {
+        try {
+            $stmt = $this->pdo->prepare('UPDATE `tacos_users` SET `tacos_users`.`last_login` = :lastLogin WHERE `tacos_users`.`id` = :id AND `tacos_users`.`enabled` = 1');
+            $res = $stmt->execute([
+                'lastLogin' => $user->getLastLogin(),
+                'id'        => $user->getId()
+            ]);
+
+            if (!$res) {
+                $this->logger->error(
+                    '[UserRepository] Failed to update user last login (execute returned false)',
+                    [
+                        'id'        => $user->getId(),
+                        'name'      => $user->getName(),
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[UserRepository] Failed to update user last login (exception)',
+                [
+                    'id'                => $user->getId(),
+                    'name'              => $user->getName(),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
+            return false;
+        }
     }
 
 
@@ -495,14 +710,14 @@ final class UserRepository
      * @param array $row
      * @return Entity\User
      */
-    private function buildEntity(array $row) {
+    private function buildEntity(array $row): User {
         $user = new User();
         $user->setId($row['id']);
         $user->setUsername($row['username']);
         $user->setName($row['name']);
         $user->setEmail($row['email']);
         $user->setPassword($row['password']);
-        $user->setEnabled($row['enabled']);
+        $user->setEnabled((int) $row['enabled']);
         $user->setRegistrationDate(isset($row['registration_date']) ? $row['registration_date'] : null);
         $user->setRole($row['role_id']);
         $user->setLastLogin(isset($row['last_login']) ? $row['last_login'] : null);

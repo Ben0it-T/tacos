@@ -4,14 +4,18 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\Project;
+use Psr\Log\LoggerInterface;
+
 use PDO;
 
 final class ProjectRepository
 {
-    private $pdo;
+    private PDO $pdo;
+    private LoggerInterface $logger;
 
-    public function __construct(PDO $pdo) {
+    public function __construct(PDO $pdo, LoggerInterface $logger) {
         $this->pdo = $pdo;
+        $this->logger = $logger;
     }
 
     /**
@@ -341,7 +345,6 @@ final class ProjectRepository
 
         $stmt->execute($params);
         $rows = $stmt->fetchAll();
-        $sql;
         $projects = array();
         foreach ($rows as $row) {
             $projects[$row['id']] = $this->buildEntity($row);
@@ -498,23 +501,45 @@ final class ProjectRepository
      * @param Project $project
      * @return lastInsertId or false
      */
-    public function insert(Project $project) {
+    public function insert(Project $project): string|false {
         try {
             $stmt = $this->pdo->prepare('INSERT INTO `tacos_projects` (`id`, `customer_id`, `name`, `color`, `number`, `comment`, `start`, `end`, `last_activity`, `global_activities`, `visible`, `created_at`) VALUES (NULL, :customerId, :name, :color, :number, :comment, :start, :end, NULL, :globalActivities, :visible, :createdAt)');
             $res = $stmt->execute([
-                'customerId' => $project->getCustomerId(),
-                'name' => $project->getName(),
-                'color' => $project->getColor(),
-                'number' => $project->getNumber(),
-                'comment' => $project->getComment(),
-                'start' => $project->getStart(),
-                'end' => $project->getEnd(),
+                'customerId'       => $project->getCustomerId(),
+                'name'             => $project->getName(),
+                'color'            => $project->getColor(),
+                'number'           => $project->getNumber(),
+                'comment'          => $project->getComment(),
+                'start'            => $project->getStart(),
+                'end'              => $project->getEnd(),
                 'globalActivities' => $project->getGlobalActivities(),
-                'visible' => $project->getVisible(),
-                'createdAt' => $project->getCreatedAt()
+                'visible'          => $project->getVisible(),
+                'createdAt'        => $project->getCreatedAt()
             ]);
+
+            if (!$res) {
+                $this->logger->error(
+                    '[ProjectRepository] Failed to insert project (execute returned false)',
+                    [
+                        'name'      => $project->getName(),
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
             return $this->pdo->lastInsertId();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[ProjectRepository] Failed to insert project (exception)',
+                [
+                    'name'              => $project->getName(),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
             return false;
         }
     }
@@ -525,23 +550,46 @@ final class ProjectRepository
      * @param Project $project
      * @return bool
      */
-    public function updateProject(Project $project) {
+    public function updateProject(Project $project): bool {
         try {
             $stmt = $this->pdo->prepare('UPDATE `tacos_projects` SET `tacos_projects`.`customer_id` = :customerId, `tacos_projects`.`name` = :name, `tacos_projects`.`color` = :color, `tacos_projects`.`number` = :number, `tacos_projects`.`comment` = :comment, `tacos_projects`.`start` = :start, `tacos_projects`.`end` = :end, `tacos_projects`.`global_activities` = :globalActivities, `tacos_projects`.`visible` = :visible WHERE `tacos_projects`.`id` = :id');
             $res = $stmt->execute([
-                'customerId' => $project->getCustomerId(),
-                'name' => $project->getName(),
-                'color' => $project->getColor(),
-                'number' => $project->getNumber(),
-                'comment' => $project->getComment(),
-                'start' => $project->getStart(),
-                'end' => $project->getEnd(),
+                'customerId'       => $project->getCustomerId(),
+                'name'             => $project->getName(),
+                'color'            => $project->getColor(),
+                'number'           => $project->getNumber(),
+                'comment'          => $project->getComment(),
+                'start'            => $project->getStart(),
+                'end'              => $project->getEnd(),
                 'globalActivities' => $project->getGlobalActivities(),
-                'visible' => $project->getVisible(),
-                'id' => $project->getId()
+                'visible'          => $project->getVisible(),
+                'id'               => $project->getId()
             ]);
+            if (!$res) {
+                $this->logger->error(
+                    '[ProjectRepository] Failed to update project (execute returned false)',
+                    [
+                        'id'        => $project->getId(),
+                        'name'      => $project->getName(),
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[ProjectRepository] Failed to update project (exception)',
+                [
+                    'id'                => $project->getId(),
+                    'name'              => $project->getName(),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
             return false;
         }
     }
@@ -552,20 +600,78 @@ final class ProjectRepository
      * Insert Teams
      *
      * @param int $projectId
-     * @param array $data
+     * @param array $data Array of teamIds
      * @return bool
      */
-    public function insertTeams(int $projectId, $data) {
+    public function insertTeams(int $projectId, array $data): bool {
+        if ($data === []) {
+            return true;
+        }
+
+        // cast & clean ids
+        $teamIds = array_map(
+            static function ($teamId): int {
+                return (int) $teamId;
+            },
+            $data
+        );
+        $teamIds = array_unique($teamIds);
+        $teamIds = array_values($teamIds);
+
+        $startedTx = false;
+
         try {
+            if (!$this->pdo->inTransaction()) {
+                // Todo: move transaction to service
+                $this->pdo->beginTransaction();
+                $startedTx = true;
+            }
+
             $stmt = $this->pdo->prepare('INSERT INTO `tacos_projects_teams` (`project_id`, `team_id`) VALUES (:project_id, :team_id)');
-            foreach ($data as $teamId) {
-                $stmt->execute([
+
+            foreach ($teamIds as $teamId) {
+                $res = $stmt->execute([
                     'project_id' => $projectId,
-                    'team_id' => $teamId
+                    'team_id'    => $teamId
                 ]);
+
+                if (!$res) {
+                    $this->logger->error(
+                        '[ProjectRepository] Failed to insert team link (execute returned false)',
+                        [
+                            'projectId'  => $projectId,
+                            'teamId'     => $teamId,
+                            'errorInfo'  => $stmt->errorInfo(),
+                        ]
+                    );
+
+                    if ($startedTx) {
+                        $this->pdo->rollBack();
+                    }
+                    return false;
+                }
+            }
+            if ($startedTx) {
+                $this->pdo->commit();
             }
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            if ($startedTx && $this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            $this->logger->error(
+                '[ProjectRepository] Failed to insert teams link (exception)',
+                [
+                    'projectId'          => $projectId,
+                    'teamIds'            => $teamIds,
+                    'exception_class'    => $e::class,
+                    'exception_message'  => $e->getMessage(),
+                    'exception_code'     => $e->getCode(),
+                    'exception'          => $e,
+                ]
+            );
+
             return false;
         }
     }
@@ -574,18 +680,58 @@ final class ProjectRepository
      * Update Teams
      *
      * @param int $projectId
-     * @param array $data
+     * @param array $data Array of teamIds
      * @return bool
      */
-    public function updateTeams(int $projectId, $data) {
-        $stmt = $this->pdo->prepare('DELETE FROM `tacos_projects_teams` WHERE `tacos_projects_teams`.`project_id` = :projectId');
-        $stmt->execute([
-            'projectId' => $projectId
-        ]);
-        if (count($data) > 0) {
-            return $this->insertTeams($projectId, $data);
+    public function updateTeams(int $projectId, array $data): bool {
+        try {
+            $this->pdo->beginTransaction();
+
+            $stmt = $this->pdo->prepare('DELETE FROM `tacos_projects_teams` WHERE `tacos_projects_teams`.`project_id` = :projectId');
+            $res = $stmt->execute([
+                'projectId' => $projectId
+            ]);
+
+            if (!$res) {
+                $this->logger->error(
+                    '[ProjectRepository] Failed to delete project teams links (execute returned false)',
+                    [
+                        'projectId'  => $projectId,
+                        'errorInfo'  => $stmt->errorInfo(),
+                    ]
+                );
+                $this->pdo->rollBack();
+                return false;
+            }
+
+            if (count($data) > 0) {
+                if (!$this->insertTeams($projectId, $data)) {
+                    $this->pdo->rollBack();
+                    return false;
+                }
+            }
+            $this->pdo->commit();
+            return true;
+
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            $this->logger->error(
+                '[ProjectRepository] Failed to update project teams links (exception)',
+                [
+                    'projectId'          => $projectId,
+                    'teamCount'          => count($data),
+                    'exception_class'    => $e::class,
+                    'exception_message'  => $e->getMessage(),
+                    'exception_code'     => $e->getCode(),
+                    'exception'          => $e,
+                ]
+            );
+
+            return false;
         }
-        return true;
     }
 
 
@@ -594,20 +740,79 @@ final class ProjectRepository
      * Insert Activities
      *
      * @param int $projectId
-     * @param array $data
+     * @param array $data Array of activityIds
      * @return bool
      */
-    public function insertActivities(int $projectId, $data) {
+    public function insertActivities(int $projectId, array $data): bool {
+        if ($data === []) {
+            return true;
+        }
+
+        // cast & clean ids
+        $activityIds = array_map(
+            static function ($activityId): int {
+                return (int) $activityId;
+            },
+            $data
+        );
+        $activityIds = array_unique($activityIds);
+        $activityIds = array_values($activityIds);
+
+        $startedTx = false;
+
         try {
+            if (!$this->pdo->inTransaction()) {
+                // Todo: move transaction to service
+                $this->pdo->beginTransaction();
+                $startedTx = true;
+            }
+
             $stmt = $this->pdo->prepare('INSERT INTO `tacos_projects_activities` (`project_id`, `activity_id`) VALUES (:project_id, :activity_id)');
-            foreach ($data as $activityId) {
-                $stmt->execute([
+
+            foreach ($activityIds as $activityId) {
+                $res = $stmt->execute([
                     'project_id' => $projectId,
                     'activity_id' => $activityId
                 ]);
+
+                if (!$res) {
+                    $this->logger->error(
+                        '[ProjectRepository] Failed to insert activity link (execute returned false)',
+                        [
+                            'projectId'  => $projectId,
+                            'activityId' => $activityId,
+                            'errorInfo'  => $stmt->errorInfo(),
+                        ]
+                    );
+
+                    if ($startedTx) {
+                        $this->pdo->rollBack();
+                    }
+                    return false;
+                }
+            }
+
+            if ($startedTx) {
+                $this->pdo->commit();
             }
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            if ($startedTx && $this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            $this->logger->error(
+                '[ProjectRepository] Failed to insert activities link (exception)',
+                [
+                    'projectId'          => $projectId,
+                    'activityIds'        => $activityIds,
+                    'exception_class'    => $e::class,
+                    'exception_message'  => $e->getMessage(),
+                    'exception_code'     => $e->getCode(),
+                    'exception'          => $e,
+                ]
+            );
+
             return false;
         }
     }
@@ -616,18 +821,58 @@ final class ProjectRepository
      * Update Activities
      *
      * @param int $projectId
-     * @param array $data
+     * @param array $data Array of activityIds
      * @return bool
      */
-    public function updateActivities(int $projectId, $data) {
-        $stmt = $this->pdo->prepare('DELETE FROM `tacos_projects_activities` WHERE `tacos_projects_activities`.`project_id` = :projectId');
-        $stmt->execute([
-            'projectId' => $projectId
-        ]);
-        if (count($data) > 0) {
-            return $this->insertActivities($projectId, $data);
+    public function updateActivities(int $projectId, array $data): bool {
+        try {
+            $this->pdo->beginTransaction();
+
+            $stmt = $this->pdo->prepare('DELETE FROM `tacos_projects_activities` WHERE `tacos_projects_activities`.`project_id` = :projectId');
+            $res = $stmt->execute([
+                'projectId' => $projectId
+            ]);
+
+            if (!$res) {
+                $this->logger->error(
+                    '[ProjectRepository] Failed to delete project activities links (execute returned false)',
+                    [
+                        'projectId' => $projectId,
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                $this->pdo->rollBack();
+                return false;
+            }
+
+            if (count($data) > 0) {
+                if (!$this->insertActivities($projectId, $data)) {
+                    $this->pdo->rollBack();
+                    return false;
+                }
+            }
+            $this->pdo->commit();
+            return true;
+
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            $this->logger->error(
+                '[ProjectRepository] Failed to update project activities links (exception)',
+                [
+                    'projectId'          => $projectId,
+                    'activityCount'      => count($data),
+                    'exception_class'    => $e::class,
+                    'exception_message'  => $e->getMessage(),
+                    'exception_code'     => $e->getCode(),
+                    'exception'          => $e,
+                ]
+            );
+
+            return false;
         }
-        return true;
     }
 
 
@@ -639,7 +884,7 @@ final class ProjectRepository
      * @param array $row
      * @return Entity\Project
      */
-    protected function buildEntity(array $row) {
+    protected function buildEntity(array $row): Project {
         $project = new Project();
         $project->setId($row['id']);
         $project->setCustomerId($row['customer_id']);
@@ -650,8 +895,8 @@ final class ProjectRepository
         $project->setStart(isset($row['start']) ? $row['start'] : null);
         $project->setEnd(isset($row['end']) ? $row['end'] : null);
         $project->setLastActivity(isset($row['last_activity']) ? $row['last_activity'] : null);
-        $project->setGlobalActivities($row['global_activities']);
-        $project->setVisible($row['visible']);
+        $project->setGlobalActivities((int) $row['global_activities']);
+        $project->setVisible((int) $row['visible']);
         $project->setCreatedAt(isset($row['created_at']) ? $row['created_at'] : null);
 
         return $project;

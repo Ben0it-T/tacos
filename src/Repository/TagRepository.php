@@ -4,14 +4,18 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\Tag;
+use Psr\Log\LoggerInterface;
+
 use PDO;
 
 final class TagRepository
 {
-    private $pdo;
+    private PDO $pdo;
+    private LoggerInterface $logger;
 
-    public function __construct(PDO $pdo) {
+    public function __construct(PDO $pdo, LoggerInterface $logger) {
         $this->pdo = $pdo;
+        $this->logger = $logger;
     }
 
     /**
@@ -148,16 +152,38 @@ final class TagRepository
      * @param Tag $tag
      * @return lastInsertId or false
      */
-    public function insert(Tag $tag) {
+    public function insert(Tag $tag): string|false {
         try {
             $stmt = $this->pdo->prepare('INSERT INTO `tacos_tags` (`id`, `name`, `color`, `visible`) VALUES (NULL, :name, :color, :visible)');
             $res = $stmt->execute([
-                'name' => $tag->getName(),
-                'color' => $tag->getColor(),
+                'name'    => $tag->getName(),
+                'color'   => $tag->getColor(),
                 'visible' => $tag->getVisible()
             ]);
+
+            if (!$res) {
+                $this->logger->error(
+                    '[TagRepository] Failed to insert tag (execute returned false)',
+                    [
+                        'name'      => $tag->getName(),
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
             return $this->pdo->lastInsertId();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[TagRepository] Failed to insert tag (exception)',
+                [
+                    'name'              => $tag->getName(),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
             return false;
         }
     }
@@ -168,17 +194,41 @@ final class TagRepository
      * @param Tag $tag
      * @return bool
      */
-    public function update(Tag $tag) {
+    public function update(Tag $tag): bool {
         try {
             $stmt = $this->pdo->prepare('UPDATE `tacos_tags` SET `tacos_tags`.`name` = :name, `tacos_tags`.`color` = :color, `tacos_tags`.`visible` = :visible WHERE `tacos_tags`.`id` = :id');
             $res = $stmt->execute([
-                'name' => $tag->getName(),
-                'color' => $tag->getColor(),
+                'name'    => $tag->getName(),
+                'color'   => $tag->getColor(),
                 'visible' => $tag->getVisible(),
-                'id' => $tag->getId()
+                'id'      => $tag->getId()
             ]);
+
+            if (!$res) {
+                $this->logger->error(
+                    '[TagRepository] Failed to update tag (execute returned false)',
+                    [
+                        'id'        => $tag->getId(),
+                        'name'      => $tag->getName(),
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[TagRepository] Failed to update tag (exception)',
+                [
+                    'id'                => $tag->getId(),
+                    'name'              => $tag->getName(),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
             return false;
         }
     }
@@ -189,12 +239,12 @@ final class TagRepository
      * @param array $row
      * @return Entity\Tag
      */
-    protected function buildEntity(array $row) {
+    protected function buildEntity(array $row): Tag {
         $tag = new Tag();
         $tag->setId($row['id']);
         $tag->setName($row['name']);
         $tag->setColor($row['color']);
-        $tag->setVisible($row['visible']);
+        $tag->setVisible((int) $row['visible']);
 
         return $tag;
     }

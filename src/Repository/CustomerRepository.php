@@ -5,16 +5,20 @@ namespace App\Repository;
 
 use App\Entity\Customer;
 use App\Helper\SqlHelper;
+use Psr\Log\LoggerInterface;
+
 use PDO;
 
 final class CustomerRepository
 {
-    private $pdo;
-    private $sqlHelper;
+    private PDO $pdo;
+    private SqlHelper $sqlHelper;
+    private LoggerInterface $logger;
 
-    public function __construct(PDO $pdo, SqlHelper $sqlHelper) {
+    public function __construct(PDO $pdo, SqlHelper $sqlHelper, LoggerInterface $logger) {
         $this->pdo = $pdo;
         $this->sqlHelper = $sqlHelper;
+        $this->logger = $logger;
     }
 
     /**
@@ -379,19 +383,41 @@ final class CustomerRepository
      * @param Customer $customer
      * @return lastInsertId or false
      */
-    public function insert(Customer $customer) {
+    public function insert(Customer $customer): string|false {
         try {
             $stmt = $this->pdo->prepare('INSERT INTO `tacos_customers` (`id`, `name`, `color`, `number`, `comment`, `visible`, `created_at`) VALUES (NULL, :name, :color, :number, :comment, :visible, :createdAt)');
             $res = $stmt->execute([
-                'name' => $customer->getName(),
-                'color' => $customer->getColor(),
-                'number' => $customer->getNumber(),
-                'comment' => $customer->getComment(),
-                'visible' => $customer->getVisible(),
+                'name'      => $customer->getName(),
+                'color'     => $customer->getColor(),
+                'number'    => $customer->getNumber(),
+                'comment'   => $customer->getComment(),
+                'visible'   => $customer->getVisible(),
                 'createdAt' => $customer->getCreatedAt()
             ]);
+
+            if (!$res) {
+                $this->logger->error(
+                    '[CustomerRepository] Failed to insert customer (execute returned false)',
+                    [
+                        'name'      => $customer->getName(),
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
             return $this->pdo->lastInsertId();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[CustomerRepository] Failed to insert customer (exception)',
+                [
+                    'name'              => $customer->getName(),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
             return false;
         }
     }
@@ -401,20 +427,43 @@ final class CustomerRepository
      * @param Customer $customer
      * @return bool
      */
-    public function updateCustomer(Customer $customer) {
+    public function updateCustomer(Customer $customer): bool {
         try {
             $stmt = $this->pdo->prepare('UPDATE `tacos_customers` SET `tacos_customers`.`name` = :name, `tacos_customers`.`color` = :color, `tacos_customers`.`number` = :number, `tacos_customers`.`comment` = :comment, `tacos_customers`.`visible` = :visible WHERE `tacos_customers`.`id` = :id');
             $res = $stmt->execute([
-                'name' => $customer->getName(),
-                'color' => $customer->getColor(),
-                'number' => $customer->getNumber(),
+                'name'    => $customer->getName(),
+                'color'   => $customer->getColor(),
+                'number'  => $customer->getNumber(),
                 'comment' => $customer->getComment(),
                 'visible' => $customer->getVisible(),
-                'id' => $customer->getId()
+                'id'      => $customer->getId()
 
             ]);
+            if (!$res) {
+                $this->logger->error(
+                    '[CustomerRepository] Failed to update customer (execute returned false)',
+                    [
+                        'id'        => $customer->getId(),
+                        'name'      => $customer->getName(),
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[CustomerRepository] Failed to update customer (exception)',
+                [
+                    'id'                => $customer->getId(),
+                    'name'              => $customer->getName(),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
             return false;
         }
     }
@@ -426,20 +475,79 @@ final class CustomerRepository
      * Insert Teams
      *
      * @param int $customerId
-     * @param array $data
+     * @param array $data Array of teamIds
      * @return bool
      */
-    public function insertTeams(int $customerId, $data) {
+    public function insertTeams(int $customerId, array $data): bool {
+        if ($data === []) {
+            return true;
+        }
+
+        // cast & clean ids
+        $teamIds = array_map(
+            static function ($teamId): int {
+                return (int) $teamId;
+            },
+            $data
+        );
+        $teamIds = array_unique($teamIds);
+        $teamIds = array_values($teamIds);
+
+        $startedTx = false;
+
         try {
+            if (!$this->pdo->inTransaction()) {
+                // Todo: move transaction to service
+                $this->pdo->beginTransaction();
+                $startedTx = true;
+            }
+
             $stmt = $this->pdo->prepare('INSERT INTO `tacos_customers_teams` (`customer_id`, `team_id`) VALUES (:customer_id, :team_id)');
-            foreach ($data as $teamId) {
-                $stmt->execute([
+
+            foreach ($teamIds as $teamId) {
+                $res = $stmt->execute([
                     'customer_id' => $customerId,
                     'team_id' => $teamId
                 ]);
+
+                if (!$res) {
+                    $this->logger->error(
+                        '[CustomerRepository] Failed to insert team link (execute returned false)',
+                        [
+                            'customerId' => $customerId,
+                            'teamId'     => $teamId,
+                            'errorInfo'  => $stmt->errorInfo(),
+                        ]
+                    );
+
+                    if ($startedTx) {
+                        $this->pdo->rollBack();
+                    }
+                    return false;
+                }
+            }
+            if ($startedTx) {
+                $this->pdo->commit();
             }
             return true;
-        } catch (\Exception $e) {
+
+        } catch (\Throwable $e) {
+            if ($startedTx && $this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            $this->logger->error(
+                '[CustomerRepository] Failed to insert teams link (exception)',
+                [
+                    'customerId'         => $customerId,
+                    'teamIds'            => $teamIds,
+                    'exception_class'    => $e::class,
+                    'exception_message'  => $e->getMessage(),
+                    'exception_code'     => $e->getCode(),
+                    'exception'          => $e,
+                ]
+            );
+
             return false;
         }
     }
@@ -448,18 +556,58 @@ final class CustomerRepository
      * Update Teams
      *
      * @param int $customerId
-     * @param array $data
+     * @param array $data Array of teamIds
      * @return bool
      */
-    public function updateTeams(int $customerId, $data) {
-        $stmt = $this->pdo->prepare('DELETE FROM `tacos_customers_teams` WHERE `tacos_customers_teams`.`customer_id` = :customer_id');
-        $stmt->execute([
-            'customer_id' => $customerId
-        ]);
-        if (count($data) > 0) {
-            return $this->insertTeams($customerId, $data);
+    public function updateTeams(int $customerId, array $data): bool {
+        try {
+            $this->pdo->beginTransaction();
+
+            $stmt = $this->pdo->prepare('DELETE FROM `tacos_customers_teams` WHERE `tacos_customers_teams`.`customer_id` = :customer_id');
+            $res = $stmt->execute([
+                'customer_id' => $customerId
+            ]);
+
+            if (!$res) {
+                $this->logger->error(
+                    '[CustomerRepository] Failed to delete customer teams links (execute returned false)',
+                    [
+                        'customerId' => $customerId,
+                        'errorInfo'  => $stmt->errorInfo(),
+                    ]
+                );
+                $this->pdo->rollBack();
+                return false;
+            }
+
+            if (count($data) > 0) {
+                if (!$this->insertTeams($customerId, $data)) {
+                    $this->pdo->rollBack();
+                    return false;
+                }
+
+            }
+            $this->pdo->commit();
+            return true;
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            $this->logger->error(
+                '[CustomerRepository] Failed to update customer teams links (exception)',
+                [
+                    'customerId'         => $customerId,
+                    'teamCount'          => count($data),
+                    'exception_class'    => $e::class,
+                    'exception_message'  => $e->getMessage(),
+                    'exception_code'     => $e->getCode(),
+                    'exception'          => $e,
+                ]
+            );
+
+            return false;
         }
-        return true;
     }
 
 
@@ -470,14 +618,14 @@ final class CustomerRepository
      * @param array $row
      * @return Entity\Customer
      */
-    protected function buildEntity(array $row) {
+    protected function buildEntity(array $row): Customer {
         $customer = new Customer();
         $customer->setId($row['id']);
         $customer->setName($row['name']);
         $customer->setColor($row['color']);
         $customer->setNumber(isset($row['number']) ? $row['number'] : null);
         $customer->setComment(isset($row['comment']) ? $row['comment'] : null);
-        $customer->setVisible($row['visible']);
+        $customer->setVisible((int) $row['visible']);
         $customer->setCreatedAt(isset($row['created_at']) ? $row['created_at'] : null);
 
         return $customer;

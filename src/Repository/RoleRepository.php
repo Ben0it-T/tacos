@@ -8,7 +8,7 @@ use PDO;
 
 final class RoleRepository
 {
-    private $pdo;
+    private PDO $pdo;
 
     public function __construct(PDO $pdo) {
         $this->pdo = $pdo;
@@ -60,7 +60,7 @@ final class RoleRepository
      * @param array $row
      * @return Entity\Role
      */
-    protected function buildEntity(array $row) {
+    protected function buildEntity(array $row): Role {
         $role = new Role();
         $role->setId($row['id']);
         $role->setName($row['name']);

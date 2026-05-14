@@ -5,16 +5,20 @@ namespace App\Repository;
 
 use App\Entity\Timesheet;
 use App\Helper\SqlHelper;
+use Psr\Log\LoggerInterface;
+
 use PDO;
 
 final class TimesheetRepository
 {
-    private $pdo;
-    private $sqlHelper;
+    private PDO $pdo;
+    private SqlHelper $sqlHelper;
+    private LoggerInterface $logger;
 
-    public function __construct(PDO $pdo, SqlHelper $sqlHelper) {
+    public function __construct(PDO $pdo, SqlHelper $sqlHelper, LoggerInterface $logger) {
         $this->pdo = $pdo;
         $this->sqlHelper = $sqlHelper;
+        $this->logger = $logger;
     }
 
     /**
@@ -413,20 +417,45 @@ final class TimesheetRepository
     /**
      * Stop Timesheet
      *
-     * @param int $timesheet
+     * @param Timesheet $timesheet
      * @return bool
      */
-    public function stopTimesheet(Timesheet $timesheet) {
+    public function stopTimesheet(Timesheet $timesheet): bool {
         try {
             $stmt = $this->pdo->prepare('UPDATE `tacos_timesheet` SET `tacos_timesheet`.`end` = :end1, `tacos_timesheet`.`duration` = CAST(TIME_TO_SEC(TIMEDIFF(:end2, `tacos_timesheet`.`start`))/60 AS UNSIGNED) , `tacos_timesheet`.`modified_at` = :modifiedAt WHERE `tacos_timesheet`.`id` = :id AND `tacos_timesheet`.`end` is NULL');
             $res = $stmt->execute([
-                'end1' => $timesheet->getEnd(),
-                'end2' => $timesheet->getEnd(),
+                'end1'       => $timesheet->getEnd(),
+                'end2'       => $timesheet->getEnd(),
                 'modifiedAt' => date("Y-m-d H:i:s"),
-                'id' => $timesheet->getId(),
+                'id'         => $timesheet->getId(),
             ]);
+            if (!$res) {
+                $this->logger->error(
+                    '[TimesheetRepository] Failed to stop timesheet (execute returned false)',
+                    [
+                        'id'        => $timesheet->getId(),
+                        'userId'    => $timesheet->getUserId(),
+                        'end'       => $timesheet->getEnd(),
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[TimesheetRepository] Failed to stop timesheet (exception)',
+                [
+                    'id'                => $timesheet->getId(),
+                    'userId'            => $timesheet->getUserId(),
+                    'end'               => $timesheet->getEnd(),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
             return false;
         }
     }
@@ -438,21 +467,47 @@ final class TimesheetRepository
      * @param Timesheet $timesheet
      * @return lastInsertId or false
      */
-    public function insert(Timesheet $timesheet) {
+    public function insert(Timesheet $timesheet): string|false {
         try {
             $stmt = $this->pdo->prepare('INSERT INTO `tacos_timesheet` (`id`, `user_id`, `activity_id`, `project_id`, `start`, `end`, `duration`, `comment`, `modified_at`) VALUES (NULL, :userId, :activityId, :projectId, :start, :end, :duration, :comment, :modifiedAt)');
             $res = $stmt->execute([
-                'userId' => $timesheet->getUserId(),
+                'userId'     => $timesheet->getUserId(),
                 'activityId' => $timesheet->getActivityId(),
-                'projectId' => $timesheet->getProjectId(),
-                'start' => $timesheet->getStart(),
-                'end' => $timesheet->getEnd(),
-                'duration' => $timesheet->getDuration(),
-                'comment' => $timesheet->getComment(),
+                'projectId'  => $timesheet->getProjectId(),
+                'start'      => $timesheet->getStart(),
+                'end'        => $timesheet->getEnd(),
+                'duration'   => $timesheet->getDuration(),
+                'comment'    => $timesheet->getComment(),
                 'modifiedAt' => $timesheet->getModifiedAt()
             ]);
+
+            if (!$res) {
+                $this->logger->error(
+                    '[TimesheetRepository] Failed to insert timesheet (execute returned false)',
+                    [
+                        'userId'     => $timesheet->getUserId(),
+                        'activityId' => $timesheet->getActivityId(),
+                        'projectId'  => $timesheet->getProjectId(),
+                        'errorInfo'  => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
             return $this->pdo->lastInsertId();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[TimesheetRepository] Failed to insert timesheet (exception)',
+                [
+                    'userId'            => $timesheet->getUserId(),
+                    'activityId'        => $timesheet->getActivityId(),
+                    'projectId'         => $timesheet->getProjectId(),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
             return false;
         }
     }
@@ -463,22 +518,49 @@ final class TimesheetRepository
      * @param Timesheet $timesheet
      * @return bool
      */
-    public function updateTimesheet(Timesheet $timesheet) {
+    public function updateTimesheet(Timesheet $timesheet): bool {
         try {
             $stmt = $this->pdo->prepare('UPDATE `tacos_timesheet` SET `tacos_timesheet`.`user_id` = :userId, `tacos_timesheet`.`activity_id` = :activityId, `tacos_timesheet`.`project_id` = :projectId, `tacos_timesheet`.`start` = :start, `tacos_timesheet`.`end` = :end, `tacos_timesheet`.`duration` = :duration, `tacos_timesheet`.`comment` = :comment, `tacos_timesheet`.`modified_at` = :modifiedAt WHERE  `tacos_timesheet`.`id` = :id');
             $res = $stmt->execute([
-                'userId' => $timesheet->getUserId(),
+                'userId'     => $timesheet->getUserId(),
                 'activityId' => $timesheet->getActivityId(),
-                'projectId' => $timesheet->getProjectId(),
-                'start' => $timesheet->getStart(),
-                'end' => $timesheet->getEnd(),
-                'duration' => $timesheet->getDuration(),
-                'comment' => $timesheet->getComment(),
+                'projectId'  => $timesheet->getProjectId(),
+                'start'      => $timesheet->getStart(),
+                'end'        => $timesheet->getEnd(),
+                'duration'   => $timesheet->getDuration(),
+                'comment'    => $timesheet->getComment(),
                 'modifiedAt' => $timesheet->getModifiedAt(),
                 'id' => $timesheet->getId()
             ]);
+            if (!$res) {
+                $this->logger->error(
+                    '[TimesheetRepository] Failed to update timesheet (execute returned false)',
+                    [
+                        'id'         => $timesheet->getId(),
+                        'userId'     => $timesheet->getUserId(),
+                        'activityId' => $timesheet->getActivityId(),
+                        'projectId'  => $timesheet->getProjectId(),
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[TimesheetRepository] Failed to update timesheet (exception)',
+                [
+                    'id'                => $timesheet->getId(),
+                    'userId'            => $timesheet->getUserId(),
+                    'activityId'        => $timesheet->getActivityId(),
+                    'projectId'         => $timesheet->getProjectId(),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
             return false;
         }
     }
@@ -487,16 +569,39 @@ final class TimesheetRepository
      * Delete Timesheet
      *
      * @param Timesheet $timesheet
-     * @return string $errorMsg
+     * @return bool
      */
-    public function deleteTimesheet($timesheet) {
+    public function deleteTimesheet(Timesheet $timesheet): bool {
         try {
             $stmt = $this->pdo->prepare('DELETE FROM `tacos_timesheet` WHERE `tacos_timesheet`.`id` = :id');
             $res = $stmt->execute([
                 'id' => $timesheet->getId()
             ]);
+            if (!$res) {
+                $this->logger->error(
+                    '[TimesheetRepository] Failed to delete timesheet (execute returned false)',
+                    [
+                        'id'        => $timesheet->getId(),
+                        'userId'    => $timesheet->getUserId(),
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[TimesheetRepository] Failed to delete timesheet (exception)',
+                [
+                    'id'                => $timesheet->getId(),
+                    'userId'            => $timesheet->getUserId(),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
             return false;
         }
     }
@@ -507,20 +612,79 @@ final class TimesheetRepository
      * Insert Tags
      *
      * @param int $timesheetId
-     * @param array $data
+     * @param array $data Array of tagsIds
      * @return bool
      */
-    public function insertTags(int $timesheetId, $data) {
+    public function insertTags(int $timesheetId, array $data): bool {
+        if ($data === []) {
+            return true;
+        }
+
+        // cast & clean ids
+        $tagsIds = array_map(
+            static function ($tagsId): int {
+                return (int) $tagsId;
+            },
+            $data
+        );
+        $tagsIds = array_unique($tagsIds);
+        $tagsIds = array_values($tagsIds);
+
+        $startedTx = false;
+
         try {
+            if (!$this->pdo->inTransaction()) {
+                // Todo: move transaction to service
+                $this->pdo->beginTransaction();
+                $startedTx = true;
+            }
+
             $stmt = $this->pdo->prepare('INSERT INTO `tacos_timesheet_tags` (`timesheet_id`, `tag_id`) VALUES (:timesheetId, :tagId)');
-            foreach ($data as $tagId) {
-                $stmt->execute([
+
+            foreach ($tagsIds as $tagId) {
+                $res = $stmt->execute([
                     'timesheetId' => $timesheetId,
-                    'tagId' => $tagId
+                    'tagId'       => $tagId
                 ]);
+
+                if (!$res) {
+                    $this->logger->error(
+                        '[TimesheetRepository] Failed to insert tag link (execute returned false)',
+                        [
+                            'timesheetId' => $timesheetId,
+                            'tagId'       => $tagId,
+                            'errorInfo'   => $stmt->errorInfo(),
+                        ]
+                    );
+
+                    if ($startedTx) {
+                        $this->pdo->rollBack();
+                    }
+                    return false;
+                }
+            }
+
+            if ($startedTx) {
+                $this->pdo->commit();
             }
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            if ($startedTx && $this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            $this->logger->error(
+                '[TimesheetRepository] Failed to insert tags link (exception)',
+                [
+                    'timesheetId'        => $timesheetId,
+                    'tagsIds'            => $tagsIds,
+                    'exception_class'    => $e::class,
+                    'exception_message'  => $e->getMessage(),
+                    'exception_code'     => $e->getCode(),
+                    'exception'          => $e,
+                ]
+            );
+
             return false;
         }
     }
@@ -529,18 +693,58 @@ final class TimesheetRepository
      * Update Tags
      *
      * @param int $timesheetId
-     * @param array $data
+     * @param array $data Array of tagsIds
      * @return bool
      */
-    public function updateTags(int $timesheetId, $data) {
-        $stmt = $this->pdo->prepare('DELETE FROM `tacos_timesheet_tags` WHERE `tacos_timesheet_tags`.`timesheet_id` = :timesheetId');
-        $stmt->execute([
-            'timesheetId' => $timesheetId
-        ]);
-        if (count($data) > 0) {
-            return $this->insertTags($timesheetId, $data);
+    public function updateTags(int $timesheetId, array $data): bool {
+        try {
+            $this->pdo->beginTransaction();
+
+            $stmt = $this->pdo->prepare('DELETE FROM `tacos_timesheet_tags` WHERE `tacos_timesheet_tags`.`timesheet_id` = :timesheetId');
+            $res = $stmt->execute([
+                'timesheetId' => $timesheetId
+            ]);
+
+            if (!$res) {
+                $this->logger->error(
+                    '[TimesheetRepository] Failed to delete timesheet tags links (execute returned false)',
+                    [
+                        'timesheetId' => $timesheetId,
+                        'errorInfo'   => $stmt->errorInfo(),
+                    ]
+                );
+                $this->pdo->rollBack();
+                return false;
+            }
+
+            if (count($data) > 0) {
+                if (!$this->insertTags($timesheetId, $data)) {
+                    $this->pdo->rollBack();
+                    return false;
+                }
+            }
+            $this->pdo->commit();
+            return true;
+
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            $this->logger->error(
+                '[TimesheetRepository] Failed to update timesheet tags links (exception)',
+                [
+                    'timesheetId'       => $timesheetId,
+                    'tagCount'          => count($data),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
+
+            return false;
         }
-        return true;
     }
 
 
@@ -551,7 +755,7 @@ final class TimesheetRepository
      * @param array $row
      * @return Entity\Timesheet
      */
-    protected function buildEntity(array $row) {
+    protected function buildEntity(array $row): Timesheet {
         $timesheet = new Timesheet();
         $timesheet->setId($row['id']);
         $timesheet->setUserId($row['user_id']);
@@ -565,5 +769,4 @@ final class TimesheetRepository
 
         return $timesheet;
     }
-
 }

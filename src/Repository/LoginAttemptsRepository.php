@@ -59,13 +59,27 @@ final class LoginAttemptsRepository
                 'trackingId' => $trackingId
             ]);
 
-            return $res === true;
+            if (!$res) {
+                $this->logger->error(
+                    '[LoginAttemptsRepository] Failed to insert login attempt (execute returned false)',
+                    [
+                        'trackingId'=> $trackingId,
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
+            return true;
         } catch (\Throwable $e) {
             $this->logger->error(
-                '[LoginAttemptsRepository] Failed to insert login attempt',
+                '[LoginAttemptsRepository] Failed to insert login attempt (exception)',
                 [
-                    'tracking_id' => $trackingId,
-                    'exception'   => $e,
+                    'tracking_id'       => $trackingId,
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
                 ]
             );
             return false;
@@ -90,13 +104,29 @@ final class LoginAttemptsRepository
                 'blockedUntil' => $blockedUntil->format('Y-m-d H:i:s'),
             ]);
 
-            return $res === true;
+            if (!$res) {
+                $this->logger->error(
+                    '[LoginAttemptsRepository] Failed to block login attempts (execute returned false)',
+                    [
+                        'trackingId'   => $trackingId,
+                        'blockedUntil' => $blockedUntil->format('Y-m-d H:i:s'),
+                        'errorInfo'    => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
+            return true;
         } catch (\Throwable $e) {
             $this->logger->error(
                 '[LoginAttemptsRepository] Failed to block login attempts',
                 [
-                    'tracking_id' => $trackingId,
-                    'exception'   => $e,
+                    'trackingId'        => $trackingId,
+                    'blockedUntil'      => $blockedUntil->format('Y-m-d H:i:s'),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
                 ]
             );
             return false;
@@ -116,14 +146,28 @@ final class LoginAttemptsRepository
                 'trackingId' => $trackingId
             ]);
 
-            return $res === true;
+            if (!$res) {
+                $this->logger->error(
+                    '[LoginAttemptsRepository] Failed to remove login attempts (execute returned false)',
+                    [
+                        'trackingId' => $trackingId,
+                        'errorInfo'  => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
+            return true;
 
         } catch (\Throwable $e) {
             $this->logger->error(
-                '[LoginAttemptsRepository] Failed to remove login attempts',
+                '[LoginAttemptsRepository] Failed to remove login attempts (exception)',
                 [
-                    'tracking_id' => $trackingId,
-                    'exception'   => $e,
+                    'trackingId'       => $trackingId,
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
                 ]
             );
             return false;

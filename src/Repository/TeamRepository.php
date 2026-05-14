@@ -4,14 +4,18 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\Team;
+use Psr\Log\LoggerInterface;
+
 use PDO;
 
 final class TeamRepository
 {
-    private $pdo;
+    private PDO $pdo;
+    private LoggerInterface $logger;
 
-    public function __construct(PDO $pdo) {
+    public function __construct(PDO $pdo, LoggerInterface $logger) {
         $this->pdo = $pdo;
+        $this->logger = $logger;
     }
 
     /**
@@ -331,15 +335,36 @@ final class TeamRepository
      * @param Team $team
      * @return lastInsertId or false
      */
-    public function insert(Team $team) {
+    public function insert(Team $team): string|false {
         try {
             $stmt = $this->pdo->prepare('INSERT INTO `tacos_teams` (`id`, `name`, `color`) VALUES (NULL, :name, :color)');
             $res = $stmt->execute([
-                'name' => $team->getName(),
+                'name'  => $team->getName(),
                 'color' => $team->getColor()
             ]);
+            if (!$res) {
+                $this->logger->error(
+                    '[TeamRepository] Failed to insert team (execute returned false)',
+                    [
+                        'name'      => $team->getName(),
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
             return $this->pdo->lastInsertId();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[TeamRepository] Failed to insert team (exception)',
+                [
+                    'name'              => $team->getName(),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
             return false;
         }
     }
@@ -350,7 +375,7 @@ final class TeamRepository
      * @param Team $team
      * @return bool
      */
-    public function updateTeam(Team $team) {
+    public function updateTeam(Team $team): bool {
         try {
             $stmt = $this->pdo->prepare('UPDATE `tacos_teams` SET `tacos_teams`.`name` = :name, `tacos_teams`.`color` = :color WHERE `tacos_teams`.`id` = :id');
             $res = $stmt->execute([
@@ -358,8 +383,31 @@ final class TeamRepository
                 'color' => $team->getColor(),
                 'id' => $team->getId()
             ]);
+            if (!$res) {
+                $this->logger->error(
+                    '[TeamRepository] Failed to update team (execute returned false)',
+                    [
+                        'id'        => $team->getId(),
+                        'name'      => $team->getName(),
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[TeamRepository] Failed to update team (exception)',
+                [
+                    'id'                => $team->getId(),
+                    'name'              => $team->getName(),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
             return false;
         }
     }
@@ -370,21 +418,70 @@ final class TeamRepository
      * Insert Members
      *
      * @param int $teamId
-     * @param array $data
+     * @param array $data Array of userIds
      * @return bool
      */
-    public function insertMembers(int $teamId, $data) {
+    public function insertMembers(int $teamId, array $data): bool {
+        if ($data === []) {
+            return true;
+        }
+
+        $startedTx = false;
+
         try {
+            if (!$this->pdo->inTransaction()) {
+                // Todo: move transaction to service
+                $this->pdo->beginTransaction();
+                $startedTx = true;
+            }
+
             $stmt = $this->pdo->prepare('INSERT INTO `tacos_users_teams` (`user_id`, `team_id`, `teamlead`) VALUES (:user_id, :team_id, :teamlead)');
+
             foreach ($data as $userId => $member) {
-                $stmt->execute([
-                    'user_id' => $userId,
-                    'team_id' => $teamId,
-                    'teamlead' => $member['teamlead']
+                $res = $stmt->execute([
+                    'user_id'  => $userId,
+                    'team_id'  => $teamId,
+                    'teamlead' => (int) $member['teamlead']
                 ]);
+
+                if (!$res) {
+                    $this->logger->error(
+                        '[TeamRepository] Failed to insert user link (execute returned false)',
+                        [
+                            'teamId'    => $teamId,
+                            'userId'    => $userId,
+                            'errorInfo' => $stmt->errorInfo(),
+                        ]
+                    );
+
+                    if ($startedTx) {
+                        $this->pdo->rollBack();
+                    }
+                    return false;
+                }
+            }
+
+            if ($startedTx) {
+                $this->pdo->commit();
             }
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            if ($startedTx && $this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            $this->logger->error(
+                '[TeamRepository] Failed to insert users link (exception)',
+                [
+                    'teamId'             => $teamId,
+                    'userIds'            => array_keys($data),
+                    'exception_class'    => $e::class,
+                    'exception_message'  => $e->getMessage(),
+                    'exception_code'     => $e->getCode(),
+                    'exception'          => $e,
+                ]
+            );
+
             return false;
         }
     }
@@ -393,18 +490,58 @@ final class TeamRepository
      * Update Members
      *
      * @param int $teamId
-     * @param array $data
+     * @param array $data Array of userIds
      * @return bool
      */
-    public function updateMembers(int $teamId, $data) {
-        $stmt = $this->pdo->prepare('DELETE FROM `tacos_users_teams` WHERE `tacos_users_teams`.`team_id` = :team_id');
-        $stmt->execute([
-            'team_id' => $teamId
-        ]);
-        if (count($data) > 0) {
-            return $this->insertMembers($teamId, $data);
+    public function updateMembers(int $teamId, array $data): bool {
+        try {
+            $this->pdo->beginTransaction();
+
+            $stmt = $this->pdo->prepare('DELETE FROM `tacos_users_teams` WHERE `tacos_users_teams`.`team_id` = :team_id');
+            $res = $stmt->execute([
+                'team_id' => $teamId
+            ]);
+
+            if (!$res) {
+                $this->logger->error(
+                    '[TeamRepository] Failed to delete team users links (execute returned false)',
+                    [
+                        'teamId'    => $teamId,
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                $this->pdo->rollBack();
+                return false;
+            }
+
+            if (count($data) > 0) {
+                if (!$this->insertMembers($teamId, $data)) {
+                    $this->pdo->rollBack();
+                    return false;
+                }
+            }
+            $this->pdo->commit();
+            return true;
+
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            $this->logger->error(
+                '[TeamRepository] Failed to update team users links (exception)',
+                [
+                    'teamId'             => $teamId,
+                    'userCount'          => count($data),
+                    'exception_class'    => $e::class,
+                    'exception_message'  => $e->getMessage(),
+                    'exception_code'     => $e->getCode(),
+                    'exception'          => $e,
+                ]
+            );
+
+            return false;
         }
-        return true;
     }
 
 
@@ -415,7 +552,7 @@ final class TeamRepository
      * @param array $row
      * @return Entity\Team
      */
-    private function buildEntity(array $row) {
+    private function buildEntity(array $row): Team {
         $team = new Team();
         $team->setId($row['id']);
         $team->setName($row['name']);

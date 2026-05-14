@@ -4,14 +4,18 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\Activity;
+use Psr\Log\LoggerInterface;
+
 use PDO;
 
 final class ActivityRepository
 {
-    private $pdo;
+    private PDO $pdo;
+    private LoggerInterface $logger;
 
-    public function __construct(PDO $pdo) {
+    public function __construct(PDO $pdo, LoggerInterface $logger) {
         $this->pdo = $pdo;
+        $this->logger = $logger;
     }
 
     /**
@@ -436,20 +440,42 @@ final class ActivityRepository
      * @param Activity $activity
      * @return lastInsertId or false
      */
-    public function insert(Activity $activity) {
+    public function insert(Activity $activity): string|false {
         try {
             $stmt = $this->pdo->prepare('INSERT INTO `tacos_activities` (`id`, `project_id`, `name`, `color`, `number`, `comment`, `visible`, `created_at`) VALUES (NULL, :projectId, :name, :color, :number, :comment, :visible, :createdAt)');
             $res = $stmt->execute([
                 'projectId' => $activity->getProjectId(),
-                'name' => $activity->getName(),
-                'color' => $activity->getColor(),
-                'number' => $activity->getNumber(),
-                'comment' => $activity->getComment(),
-                'visible' => $activity->getVisible(),
+                'name'      => $activity->getName(),
+                'color'     => $activity->getColor(),
+                'number'    => $activity->getNumber(),
+                'comment'   => $activity->getComment(),
+                'visible'   => $activity->getVisible(),
                 'createdAt' => $activity->getCreatedAt()
             ]);
+
+            if (!$res) {
+                $this->logger->error(
+                    '[ActivityRepository] Failed to insert activity (execute returned false)',
+                    [
+                        'name'      => $activity->getName(),
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
             return $this->pdo->lastInsertId();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[ActivityRepository] Failed to insert activity (exception)',
+                [
+                    'name'              => $activity->getName(),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
             return false;
         }
     }
@@ -460,19 +486,43 @@ final class ActivityRepository
      * @param Activity $activity
      * @return bool
      */
-    public function updateActivity(Activity $activity) {
+    public function updateActivity(Activity $activity): bool {
         try {
             $stmt = $this->pdo->prepare('UPDATE `tacos_activities` SET `tacos_activities`.`name` = :name, `tacos_activities`.`color` = :color, `tacos_activities`.`number` = :number, `tacos_activities`.`comment` = :comment, `tacos_activities`.`visible` = :visible WHERE `tacos_activities`.`id` = :id');
             $res = $stmt->execute([
-                'name' => $activity->getName(),
-                'color' => $activity->getColor(),
-                'number' => $activity->getNumber(),
+                'name'    => $activity->getName(),
+                'color'   => $activity->getColor(),
+                'number'  => $activity->getNumber(),
                 'comment' => $activity->getComment(),
                 'visible' => $activity->getVisible(),
-                'id' => $activity->getId()
+                'id'      => $activity->getId()
             ]);
+
+            if (!$res) {
+                $this->logger->error(
+                    '[ActivityRepository] Failed to update activity (execute returned false)',
+                    [
+                        'id'        => $activity->getId(),
+                        'name'      => $activity->getName(),
+                        'errorInfo' => $stmt->errorInfo(),
+                    ]
+                );
+                return false;
+            }
+
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $this->logger->error(
+                '[ActivityRepository] Failed to update activity (exception)',
+                [
+                    'id'                => $activity->getId(),
+                    'name'              => $activity->getName(),
+                    'exception_class'   => $e::class,
+                    'exception_message' => $e->getMessage(),
+                    'exception_code'    => $e->getCode(),
+                    'exception'         => $e,
+                ]
+            );
             return false;
         }
     }
@@ -482,20 +532,79 @@ final class ActivityRepository
      * Insert Teams
      *
      * @param int $activityId
-     * @param array $data
+     * @param array $data Array of teamIds
      * @return bool
      */
-    public function insertTeams(int $activityId, $data) {
+    public function insertTeams(int $activityId, array $data): bool {
+        if ($data === []) {
+            return true;
+        }
+
+        // cast & clean ids
+        $teamIds = array_map(
+            static function ($teamId): int {
+                return (int) $teamId;
+            },
+            $data
+        );
+        $teamIds = array_unique($teamIds);
+        $teamIds = array_values($teamIds);
+
+        $startedTx = false;
+
         try {
+            if (!$this->pdo->inTransaction()) {
+                // Todo: move transaction to service
+                $this->pdo->beginTransaction();
+                $startedTx = true;
+            }
+
             $stmt = $this->pdo->prepare('INSERT INTO `tacos_activities_teams` (`activity_id`, `team_id`) VALUES (:activityId, :teamId)');
-            foreach ($data as $teamId) {
-                $stmt->execute([
+
+            foreach ($teamIds as $teamId) {
+                $res = $stmt->execute([
                     'activityId' => $activityId,
-                    'teamId' => $teamId
+                    'teamId'     => $teamId
                 ]);
+
+                if (!$res) {
+                    $this->logger->error(
+                        '[ActivityRepository] Failed to insert team link (execute returned false)',
+                        [
+                            'activityId' => $activityId,
+                            'teamId'     => $teamId,
+                            'errorInfo'  => $stmt->errorInfo(),
+                        ]
+                    );
+
+                    if ($startedTx) {
+                        $this->pdo->rollBack();
+                    }
+                    return false;
+                }
+            }
+
+            if ($startedTx) {
+                $this->pdo->commit();
             }
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            if ($startedTx && $this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            $this->logger->error(
+                '[ActivityRepository] Failed to insert teams link (exception)',
+                [
+                    'activityId'         => $activityId,
+                    'teamIds'            => $teamIds,
+                    'exception_class'    => $e::class,
+                    'exception_message'  => $e->getMessage(),
+                    'exception_code'     => $e->getCode(),
+                    'exception'          => $e,
+                ]
+            );
+
             return false;
         }
     }
@@ -504,18 +613,58 @@ final class ActivityRepository
      * Update Teams
      *
      * @param int $activityId
-     * @param array $data
+     * @param array $data $data Array of teamIds
      * @return bool
      */
-    public function updateTeams(int $activityId, $data) {
-        $stmt = $this->pdo->prepare('DELETE FROM `tacos_activities_teams` WHERE `tacos_activities_teams`.`activity_id` = :activityId');
-        $stmt->execute([
-            'activityId' => $activityId
-        ]);
-        if (count($data) > 0) {
-            return $this->insertTeams($activityId, $data);
+    public function updateTeams(int $activityId, array $data): bool {
+        try {
+            $this->pdo->beginTransaction();
+
+            $stmt = $this->pdo->prepare('DELETE FROM `tacos_activities_teams` WHERE `tacos_activities_teams`.`activity_id` = :activityId');
+            $res = $stmt->execute([
+                'activityId' => $activityId
+            ]);
+
+            if (!$res) {
+                $this->logger->error(
+                    '[ActivityRepository] Failed to delete activity teams links (execute returned false)',
+                    [
+                        'activityId' => $activityId,
+                        'errorInfo'  => $stmt->errorInfo(),
+                    ]
+                );
+                $this->pdo->rollBack();
+                return false;
+            }
+
+            if (count($data) > 0) {
+                if (!$this->insertTeams($activityId, $data)) {
+                    $this->pdo->rollBack();
+                    return false;
+                }
+            }
+            $this->pdo->commit();
+            return true;
+
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            $this->logger->error(
+                '[ActivityRepository] Failed to update activity teams links (exception)',
+                [
+                    'activityId'         => $activityId,
+                    'teamCount'          => count($data),
+                    'exception_class'    => $e::class,
+                    'exception_message'  => $e->getMessage(),
+                    'exception_code'     => $e->getCode(),
+                    'exception'          => $e,
+                ]
+            );
+
+            return false;
         }
-        return true;
     }
 
 
@@ -526,7 +675,7 @@ final class ActivityRepository
      * @param array $row
      * @return Entity\Activity
      */
-    protected function buildEntity(array $row) {
+    protected function buildEntity(array $row): Activity {
         $activity = new Activity();
         $activity->setId($row['id']);
         $activity->setProjectId($row['project_id']);
@@ -534,7 +683,7 @@ final class ActivityRepository
         $activity->setColor($row['color']);
         $activity->setNumber(isset($row['number']) ? $row['number'] : null);
         $activity->setComment(isset($row['comment']) ? $row['comment'] : null);
-        $activity->setVisible($row['visible']);
+        $activity->setVisible((int) $row['visible']);
         $activity->setCreatedAt(isset($row['created_at']) ? $row['created_at'] : null);
 
         return $activity;
