@@ -95,22 +95,28 @@ final class ValidationHelper
 
     /**
      * Validate date
-     * @param string $string
+     * @param string $value
      * @param bool $empty
      * @return bool
      */
-    public function validateDate($string, $empty = false) {
-        if (empty($string)) {
-            return ($empty ? true : false);
+    public function validateDate($value, bool $empty = false): bool {
+        if (empty($value)) {
+            return $empty;
         }
 
-        if ($string instanceof \DateTime) {
+        if ($value instanceof \DateTimeInterface) {
             return true;
-        } else {
-            return (strtotime($string) !== false);
         }
 
-        return true;
+        if ($value === false) {
+            return false;
+        }
+
+        if (is_string($value)) {
+            return strtotime($value) !== false;
+        }
+
+        return false;
     }
 
     /**

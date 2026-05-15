@@ -7,26 +7,23 @@ use App\Entity\Project;
 use App\Helper\ValidationHelper;
 use App\Repository\ActivityRepository;
 use App\Repository\ProjectRepository;
-use App\Repository\CustomerRepository;
-use Psr\Container\ContainerInterface;
+
 use Psr\Log\LoggerInterface;
 
 final class ProjectService
 {
-    private $container;
-    private $activityRepository;
-    private $projectRepository;
-    private $customerRepository;
-    private $validationHelper;
-    private $logger;
+    private ActivityRepository $activityRepository;
+    private ProjectRepository $projectRepository;
+    private ValidationHelper $validationHelper;
+    private LoggerInterface $logger;
+    private array $translations;
 
-    public function __construct(ContainerInterface $container, ActivityRepository $activityRepository, ProjectRepository $projectRepository, CustomerRepository $customerRepository, ValidationHelper $validationHelper, LoggerInterface $logger) {
-        $this->container = $container;
+    public function __construct(ActivityRepository $activityRepository, ProjectRepository $projectRepository, ValidationHelper $validationHelper, LoggerInterface $logger, array $translations) {
         $this->activityRepository = $activityRepository;
         $this->projectRepository = $projectRepository;
-        $this->customerRepository = $customerRepository;
         $this->validationHelper = $validationHelper;
         $this->logger = $logger;
+        $this->translations = $translations;
     }
 
     /**
@@ -35,7 +32,7 @@ final class ProjectService
      * @param int $id
      * @return Project entity or false
      */
-    public function findProject(int $id) {
+    public function findProject(int $id): Project|false {
         return $this->projectRepository->find($id);
     }
 
@@ -47,7 +44,7 @@ final class ProjectService
      * @param int $teamleaderId
      * @return Project entity or false
      */
-    public function findOneByIdAndTeamleaderId(int $projectId, int $teamleaderId) {
+    public function findOneByIdAndTeamleaderId(int $projectId, int $teamleaderId): Project|false {
         return $this->projectRepository->findOneByIdAndTeamleaderId($projectId, $teamleaderId);
     }
 
@@ -59,7 +56,7 @@ final class ProjectService
      * @param int $teamleaderId
      * @return Project entity or false
      */
-    public function findOneByIdAndTeamleaderIdStrict(int $projectId, int $teamleaderId) {
+    public function findOneByIdAndTeamleaderIdStrict(int $projectId, int $teamleaderId): Project|false {
         return $this->projectRepository->findOneByIdAndTeamleaderIdStrict($projectId, $teamleaderId);
     }
 
@@ -71,7 +68,7 @@ final class ProjectService
      * @param ?int $visible
      * @return array of Project entities
      */
-    public function findAll(?int $visible = null) {
+    public function findAll(?int $visible = null): array {
         return $this->projectRepository->findAll($visible);
     }
 
@@ -82,7 +79,7 @@ final class ProjectService
      * @param ?int $visible
      * @return array of Project entities
      */
-    public function findAllByCustomerId(int $customerId, ?int $visible = null) {
+    public function findAllByCustomerId(int $customerId, ?int $visible = null): array {
         return $this->projectRepository->findAllByCustomerId($customerId, $visible);
     }
 
@@ -93,7 +90,7 @@ final class ProjectService
      * @param ?int $visible
      * @return array of Project entities
      */
-    public function findAllByUserId(int $userId, ?int $visible = null) {
+    public function findAllByUserId(int $userId, ?int $visible = null): array {
         return $this->projectRepository->findAllByUserId($userId, $visible);
     }
 
@@ -105,7 +102,7 @@ final class ProjectService
      * @param ?int $visible
      * @return array of Project entities
      */
-    public function findAllByUserIdAndCustomerId(int $userId, int $customerId, ?int $visible = null) {
+    public function findAllByUserIdAndCustomerId(int $userId, int $customerId, ?int $visible = null): array {
         return $this->projectRepository->findAllByUserIdAndCustomerId($userId, $customerId, $visible);
     }
 
@@ -116,7 +113,7 @@ final class ProjectService
      * @param int $visible
      * @return array of Project entities
      */
-    public function findAllByTeamleaderId(int $teamleaderId, ?int $visible = null) {
+    public function findAllByTeamleaderId(int $teamleaderId, ?int $visible = null): array {
         return $this->projectRepository->findAllByTeamleaderId($teamleaderId, $visible);
     }
 
@@ -127,7 +124,7 @@ final class ProjectService
      *
      * @return array of Projects with Teams count and Customer
      */
-    public function findAllProjectsWithTeamsCountAndCustomer() {
+    public function findAllProjectsWithTeamsCountAndCustomer(): array {
         return $this->projectRepository->findAllProjectsWithTeamsCountAndCustomer();
     }
 
@@ -137,7 +134,7 @@ final class ProjectService
      * @param int $teamleaderId
      * @return array of Projects with Teams count and Customer
      */
-    public function findAllProjectsWithTeamsCountAndCustomerByTeamleaderId(int $teamleaderId) {
+    public function findAllProjectsWithTeamsCountAndCustomerByTeamleaderId(int $teamleaderId): array {
         return $this->projectRepository->findAllProjectsWithTeamsCountAndCustomerByTeamleaderId($teamleaderId);
     }
 
@@ -147,7 +144,7 @@ final class ProjectService
      * @param int $userId
      * @return array of Projects with Customer
      */
-    public function findAllProjectsWithCustomerByUserId(int $userId) {
+    public function findAllProjectsWithCustomerByUserId(int $userId): array {
         return $this->projectRepository->findAllProjectsWithCustomerByUserId($userId);
     }
 
@@ -157,7 +154,7 @@ final class ProjectService
      * @param int $teamId
      * @return array of Projects with Customer
      */
-    public function findAllProjectsWithCustomerByTeamId(int $teamId) {
+    public function findAllProjectsWithCustomerByTeamId(int $teamId): array {
         return $this->projectRepository->findAllProjectsWithCustomerByTeamId($teamId);
     }
 
@@ -169,81 +166,96 @@ final class ProjectService
      * @param array $data
      * @return string $errorMsg
      */
-    public function createProject($data) {
-        $translations = $this->container->get('translations');
-        $validation = true;
+    public function createProject(array $data): string {
         $errorMsg = "";
-        $dateFormat = $translations['dateFormats_date'];
-
+        $dateFormat = $this->translations['dateFormats_date'];
         $name = $this->validationHelper->sanitizeString($data['project_edit_form_name']);
-        $color = isset($data['project_edit_form_color']) ? $this->validationHelper->sanitizeColor($data['project_edit_form_color']) : "#ffffff";
+        $color = $this->validationHelper->sanitizeColor($data['project_edit_form_color'] ?? '#ffffff');
         $customerId = intval($data['project_edit_form_customer']);
         $number = $this->validationHelper->sanitizeString($data['project_edit_form_number']);
         $comment = $this->validationHelper->sanitizeString($data['project_edit_form_description']);
         $start = $this->validationHelper->sanitizeString($data['project_edit_form_start']);
-        $start = !empty($start) ? date_create_from_format($dateFormat,$start) : "";
+        $start = !empty($start) ? date_create_from_format($dateFormat, $start) : null;
         $end = $this->validationHelper->sanitizeString($data['project_edit_form_end']);
-        $end = !empty($end) ? date_create_from_format($dateFormat,$end) : "";
-        $selectedTeams = isset($data['project_edit_form']['selectedTeams']) ? $data['project_edit_form']['selectedTeams'] : array();
+        $end = !empty($end) ? date_create_from_format($dateFormat, $end) : null;
+        $selectedTeams = $data['project_edit_form']['selectedTeams'] ?? [];
         $visible = isset($data['project_edit_form_visible']) ? 1 : 0;
         $globalActivities = isset($data['project_edit_form_globalactivities']) ? 1 : 0;
 
         // Validate name
         if (!$this->validationHelper->validateName($name)) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_name'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_name'], $this->translations['form_error_format']) . "\n";
         }
 
         // Validate color
         if (!$this->validationHelper->validateColor($color)) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_color'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_color'], $this->translations['form_error_format']) . "\n";
         }
 
         // Validate customer
         if ($customerId === 0) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_customer'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_customer'], $this->translations['form_error_format']) . "\n";
         }
 
         // Validate number
         if (!$this->validationHelper->validateNumber($number, true)) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_project_number'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_project_number'], $this->translations['form_error_format']) . "\n";
         }
 
         // Validate Date
         if (!$this->validationHelper->validateDate($start, true)) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_project_start'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_project_start'], $this->translations['form_error_format']) . "\n";
         }
         if (!$this->validationHelper->validateDate($end, true)) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_project_end'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_project_end'], $this->translations['form_error_format']) . "\n";
         }
 
+        if ($errorMsg !== '') {
+            return $errorMsg;
+        }
 
-        if ($validation) {
-            $project = new Project;
-            $project->setName($name);
-            $project->setColor($color);
-            $project->setCustomerId($customerId);
-            $project->setNumber($number);
-            $project->setComment($comment);
-            $project->setStart((!empty($start) ? date_format($start,"Y-m-d") : NULL));
-            $project->setEnd((!empty($end) ? date_format($end,"Y-m-d") : NULL));
-            $project->setGlobalActivities($globalActivities);
-            $project->setVisible($visible);
-            $project->setCreatedAt(date("Y-m-d H:i:s"));
-            $lastInsertId = $this->projectRepository->insert($project);
-            $this->logger->info("ProjectService - Project '" . $lastInsertId . "' created.");
-            if (count($selectedTeams) > 0) {
-                $this->projectRepository->insertTeams(intval($lastInsertId), $selectedTeams);
-                $this->logger->info("ProjectService - Project '" . $lastInsertId . "': teams created.");
+        $project = new Project;
+        $project->setName($name);
+        $project->setColor($color);
+        $project->setCustomerId($customerId);
+        $project->setNumber($number);
+        $project->setComment($comment);
+        $project->setStart($start ? $start->format('Y-m-d') : null);
+        $project->setEnd($end ? $end->format('Y-m-d') : null);
+        $project->setGlobalActivities($globalActivities);
+        $project->setVisible($visible);
+        $project->setCreatedAt((new \DateTimeImmutable())->format('Y-m-d H:i:s'));
+
+        $lastInsertId = $this->projectRepository->insert($project);
+
+        if (!$lastInsertId) {
+            return $this->translations['error_occurred'];
+        }
+
+        $this->logger->info(
+            "[ProjectService] Project '".$project->getName()."' created",
+            [
+                'id'   => $lastInsertId,
+                'name' => $project->getName(),
+            ]
+        );
+
+        if (count($selectedTeams) > 0) {
+            if (!$this->projectRepository->insertTeams(intval($lastInsertId), $selectedTeams)) {
+                return $this->translations['error_occurred'];
             }
+
+            $this->logger->info(
+                "[ProjectService] Project '".$project->getName()."': teams link created",
+                [
+                    'id'      => $lastInsertId,
+                    'name'    => $project->getName(),
+                    'teamIds' => $selectedTeams,
+                ]
+            );
         }
 
-        return $errorMsg;
+        return '';
     }
 
     /**
@@ -253,58 +265,53 @@ final class ProjectService
      * @param array $data
      * @return string $errorMsg
      */
-    public function updateProject($project, $data) {
-        $translations = $this->container->get('translations');
-        $validation = true;
+    public function updateProject(Project $project, array $data): string {
         $errorMsg = "";
-        $dateFormat = $translations['dateFormats_date'];
-
+        $dateFormat = $this->translations['dateFormats_date'];
         $name = $this->validationHelper->sanitizeString($data['project_edit_form_name']);
-        $color = isset($data['project_edit_form_color']) ? $this->validationHelper->sanitizeColor($data['project_edit_form_color']) : "#ffffff";
+        $color = $this->validationHelper->sanitizeColor($data['project_edit_form_color'] ?? '#ffffff');
         $customerId = intval($data['project_edit_form_customer']);
         $number = $this->validationHelper->sanitizeString($data['project_edit_form_number']);
         $comment = $this->validationHelper->sanitizeString($data['project_edit_form_description']);
         $start = $this->validationHelper->sanitizeString($data['project_edit_form_start']);
-        $start = !empty($start) ? date_create_from_format($dateFormat,$start) : "";
+        $start = !empty($start) ? date_create_from_format($dateFormat, $start) : null;
         $end = $this->validationHelper->sanitizeString($data['project_edit_form_end']);
-        $end = !empty($end) ? date_create_from_format($dateFormat,$end) : "";
-        $selectedTeams = isset($data['project_edit_form']['selectedTeams']) ? $data['project_edit_form']['selectedTeams'] : array();
-        $selectedActivities = isset($data['project_edit_form']['selectedActivities']) ? $data['project_edit_form']['selectedActivities'] : array();
+        $end = !empty($end) ? date_create_from_format($dateFormat, $end) : null;
+        $selectedTeams = $data['project_edit_form']['selectedTeams'] ?? [];
+        $selectedActivities = $data['project_edit_form']['selectedActivities'] ?? [];
         $visible = isset($data['project_edit_form_visible']) ? 1 : 0;
         $globalActivities = isset($data['project_edit_form_globalactivities']) ? 1 : 0;
 
         // Validate name
         if (!$this->validationHelper->validateName($name)) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_name'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_name'], $this->translations['form_error_format']) . "\n";
         }
 
         // Validate color
         if (!$this->validationHelper->validateColor($color)) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_color'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_color'], $this->translations['form_error_format']) . "\n";
         }
 
         // Validate customer
         if ($customerId === 0) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_customer'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_customer'], $this->translations['form_error_format']) . "\n";
         }
 
         // Validate number
         if (!$this->validationHelper->validateNumber($number, true)) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_project_number'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_project_number'], $this->translations['form_error_format']) . "\n";
         }
 
         // Validate Date
         if (!$this->validationHelper->validateDate($start, true)) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_project_start'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_project_start'], $this->translations['form_error_format']) . "\n";
         }
         if (!$this->validationHelper->validateDate($end, true)) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_project_end'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_project_end'], $this->translations['form_error_format']) . "\n";
+        }
+
+        if ($errorMsg !== '') {
+            return $errorMsg;
         }
 
         // Validate activities
@@ -320,30 +327,54 @@ final class ProjectService
                     unset($selectedActivities[$key]);
                 }
             }
-
         }
 
-        if ($validation) {
-            $project->setName($name);
-            $project->setColor($color);
-            $project->setCustomerId($customerId);
-            $project->setNumber($number);
-            $project->setComment($comment);
-            $project->setStart((!empty($start) ? date_format($start,"Y-m-d") : NULL));
-            $project->setEnd((!empty($end) ? date_format($end,"Y-m-d") : NULL));
-            $project->setGlobalActivities($globalActivities);
-            $project->setVisible($visible);
-            $this->projectRepository->updateProject($project);
-            $this->logger->info("ProjectService - Project '" . $project->getId() . "' updated.");
+        $project->setName($name);
+        $project->setColor($color);
+        $project->setCustomerId($customerId);
+        $project->setNumber($number);
+        $project->setComment($comment);
+        $project->setStart($start ? $start->format('Y-m-d') : null);
+        $project->setEnd($end ? $end->format('Y-m-d') : null);
+        $project->setGlobalActivities($globalActivities);
+        $project->setVisible($visible);
 
-            $this->projectRepository->updateTeams($project->getId(), $selectedTeams);
-            $this->logger->info("ProjectService - Project '" . $project->getId() . "': Teams updated.");
-
-            // update autorised > selectedActivities
-            $this->projectRepository->updateActivities($project->getId(), $selectedActivities);
-            $this->logger->info("ProjectService - Project '" . $project->getId() . "': Activities updated.");
-
+        if (!$this->projectRepository->updateProject($project)) {
+            return $this->translations['error_occurred'];
         }
+        $this->logger->info(
+            "[ProjectService] Project '".$project->getName()."' updated",
+            [
+                'id'   => $project->getId(),
+                'name' => $project->getName(),
+            ]
+        );
+
+
+        if (!$this->projectRepository->updateTeams($project->getId(), $selectedTeams)) {
+            return $this->translations['error_occurred'];
+        }
+        $this->logger->info(
+            "[ProjectService] Project '".$project->getName()."': teams link updated",
+            [
+                'id'      => $project->getId(),
+                'name'    => $project->getName(),
+                'teamIds' => $selectedTeams,
+            ]
+        );
+
+        // update autorised > selectedActivities
+        if (!$this->projectRepository->updateActivities($project->getId(), $selectedActivities)) {
+            return $this->translations['error_occurred'];
+        }
+        $this->logger->info(
+            "[ProjectService] Project '".$project->getName()."': activities link updated",
+            [
+                'id'          => $project->getId(),
+                'name'        => $project->getName(),
+                'activityIds' => $selectedActivities,
+            ]
+        );
 
         return $errorMsg;
     }

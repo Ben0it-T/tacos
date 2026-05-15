@@ -17,6 +17,7 @@ use App\Service\ActivityService;
 use App\Service\AuthService;
 use App\Service\CustomerService;
 use App\Service\PasswordRequestService;
+use App\Service\ProjectService;
 
 use App\Repository\ActivityRepository;
 use App\Repository\CustomerRepository;
@@ -264,6 +265,16 @@ return function (ContainerInterface $container): void {
               'pwdRequestSalt'          => (string)$settings['pwdRequestSalt'],
               'pwdMinLength'            => max(1, (int)($settings['pwdMinLength'] ?? 16)),
             ],
+            $c->get('translations')
+        );
+    });
+
+    $container->set(ProjectService::class, function (ContainerInterface $c) {
+        return new ProjectService(
+            $c->get(ActivityRepository::class),
+            $c->get(ProjectRepository::class),
+            $c->get(ValidationHelper::class),
+            $c->get(LoggerInterface::class),
             $c->get('translations')
         );
     });
