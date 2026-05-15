@@ -41,7 +41,8 @@ final class PasswordResetController
         $retryLifetimeStr = sprintf("%d", $retryLifetime/60);
 
         if (!empty($data['_username'])) {
-            $this->passwordRequest->newPasswordRequest($data['_username'], $request);
+            $resetLinkBase = $routeParser->fullUrlFor($request->getUri(), 'change_password', array('key' => ''));
+            $this->passwordRequest->newPasswordRequest($data['_username'], $resetLinkBase);
         }
 
         $message = str_replace("%timelimit%", $retryLifetimeStr, $translations['form_message_password_request']);

@@ -16,6 +16,7 @@ use App\Session\Handler\DatabaseSessionHandler;
 use App\Service\ActivityService;
 use App\Service\AuthService;
 use App\Service\CustomerService;
+use App\Service\PasswordRequestService;
 
 use App\Repository\ActivityRepository;
 use App\Repository\CustomerRepository;
@@ -246,6 +247,23 @@ return function (ContainerInterface $container): void {
             $c->get(CustomerRepository::class),
             $c->get(ValidationHelper::class),
             $c->get(LoggerInterface::class),
+            $c->get('translations')
+        );
+    });
+
+    $container->set(PasswordRequestService::class, function (ContainerInterface $c) {
+        $settings = $c->get('settings')['auth'];
+
+        return new PasswordRequestService(
+            $c->get(UserRepository::class),
+            $c->get(PHPMailer::class),
+            $c->get(LoggerInterface::class),
+            [
+              'pwdRequestRetryLifetime' => max(1, (int)($settings['pwdRequestRetryLifetime'] ?? 300)),
+              'pwdRequestTokenLifetime' => max(1, (int)($settings['pwdRequestTokenLifetime'] ?? 3600)),
+              'pwdRequestSalt'          => (string)$settings['pwdRequestSalt'],
+              'pwdMinLength'            => max(1, (int)($settings['pwdMinLength'] ?? 16)),
+            ],
             $c->get('translations')
         );
     });
