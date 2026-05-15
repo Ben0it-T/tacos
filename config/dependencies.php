@@ -18,6 +18,7 @@ use App\Service\AuthService;
 use App\Service\CustomerService;
 use App\Service\PasswordRequestService;
 use App\Service\ProjectService;
+use App\Service\TagService;
 
 use App\Repository\ActivityRepository;
 use App\Repository\CustomerRepository;
@@ -273,6 +274,15 @@ return function (ContainerInterface $container): void {
         return new ProjectService(
             $c->get(ActivityRepository::class),
             $c->get(ProjectRepository::class),
+            $c->get(ValidationHelper::class),
+            $c->get(LoggerInterface::class),
+            $c->get('translations')
+        );
+    });
+
+    $container->set(TagService::class, function (ContainerInterface $c) {
+        return new TagService(
+            $c->get(TagRepository::class),
             $c->get(ValidationHelper::class),
             $c->get(LoggerInterface::class),
             $c->get('translations')
