@@ -52,8 +52,8 @@ final class AuthService
             if (password_verify($password, $user->getPassword())) {
                 $options = array(
                     'memory_cost' => PASSWORD_ARGON2_DEFAULT_MEMORY_COST,
-                    'time_cost' => PASSWORD_ARGON2_DEFAULT_TIME_COST,
-                    'threads' => PASSWORD_ARGON2_DEFAULT_THREADS
+                    'time_cost'   => PASSWORD_ARGON2_DEFAULT_TIME_COST,
+                    'threads'     => PASSWORD_ARGON2_DEFAULT_THREADS
                 );
                 if (password_needs_rehash($user->getPassword(), PASSWORD_ARGON2ID, $options)) {
                     $user->setPassword(password_hash($password, PASSWORD_ARGON2ID, $options));
@@ -67,11 +67,18 @@ final class AuthService
                 $this->loginAttemptsRepository->remove($trackingId);
 
                 session_regenerate_id(true);
-                $_SESSION['auth'] = array(
+                $_SESSION['auth'] = [
                     'isLoggedIn'  => true,
                     'app'         => 'tacos',
                     'userId'      => $user->getId(),
-                    'loginAt'   => $lastLogin->format('Y-m-d H:i:s'),
+                    'loginAt'     => $lastLogin->format('Y-m-d H:i:s'),
+                ];
+
+                $this->logger->info(
+                    '[AuthService] User logged in',
+                    [
+                        'userId'  => $user->getId(),
+                    ]
                 );
 
                 return AuthResult::SUCCESS;
@@ -95,8 +102,8 @@ final class AuthService
             $this->logger->warning(
                 '[AuthService] User has been blocked',
                 [
-                    'tracking_id' => $trackingId,
-                    'blocked_until'   => $blockedUntil->format('Y-m-d H:i:s'),
+                    'tracking_id'   => $trackingId,
+                    'blocked_until' => $blockedUntil->format('Y-m-d H:i:s'),
                 ]
             );
             return AuthResult::BLOCKED;
@@ -131,8 +138,8 @@ final class AuthService
             $this->logger->info(
                 '[AuthService] User has been unblocked',
                 [
-                    'tracking_id' => $trackingId,
-                    'blocked_until'   => $blockedUntil->format('Y-m-d H:i:s'),
+                    'tracking_id'   => $trackingId,
+                    'blocked_until' => $blockedUntil->format('Y-m-d H:i:s'),
                 ]
             );
             return false;
