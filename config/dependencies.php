@@ -15,6 +15,7 @@ use App\Session\Handler\DatabaseSessionHandler;
 
 use App\Service\ActivityService;
 use App\Service\AuthService;
+use App\Service\CustomerService;
 
 use App\Repository\ActivityRepository;
 use App\Repository\CustomerRepository;
@@ -237,6 +238,15 @@ return function (ContainerInterface $container): void {
                 'maxAttempts' => $settings['maxAttempts'],
                 'blockDelay'  => $settings['blockDelay'],
             ]
+        );
+    });
+
+    $container->set(CustomerService::class, function (ContainerInterface $c) {
+        return new CustomerService(
+            $c->get(CustomerRepository::class),
+            $c->get(ValidationHelper::class),
+            $c->get(LoggerInterface::class),
+            $c->get('translations')
         );
     });
 

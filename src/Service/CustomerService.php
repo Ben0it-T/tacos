@@ -6,24 +6,21 @@ namespace App\Service;
 use App\Entity\Customer;
 use App\Helper\ValidationHelper;
 use App\Repository\CustomerRepository;
-use App\Repository\TeamRepository;
-use Psr\Container\ContainerInterface;
+
 use Psr\Log\LoggerInterface;
 
 final class CustomerService
 {
-    private $container;
-    private $customerRepository;
-    private $teamRepository;
-    private $validationHelper;
-    private $logger;
+    private CustomerRepository $customerRepository;
+    private ValidationHelper $validationHelper;
+    private LoggerInterface $logger;
+    private array $translations;
 
-    public function __construct(ContainerInterface $container, CustomerRepository $customerRepository, TeamRepository $teamRepository, ValidationHelper $validationHelper, LoggerInterface $logger) {
-        $this->container = $container;
+    public function __construct(CustomerRepository $customerRepository, ValidationHelper $validationHelper, LoggerInterface $logger, array $translations) {
         $this->customerRepository = $customerRepository;
-        $this->teamRepository = $teamRepository;
         $this->validationHelper = $validationHelper;
         $this->logger = $logger;
+        $this->translations = $translations;
     }
 
     /**
@@ -32,7 +29,7 @@ final class CustomerService
      * @param int $id
      * @return Customer or false
      */
-    public function findCustomer(int $id) {
+    public function findCustomer(int $id): Customer|false {
         return $this->customerRepository->find($id);
     }
 
@@ -43,7 +40,7 @@ final class CustomerService
      * @param int $userId
      * @return Customer or false
      */
-    public function findOneByIdAndUserId(int $customerId, int $userId) {
+    public function findOneByIdAndUserId(int $customerId, int $userId): Customer|false {
         return $this->customerRepository->findOneByIdAndUserId($customerId, $userId);
     }
 
@@ -55,7 +52,7 @@ final class CustomerService
      * @param int $teamleaderId
      * @return Customer or false
      */
-    public function findOneByIdAndTeamleaderId(int $customerId, int $teamleaderId) {
+    public function findOneByIdAndTeamleaderId(int $customerId, int $teamleaderId): Customer|false {
         return $this->customerRepository->findOneByIdAndTeamleaderId($customerId, $teamleaderId);
     }
 
@@ -67,7 +64,7 @@ final class CustomerService
      * @param int $teamleaderId
      * @return Customer or false
      */
-    public function findOneByIdAndTeamleaderIdStrict(int $customerId, int $teamleaderId) {
+    public function findOneByIdAndTeamleaderIdStrict(int $customerId, int $teamleaderId): Customer|false {
         return $this->customerRepository->findOneByIdAndTeamleaderIdStrict($customerId, $teamleaderId);
     }
 
@@ -79,7 +76,7 @@ final class CustomerService
      * @param ?int $visible
      * @return array of Customer entities
      */
-    public function findAll(?int $visible = null) {
+    public function findAll(?int $visible = null): array {
         return $this->customerRepository->findAll($visible);
     }
 
@@ -90,7 +87,7 @@ final class CustomerService
      * @param ?int $visible
      * @return array of Customer entities
      */
-    public function findAllByUserId(int $userId, ?int $visible = null) {
+    public function findAllByUserId(int $userId, ?int $visible = null): array {
         return $this->customerRepository->findAllByUserId($userId, $visible);
     }
 
@@ -101,7 +98,7 @@ final class CustomerService
      * @param ?int $visible
      * @return array of Customer entities
      */
-    public function findAllByTeamleaderId(int $teamleaderId, ?int $visible = null) {
+    public function findAllByTeamleaderId(int $teamleaderId, ?int $visible = null): array {
         return $this->customerRepository->findAllByTeamleaderId($teamleaderId, $visible);
     }
 
@@ -112,7 +109,7 @@ final class CustomerService
      * @param ?int $visible
      * @return array of Customer entities
      */
-    public function findAllByTeamId(int $teamId, ?int $visible = null) {
+    public function findAllByTeamId(int $teamId, ?int $visible = null): array {
         return $this->customerRepository->findAllByTeamId($teamId, $visible);
     }
 
@@ -123,7 +120,7 @@ final class CustomerService
      *
      * @return array of Customers with Teams count and Projects count
      */
-    public function findAllCustomersWithTeamsCountAndProjectsCount() {
+    public function findAllCustomersWithTeamsCountAndProjectsCount(): array {
         return $this->customerRepository->findAllCustomersWithTeamsCountAndProjectsCount();
     }
 
@@ -133,7 +130,7 @@ final class CustomerService
      * @param int $userId
      * @return array of Customers with Teams count and Projects count
      */
-    public function findAllCustomersWithTeamsCountAndProjectsCountByUserId(int $userId) {
+    public function findAllCustomersWithTeamsCountAndProjectsCountByUserId(int $userId): array {
         return $this->customerRepository->findAllCustomersWithTeamsCountAndProjectsCountByUserId($userId);
     }
 
@@ -143,7 +140,7 @@ final class CustomerService
      * @param int $teamleaderId
      * @return array of Customers with Teams count and Projects count
      */
-    public function findAllCustomersWithTeamsCountAndProjectsCountByTeamleaderId(int $teamleaderId) {
+    public function findAllCustomersWithTeamsCountAndProjectsCountByTeamleaderId(int $teamleaderId): array {
         return $this->customerRepository->findAllCustomersWithTeamsCountAndProjectsCountByTeamleaderId($teamleaderId);
     }
 
@@ -155,53 +152,73 @@ final class CustomerService
      * @param array $data
      * @return string $errorMsg
      */
-    public function createCustomer($data) {
-        $translations = $this->container->get('translations');
-        $validation = true;
+    public function createCustomer(array $data): string {
         $errorMsg = "";
-
         $name = $this->validationHelper->sanitizeName($data['customer_edit_form_name']);
-        $color = isset($data['customer_edit_form_color']) ? $this->validationHelper->sanitizeColor($data['customer_edit_form_color']) : "#ffffff";
+        $color = $this->validationHelper->sanitizeColor($data['customer_edit_form_color'] ?? '#ffffff');
         $number = $this->validationHelper->sanitizeString($data['customer_edit_form_number']);
         $comment = $this->validationHelper->sanitizeString($data['customer_edit_form_description']);
-        $selectedTeams = isset($data['customer_edit_form']['selectedTeams']) ? $data['customer_edit_form']['selectedTeams'] : array();
+        $selectedTeams = $data['customer_edit_form']['selectedTeams'] ?? [];
         $visible = isset($data['customer_edit_form_visible']) ? 1 : 0;
 
         // Validate name
         if (!$this->validationHelper->validateName($name)) {
-            $validation = false;
-            $errorMsg .= $translations['form_error_name'] . "\n";
+            $errorMsg .= $this->translations['form_error_name'] . "\n";
         }
 
         // Validate color
         if (!$this->validationHelper->validateColor($color)) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_color'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_color'], $this->translations['form_error_format']) . "\n";
         }
 
         // Validate number
         if (!$this->validationHelper->validateNumber($number, true)) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_project_number'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_project_number'], $this->translations['form_error_format']) . "\n";
         }
 
-        if ($validation) {
-            $customer = new Customer;
-            $customer->setName($name);
-            $customer->setColor($color);
-            $customer->setNumber($number);
-            $customer->setComment($comment);
-            $customer->setVisible($visible);
-            $customer->setCreatedAt(date("Y-m-d H:i:s"));
-            $lastInsertId = $this->customerRepository->insert($customer);
-            $this->logger->info("CustomerService - Customer '" . $lastInsertId . "' created.");
-            if (count($selectedTeams) > 0) {
-                $this->customerRepository->insertTeams(intval($lastInsertId), $selectedTeams);
-                $this->logger->info("CustomerService - Customer '" . $lastInsertId . "': teams created.");
+        if ($errorMsg !== '') {
+            return $errorMsg;
+        }
+
+        $customer = new Customer;
+        $customer->setName($name);
+        $customer->setColor($color);
+        $customer->setNumber($number);
+        $customer->setComment($comment);
+        $customer->setVisible($visible);
+        $customer->setCreatedAt((new \DateTimeImmutable())->format('Y-m-d H:i:s'));
+
+        $lastInsertId = $this->customerRepository->insert($customer);
+
+        if (!$lastInsertId) {
+            return $this->translations['error_occurred'];
+        }
+
+        $this->logger->info(
+            "[CustomerService] Customer '".$customer->getName()."' created",
+            [
+                'id'   => $lastInsertId,
+                'name' => $customer->getName(),
+            ]
+        );
+
+        if (count($selectedTeams) > 0) {
+            if (!$this->customerRepository->insertTeams(intval($lastInsertId), $selectedTeams)) {
+                return $this->translations['error_occurred'];
             }
+
+            $this->logger->info(
+                "[CustomerService] Customer '".$customer->getName()."': teams link created",
+                [
+                    'id'      =>  $lastInsertId,
+                    'name'    =>  $customer->getName(),
+                    'teamIds' =>  $selectedTeams,
+                ]
+            );
         }
 
-        return $errorMsg;
+
+        return '';
     }
 
     /**
@@ -211,48 +228,64 @@ final class CustomerService
      * @param array $data
      * @return string $errorMsg
      */
-    public function updateCustomer(Customer $customer, $data) {
-        $translations = $this->container->get('translations');
-        $validation = true;
+    public function updateCustomer(Customer $customer, array $data): string {
         $errorMsg = "";
-
         $name = $this->validationHelper->sanitizeName($data['customer_edit_form_name']);
-        $color = isset($data['customer_edit_form_color']) ? $this->validationHelper->sanitizeColor($data['customer_edit_form_color']) : "#ffffff";
+        $color = $this->validationHelper->sanitizeColor($data['customer_edit_form_color'] ?? '#ffffff');
         $number = $this->validationHelper->sanitizeString($data['customer_edit_form_number']);
         $comment = $this->validationHelper->sanitizeString($data['customer_edit_form_description']);
-        $selectedTeams = isset($data['customer_edit_form']['selectedTeams']) ? $data['customer_edit_form']['selectedTeams'] : array();
+        $selectedTeams = $data['customer_edit_form']['selectedTeams'] ?? [];
         $visible = isset($data['customer_edit_form_visible']) ? 1 : 0;
 
         // Validate name
         if (!$this->validationHelper->validateName($name)) {
-            $validation = false;
-            $errorMsg .= $translations['form_error_name'] . "\n";
+            $errorMsg .= $this->translations['form_error_name'] . "\n";
         }
 
         // Validate color
         if (!$this->validationHelper->validateColor($color)) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_color'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_color'], $this->translations['form_error_format']) . "\n";
         }
 
         // Validate number
         if (!$this->validationHelper->validateNumber($number, true)) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_project_number'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_project_number'], $this->translations['form_error_format']) . "\n";
         }
 
-        if ($validation) {
-            $customer->setName($name);
-            $customer->setColor($color);
-            $customer->setNumber($number);
-            $customer->setComment($comment);
-            $customer->setVisible($visible);
-            $this->customerRepository->updateCustomer($customer);
-            $this->logger->info("CustomerService - Customer '" . $customer->getId() . "' updated.");
-            $this->customerRepository->updateTeams($customer->getId(), $selectedTeams);
-            $this->logger->info("CustomerService - Customer '" . $customer->getId() . "': Teams updated.");
+        if ($errorMsg !== '') {
+            return $errorMsg;
         }
 
-        return $errorMsg;
+        $customer->setName($name);
+        $customer->setColor($color);
+        $customer->setNumber($number);
+        $customer->setComment($comment);
+        $customer->setVisible($visible);
+
+        if (!$this->customerRepository->updateCustomer($customer)) {
+            return $this->translations['error_occurred'];
+        }
+
+        $this->logger->info(
+            "[CustomerService] Customer '".$customer->getName()."' updated",
+            [
+                'id'   => $customer->getId(),
+                'name' => $customer->getName(),
+            ]
+        );
+
+        if (!$this->customerRepository->updateTeams($customer->getId(), $selectedTeams)) {
+            return $this->translations['error_occurred'];
+        }
+        $this->logger->info(
+            "[CustomerService] Customer '".$customer->getName()."': teams link updated",
+            [
+                'id'      =>  $customer->getId(),
+                'name'    =>  $customer->getName(),
+                'teamIds' =>  $selectedTeams,
+            ]
+        );
+
+        return '';
     }
 }
