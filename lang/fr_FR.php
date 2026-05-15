@@ -30,6 +30,8 @@ return array(
     'card_teams_visibility' => "Visible uniquement par les équipes suivantes et les administrateurs.",
     'card_teams_visibility_all' => "Visible par toutes les équipes. Aucune équipe n'a été assignée.",
 
+    'error_occurred' => "Une erreur s'est produite.",
+
     'form_error_credentials' => "Identifiants invalides.",
     'form_error_customer_number' => "Le numéro de client doit être compris entre 0 et 50 caractères.",
     'form_error_delete_record' => "Impossible de supprimer l'enregistrement",

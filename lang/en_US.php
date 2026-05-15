@@ -30,6 +30,8 @@ return array(
     'card_teams_visibility' => "Only visible to the following teams and all admins.",
     'card_teams_visibility_all' => "Visible to all teams. No teams have been assigned.",
 
+    'error_occurred' => "An error has occurred.",
+
     'form_error_credentials'  => "Invalid credentials.",
     'form_error_customer_number' => "Customer number should be between 0 and 50 characters.",
     'form_error_delete_record' => "Unable to delete record",

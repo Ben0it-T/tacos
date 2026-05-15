@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 use App\Helper\SqlHelper;
+use App\Helper\ValidationHelper;
 
 use App\Middleware\CSPMiddleware;
 use App\Middleware\PermissionMiddleware;
@@ -12,6 +13,7 @@ use App\Session\SessionManager;
 use App\Session\Handler\LocalSessionHandlerFactory;
 use App\Session\Handler\DatabaseSessionHandler;
 
+use App\Service\ActivityService;
 use App\Service\AuthService;
 
 use App\Repository\ActivityRepository;
@@ -135,6 +137,10 @@ return function (ContainerInterface $container): void {
         return new SqlHelper();
     });
 
+    $container->set(ValidationHelper::class, function () {
+        return new ValidationHelper();
+    });
+
     //
     // Middlewares
     //
@@ -207,6 +213,15 @@ return function (ContainerInterface $container): void {
     //
     // Services
     //
+
+    $container->set(ActivityService::class, function (ContainerInterface $c) {
+        return new ActivityService(
+            $c->get(ActivityRepository::class),
+            $c->get(ValidationHelper::class),
+            $c->get(LoggerInterface::class),
+            $c->get('translations')
+        );
+    });
 
     $container->set(AuthService::class, function (ContainerInterface $c) {
         $settings = $c->get('settings')['auth']['loginAttempts'] ?? [

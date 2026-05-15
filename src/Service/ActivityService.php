@@ -6,24 +6,23 @@ namespace App\Service;
 use App\Entity\Activity;
 use App\Helper\ValidationHelper;
 use App\Repository\ActivityRepository;
-use App\Repository\CustomerRepository;
-use Psr\Container\ContainerInterface;
+
 use Psr\Log\LoggerInterface;
+
+use \DateTimeImmutable;
 
 final class ActivityService
 {
-    private $container;
-    private $activityRepository;
-    private $customerRepository;
-    private $validationHelper;
-    private $logger;
+    private ActivityRepository $activityRepository;
+    private ValidationHelper $validationHelper;
+    private LoggerInterface $logger;
+    private array $translations;
 
-    public function __construct(ContainerInterface $container, ActivityRepository $activityRepository, CustomerRepository $customerRepository, ValidationHelper $validationHelper, LoggerInterface $logger) {
-        $this->container = $container;
+    public function __construct(ActivityRepository $activityRepository, ValidationHelper $validationHelper, LoggerInterface $logger, array $translations) {
         $this->activityRepository = $activityRepository;
-        $this->customerRepository = $customerRepository;
         $this->validationHelper = $validationHelper;
         $this->logger = $logger;
+        $this->translations = $translations;
     }
 
     /**
@@ -32,7 +31,7 @@ final class ActivityService
      * @param int $id
      * @return Activity entity or false
      */
-    public function findActivity(int $id) {
+    public function findActivity(int $id): Activity|false {
         return $this->activityRepository->find($id);
     }
 
@@ -43,7 +42,7 @@ final class ActivityService
      * @param int $userId
      * @return Activity entity or false
      */
-    public function findOneByIdAndUserId(int $activityId, int $userId) {
+    public function findOneByIdAndUserId(int $activityId, int $userId): Activity|false {
         return $this->activityRepository->findOneByIdAndUserId($activityId, $userId);
     }
 
@@ -55,7 +54,7 @@ final class ActivityService
      * @param int $teamleaderId
      * @return Activity entity or false
      */
-    public function findOneByIdAndTeamleaderId(int $activityId, int $teamleaderId) {
+    public function findOneByIdAndTeamleaderId(int $activityId, int $teamleaderId): Activity|false {
         return $this->activityRepository->findOneByIdAndTeamleaderId($activityId, $teamleaderId);
     }
 
@@ -67,7 +66,7 @@ final class ActivityService
      * @param int $teamleaderId
      * @return Activity entity or false
      */
-    public function findOneByIdAndTeamleaderIdStrict(int $activityId, int $teamleaderId) {
+    public function findOneByIdAndTeamleaderIdStrict(int $activityId, int $teamleaderId): Activity|false {
         return $this->activityRepository->findOneByIdAndTeamleaderIdStrict($activityId, $teamleaderId);
     }
 
@@ -79,7 +78,7 @@ final class ActivityService
      * @param ?int $visible
      * @return array of Activity entities
      */
-    public function findAll(?int $visible = null) {
+    public function findAll(?int $visible = null): array {
         return $this->activityRepository->findAll($visible);
     }
 
@@ -92,7 +91,7 @@ final class ActivityService
      * @param ?int $visible
      * @return array of Activity entities
      */
-    public function findAllByProjectId(int $projectId, ?int $visible = null) {
+    public function findAllByProjectId(int $projectId, ?int $visible = null): array {
         return $this->activityRepository->findAllByProjectId($projectId, $visible);
     }
 
@@ -103,7 +102,7 @@ final class ActivityService
      * @param ?int $visible
      * @return array of Activity entities
      */
-    public function findAllProjectActivitiesByProjectId(int $projectId, ?int $visible = null) {
+    public function findAllProjectActivitiesByProjectId(int $projectId, ?int $visible = null): array {
         return $this->activityRepository->findAllProjectActivitiesByProjectId($projectId, $visible);
     }
 
@@ -113,7 +112,7 @@ final class ActivityService
      * @param ?int $visible
      * @return array of Activity entities
      */
-    public function findAllGlobalActivities(?int $visible = null) {
+    public function findAllGlobalActivities(?int $visible = null): array {
         return $this->activityRepository->findAllGlobalActivities($visible);
     }
 
@@ -124,7 +123,7 @@ final class ActivityService
      * @param ?int $visible
      * @return array of Activity entities
      */
-    public function findAllByUserId(int $userId, ?int $visible = null) {
+    public function findAllByUserId(int $userId, ?int $visible = null): array {
         return $this->activityRepository->findAllByUserId($userId, $visible);
     }
 
@@ -135,7 +134,7 @@ final class ActivityService
      * @param ?int $visible
      * @return array of Activity entities
      */
-    public function findAllByTeamleaderId(int $teamleaderId, ?int $visible = null) {
+    public function findAllByTeamleaderId(int $teamleaderId, ?int $visible = null): array {
         return $this->activityRepository->findAllByTeamleaderId($teamleaderId, $visible);
     }
 
@@ -147,7 +146,7 @@ final class ActivityService
      * @param ?int $visible
      * @return array of Activity entities
      */
-    public function findAllByUserIdAndProjectId(int $userId, int $projectId, ?int $visible = null) {
+    public function findAllByUserIdAndProjectId(int $userId, int $projectId, ?int $visible = null): array {
         return $this->activityRepository->findAllByUserIdAndProjectId($userId, $projectId, $visible);
     }
 
@@ -158,7 +157,7 @@ final class ActivityService
      *
      * @return array of Activities with Teams count and Project
      */
-    public function findAllActivitiesWithTeamsCountAndProject() {
+    public function findAllActivitiesWithTeamsCountAndProject(): array {
         return $this->activityRepository->findAllActivitiesWithTeamsCountAndProject();
     }
 
@@ -167,7 +166,7 @@ final class ActivityService
      *
      * @return array of Activities with Teams count and Project
      */
-    public function findAllActivitiesWithTeamsCountAndProjectByTeamleaderId(int $teamleaderId) {
+    public function findAllActivitiesWithTeamsCountAndProjectByTeamleaderId(int $teamleaderId): array {
         return $this->activityRepository->findAllActivitiesWithTeamsCountAndProjectByTeamleaderId($teamleaderId);
     }
 
@@ -179,60 +178,78 @@ final class ActivityService
      * @param array $data
      * @return string $errorMsg
      */
-    public function createActivity($data) {
-        $translations = $this->container->get('translations');
-        $validation = true;
+    public function createActivity(array $data): string {
         $errorMsg = "";
-
         $name = $this->validationHelper->sanitizeString($data['activity_edit_form_name']);
-        $color = isset($data['activity_edit_form_color']) ? $this->validationHelper->sanitizeColor($data['activity_edit_form_color']) : "#ffffff";
+        $color = $this->validationHelper->sanitizeColor($data['activity_edit_form_color'] ?? '#ffffff');
         $projectId = intval($data['activity_edit_form_project']);
         $number = $this->validationHelper->sanitizeString($data['activity_edit_form_number']);
         $comment = $this->validationHelper->sanitizeString($data['activity_edit_form_description']);
-        $selectedTeams = isset($data['activity_edit_form']['selectedTeams']) ? $data['activity_edit_form']['selectedTeams'] : array();
+        $selectedTeams = $data['activity_edit_form']['selectedTeams'] ?? [];
         $visible = isset($data['activity_edit_form_visible']) ? 1 : 0;
 
         // Validate name
         if (!$this->validationHelper->validateName($name)) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_name'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_name'], $this->translations['form_error_format']) . "\n";
         }
 
         // Validate color
         if (!$this->validationHelper->validateColor($color)) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_color'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_color'], $this->translations['form_error_format']) . "\n";
         }
 
         // Validate project
         if ($projectId === 0) {
-            $projectId = NULL;
+            $projectId = null;
         }
 
         // Validate number
         if (!$this->validationHelper->validateNumber($number, true)) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_project_number'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_project_number'], $this->translations['form_error_format']) . "\n";
         }
 
-        if ($validation) {
-            $activity = new Activity;
-            $activity->setName($name);
-            $activity->setColor($color);
-            $activity->setProjectId($projectId);
-            $activity->setNumber($number);
-            $activity->setComment($comment);
-            $activity->setVisible($visible);
-            $activity->setCreatedAt(date("Y-m-d H:i:s"));
-            $lastInsertId = $this->activityRepository->insert($activity);
-            $this->logger->info("ActivityService - Activity '" . $lastInsertId . "' created.");
-            if (count($selectedTeams) > 0) {
-                $this->activityRepository->insertTeams(intval($lastInsertId), $selectedTeams);
-                $this->logger->info("ActivityService - Activity '" . $lastInsertId . "': teams created.");
+        if ($errorMsg !== '') {
+            return $errorMsg;
+        }
+
+        $activity = new Activity;
+        $activity->setName($name);
+        $activity->setColor($color);
+        $activity->setProjectId($projectId);
+        $activity->setNumber($number);
+        $activity->setComment($comment);
+        $activity->setVisible($visible);
+        $activity->setCreatedAt((new \DateTimeImmutable())->format('Y-m-d H:i:s'));
+
+        $lastInsertId = $this->activityRepository->insert($activity);
+
+        if (!$lastInsertId) {
+            return $this->translations['error_occurred'];
+        }
+
+        $this->logger->info(
+            "[ActivityService] Activity '".$activity->getName()."' created",
+            [
+                'id'   => $lastInsertId,
+                'name' => $activity->getName(),
+            ]
+        );
+        if (count($selectedTeams) > 0) {
+            if (!$this->activityRepository->insertTeams(intval($lastInsertId), $selectedTeams)) {
+                return $this->translations['error_occurred'];
             }
+
+            $this->logger->info(
+                "[ActivityService] Activity '".$activity->getName()."': teams link created",
+                [
+                    'id'      =>  $lastInsertId,
+                    'name'    =>  $activity->getName(),
+                    'teamIds' =>  $selectedTeams,
+                ]
+            );
         }
 
-        return $errorMsg;
+        return '';
     }
 
     /**
@@ -242,50 +259,65 @@ final class ActivityService
      * @param array $data
      * @return string $errorMsg
      */
-    public function updateActivity($activity, $data) {
-        $translations = $this->container->get('translations');
-        $validation = true;
+    public function updateActivity(Activity $activity, array $data): string {
         $errorMsg = "";
-
         $name = $this->validationHelper->sanitizeString($data['activity_edit_form_name']);
-        $color = isset($data['activity_edit_form_color']) ? $this->validationHelper->sanitizeColor($data['activity_edit_form_color']) : "#ffffff";
+        $color = $this->validationHelper->sanitizeColor($data['activity_edit_form_color'] ?? '#ffffff');
         $number = $this->validationHelper->sanitizeString($data['activity_edit_form_number']);
         $comment = $this->validationHelper->sanitizeString($data['activity_edit_form_description']);
-        $selectedTeams = isset($data['activity_edit_form']['selectedTeams']) ? $data['activity_edit_form']['selectedTeams'] : array();
+        $selectedTeams = $data['activity_edit_form']['selectedTeams'] ?? [];
         $visible = isset($data['activity_edit_form_visible']) ? 1 : 0;
 
         // Validate name
         if (!$this->validationHelper->validateName($name)) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_name'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_name'], $this->translations['form_error_format']) . "\n";
         }
 
         // Validate color
         if (!$this->validationHelper->validateColor($color)) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_color'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_color'], $this->translations['form_error_format']) . "\n";
         }
 
         // Validate number
         if (!$this->validationHelper->validateNumber($number, true)) {
-            $validation = false;
-            $errorMsg .= str_replace("%fieldName%", $translations['form_label_project_number'], $translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_project_number'], $this->translations['form_error_format']) . "\n";
         }
 
-        if ($validation) {
-            $activity->setName($name);
-            $activity->setColor($color);
-            $activity->setNumber($number);
-            $activity->setComment($comment);
-            $activity->setVisible($visible);
-            $this->activityRepository->updateActivity($activity);
-            $this->logger->info("ActivityService - Activity '" . $activity->getId() . "' updated.");
-
-            $this->activityRepository->updateTeams($activity->getId(), $selectedTeams);
-            $this->logger->info("ActivityService - Activity '" . $activity->getId() . "': teams updated.");
+        if ($errorMsg !== '') {
+            return $errorMsg;
         }
 
-        return $errorMsg;
+        $activity->setName($name);
+        $activity->setColor($color);
+        $activity->setNumber($number);
+        $activity->setComment($comment);
+        $activity->setVisible($visible);
+
+        if (!$this->activityRepository->updateActivity($activity)) {
+            return $this->translations['error_occurred'];
+        }
+
+        $this->logger->info(
+            "[ActivityService] Activity '".$activity->getName()."' updated",
+            [
+                'id'   => $activity->getId(),
+                'name' => $activity->getName(),
+            ]
+        );
+
+        if (!$this->activityRepository->updateTeams($activity->getId(), $selectedTeams)) {
+            return $this->translations['error_occurred'];
+        }
+        $this->logger->info(
+            "[ActivityService] Activity '".$activity->getName()."': teams link updated",
+            [
+                'id'      =>  $activity->getId(),
+                'name'    =>  $activity->getName(),
+                'teamIds' =>  $selectedTeams,
+            ]
+        );
+
+        return '';
     }
 
 }
