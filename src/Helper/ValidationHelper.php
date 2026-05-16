@@ -225,7 +225,7 @@ final class ValidationHelper
      * @param bool $empty
      * @return bool
      */
-    public function validateUsename($string, $minLength = 6, $empty = false) {
+    public function validateUsername($string, $minLength = 6, $empty = false) {
         if (empty($string)) {
             return ($empty ? true : false);
         }

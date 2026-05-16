@@ -482,9 +482,9 @@ final class UserRepository
      * Insert User
      *
      * @param User $user
-     * @return bool
+     * @return lastInsertId or false
      */
-    public function insert(User $user): bool {
+    public function insert(User $user): string|false {
         try {
             $stmt = $this->pdo->prepare('INSERT INTO `tacos_users` (`id`, `username`, `name`, `email`, `password`, `enabled`, `registration_date`, `role_id`, `last_login`, `password_request_token`, `password_request_date`) VALUES (NULL, :username, :name, :email, :password, :enabled, :registrationDate, :role, NULL, NULL, NULL)');
             $res = $stmt->execute([
@@ -508,7 +508,7 @@ final class UserRepository
                 return false;
             }
 
-            return true;
+            return $this->pdo->lastInsertId();
         } catch (\Throwable $e) {
             $this->logger->error(
                 '[UserRepository] Failed to insert user (exception)',

@@ -22,6 +22,7 @@ use App\Service\ProjectService;
 use App\Service\TagService;
 use App\Service\TeamService;
 use App\Service\TimesheetService;
+use App\Service\UserService;
 
 use App\Repository\ActivityRepository;
 use App\Repository\CustomerRepository;
@@ -334,6 +335,22 @@ return function (ContainerInterface $container): void {
                         'minutes' => max(1, (int)($rounding['end']['minutes'] ?? 5)),
                     ],
                 ],
+            ],
+            $c->get('translations')
+        );
+    });
+
+    $container->set(UserService::class, function (ContainerInterface $c) {
+        $settings = $c->get('settings')['auth'] ?? [];
+
+        return new UserService(
+            $c->get(RoleRepository::class),
+            $c->get(UserRepository::class),
+            $c->get(ValidationHelper::class),
+            $c->get(LoggerInterface::class),
+            [
+                'loginMinLength' => max(1, (int)($settings['loginMinLength'] ?? 5)),
+                'pwdMinLength'   => max(1, (int)($settings['pwdMinLength'] ?? 16)),
             ],
             $c->get('translations')
         );
