@@ -34,6 +34,8 @@ use App\Repository\TeamRepository;
 use App\Repository\TimesheetRepository;
 use App\Repository\UserRepository;
 
+use App\Controller\LoginController;
+
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Logger;
@@ -425,6 +427,18 @@ return function (ContainerInterface $container): void {
         );
     });
 
+    //
+    // Controllers
+    //
+
+    $container->set(LoginController::class, function (ContainerInterface $c) {
+        return new LoginController(
+            $c->get(Twig::class),
+            $c->get('flash'),
+            $c->get(AuthService::class),
+            $c->get('translations')
+        );
+    });
 
 
 };

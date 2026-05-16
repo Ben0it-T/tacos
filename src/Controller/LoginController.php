@@ -5,7 +5,6 @@ namespace App\Controller;
 
 use App\Service\AuthService;
 use App\Security\AuthResult;
-use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
@@ -15,58 +14,54 @@ use Slim\Views\Twig;
 
 final class LoginController
 {
-    private $container;
-    private $authService;
+    private Twig $twig;
+    private Messages $flash;
+    private AuthService $authService;
+    private array $translations;
 
-    public function __construct(ContainerInterface $container, AuthService $authService)
+    public function __construct(Twig $twig, Messages $flash, AuthService $authService, array $translations)
     {
-        $this->container = $container;
+        $this->twig = $twig;
+        $this->flash = $flash;
         $this->authService = $authService;
+        $this->translations = $translations;
     }
 
     public function loginForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-        $session = $request->getAttribute('session');
         if ($this->authService->isAuthenticated()) {
-            $url = $routeParser->urlFor('logout');
+            $url = $this->getUrlFor($request, 'logout');
             return $response->withStatus(302)->withHeader('Location', $url);
         }
 
-        $twig = $this->container->get(Twig::class);
-        $flash = $this->container->get('flash');
         $viewData = array();
-        $viewData['flashMsgError'] = $flash->getFirstMessage('login-error');
-        $viewData['message'] = $flash->getFirstMessage('change_password');
-        $viewData['password_forgot_url'] = $routeParser->urlFor('forgot_password');
+        $viewData['flashMsgError'] = $this->flash->getFirstMessage('login-error');
+        $viewData['message'] = $this->flash->getFirstMessage('change_password');
+        $viewData['password_forgot_url'] = $this->getUrlFor($request, 'forgot_password');
 
-        return $twig->render($response, 'login.html.twig', $viewData);
+        return $this->twig->render($response, 'login.html.twig', $viewData);
     }
 
     public function loginAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $identifier = $request->getParsedBody()['_login'] ?? '';
-        $password   = $request->getParsedBody()['_password'] ?? '';
-
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-
+        $data = $request->getParsedBody();
+        $identifier = $data['_login'] ?? '';
+        $password   = $data['_password'] ?? '';
         $result = $this->authService->authenticate($identifier, $password);
-
 
         switch ($result) {
             case AuthResult::BLOCKED:
-                $url = $routeParser->urlFor('too_many_attempts');
+                $url = $this->getUrlFor($request, 'too_many_attempts');
                 return $response->withStatus(302)->withHeader('Location', $url);
 
             case AuthResult::SUCCESS:
-                $url = $routeParser->urlFor('timesheets');
+                $url = $this->getUrlFor($request, 'timesheets');
                 return $response->withStatus(302)->withHeader('Location', $url);
 
             case AuthResult::INVALID_CREDENTIALS:
             default:
-                $translations = $this->container->get('translations');
-                $this->container->get('flash')->addMessage('login-error', $translations['form_error_credentials']);
-                $url = $routeParser->urlFor('login');
+                $this->flash->addMessage('login-error', $this->translations['form_error_credentials']);
+                $url = $this->getUrlFor($request, 'login');
                 return $response->withStatus(302)->withHeader('Location', $url);
         }
     }
@@ -74,15 +69,17 @@ final class LoginController
     public function logoutAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $this->authService->logout();
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-        $url = $routeParser->urlFor('login');
+        $url = $this->getUrlFor($request, 'login');
         return $response->withStatus(302)->withHeader('Location', $url);
     }
 
     public function tooManyAttempts(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-        $twig = $this->container->get(Twig::class);
-        return $twig->render($response->withStatus(429), 'too-many-attempts.html.twig', array());
+        return $this->twig->render($response->withStatus(429), 'too-many-attempts.html.twig', array());
+    }
+
+    private function getUrlFor(ServerRequestInterface $request, string $routeName): string
+    {
+        return RouteContext::fromRequest($request)->getRouteParser()->urlFor($routeName);
     }
 }
