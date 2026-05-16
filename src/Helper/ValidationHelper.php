@@ -11,7 +11,7 @@ final class ValidationHelper
      * @param string $string
      * @return string
      */
-    public function sanitizeColor($string) {
+    public function sanitizeColor(string $string): string {
         $string = trim($string);
         $string = strtolower($string);
         $string = preg_replace('/[^a-f0-9\#]/', '', $string);
@@ -24,7 +24,7 @@ final class ValidationHelper
      * @param string $string
      * @return string
      */
-    public function sanitizeString($string) {
+    public function sanitizeString(string $string): string {
         $string = trim($string);
         $string = stripslashes($string);
         $string = strip_tags($string);
@@ -36,10 +36,9 @@ final class ValidationHelper
      * @param string $string
      * @return string
      */
-    public function sanitizeName($string) {
+    public function sanitizeName(string $string): string {
         $string = $this->sanitizeString($string);
         $string = preg_replace('/[^a-zA-Zà-üÀ-Ü0-9\'\-\s]/', '', $string);
-
         return $string;
     }
 
@@ -48,11 +47,10 @@ final class ValidationHelper
      * @param string $string
      * @return string
      */
-    public function sanitizeUsername($string) {
+    public function sanitizeUsername(string $string): string {
         $string = $this->sanitizeString($string);
         $string = strtolower($string);
         $string = filter_var($string, FILTER_SANITIZE_EMAIL);
-
         return $string;
     }
 
@@ -61,11 +59,10 @@ final class ValidationHelper
      * @param string $string
      * @return string
      */
-    public function sanitizeEmail($string) {
+    public function sanitizeEmail(string $string): string {
         $string = $this->sanitizeString($string);
         $string = strtolower($string);
         $string = filter_var($string, FILTER_SANITIZE_EMAIL);
-
         return $string;
     }
 
@@ -77,12 +74,12 @@ final class ValidationHelper
      * @param bool $empty
      * @return bool
      */
-    public function validateColor($string, $empty = false) {
+    public function validateColor(string $string, $empty = false): bool {
         if (empty($string)) {
             return ($empty ? true : false);
         }
 
-        if (!preg_match("/^[a-f0-9\#]*$/",$string)) {
+        if (!preg_match("/^#?[a-f0-9]{6}$/i",$string)) {
             return false;
         }
 
@@ -126,7 +123,7 @@ final class ValidationHelper
      * @param bool $empty
      * @return bool
      */
-    public function validateEmail($string, $empty = false) {
+    public function validateEmail(string $string, $empty = false): bool {
         if (empty($string)) {
             return ($empty ? true : false);
         }
@@ -151,7 +148,7 @@ final class ValidationHelper
      * @param int $maxLength
      * @return bool
      */
-    public function validateMaxLength($string, $maxLength, $empty = false) {
+    public function validateMaxLength(string $string, int $maxLength, $empty = false): bool {
         if (empty($string)) {
             return ($empty ? true : false);
         }
@@ -166,7 +163,7 @@ final class ValidationHelper
      * @param int $minLength
      * @return bool
      */
-    public function validateMinLength($string, $minLength, $empty = false) {
+    public function validateMinLength(string $string, int $minLength, $empty = false): bool {
         if (empty($string)) {
             return ($empty ? true : false);
         }
@@ -180,7 +177,7 @@ final class ValidationHelper
      * @param string $string
      * @return bool
      */
-    public function validateName($string, $empty = false) {
+    public function validateName(string $string, $empty = false): bool {
         if (empty($string)) {
             return ($empty ? true : false);
         }
@@ -202,7 +199,7 @@ final class ValidationHelper
      * @param string $string
      * @return bool
      */
-    public function validateNumber($string, $empty = false) {
+    public function validateNumber(string $string, $empty = false): bool {
         if (empty($string)) {
             return ($empty ? true : false);
         }
@@ -225,7 +222,7 @@ final class ValidationHelper
      * @param bool $empty
      * @return bool
      */
-    public function validateUsername($string, $minLength = 6, $empty = false) {
+    public function validateUsername(string $string, int $minLength = 6, $empty = false): bool {
         if (empty($string)) {
             return ($empty ? true : false);
         }
@@ -244,7 +241,7 @@ final class ValidationHelper
      * @param bool $empty
      * @return bool
      */
-    public function validatePassword($string, $minLength = 12, $empty = false) {
+    public function validatePassword(string $string, int $minLength = 12, bool $empty = false): bool {
         if (empty($string)) {
             return ($empty ? true : false);
         }
@@ -263,12 +260,12 @@ final class ValidationHelper
 
     /**
      * Validate array
-     * @param string $value
+     * @param int $value
      * @param array $haystack
      * @param bool $empty
      * @return bool
      */
-    public function validateRole($value, $haystack = array(1,2,3), $empty = false) {
+    public function validateRole(int $value, array $haystack = array(1,2,3), bool $empty = false): bool {
         if (empty($value)) {
             return ($empty ? true : false);
         }
