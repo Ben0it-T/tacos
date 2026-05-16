@@ -19,6 +19,7 @@ use App\Service\CustomerService;
 use App\Service\PasswordRequestService;
 use App\Service\ProjectService;
 use App\Service\TagService;
+use App\Service\TeamService;
 
 use App\Repository\ActivityRepository;
 use App\Repository\CustomerRepository;
@@ -283,6 +284,15 @@ return function (ContainerInterface $container): void {
     $container->set(TagService::class, function (ContainerInterface $c) {
         return new TagService(
             $c->get(TagRepository::class),
+            $c->get(ValidationHelper::class),
+            $c->get(LoggerInterface::class),
+            $c->get('translations')
+        );
+    });
+
+    $container->set(TeamService::class, function (ContainerInterface $c) {
+        return new TeamService(
+            $c->get(TeamRepository::class),
             $c->get(ValidationHelper::class),
             $c->get(LoggerInterface::class),
             $c->get('translations')
