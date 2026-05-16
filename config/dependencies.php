@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+use App\Helper\RoundingHelper;
 use App\Helper\SqlHelper;
 use App\Helper\ValidationHelper;
 
@@ -20,6 +21,7 @@ use App\Service\PasswordRequestService;
 use App\Service\ProjectService;
 use App\Service\TagService;
 use App\Service\TeamService;
+use App\Service\TimesheetService;
 
 use App\Repository\ActivityRepository;
 use App\Repository\CustomerRepository;
@@ -137,6 +139,10 @@ return function (ContainerInterface $container): void {
     //
     // Helpers
     //
+
+    $container->set(RoundingHelper::class, function () {
+        return new RoundingHelper();
+    });
 
     $container->set(SqlHelper::class, function () {
         return new SqlHelper();
@@ -295,6 +301,40 @@ return function (ContainerInterface $container): void {
             $c->get(TeamRepository::class),
             $c->get(ValidationHelper::class),
             $c->get(LoggerInterface::class),
+            $c->get('translations')
+        );
+    });
+
+    $container->set(TimesheetService::class, function (ContainerInterface $c) {
+        $settings = $c->get('settings')['timesheet'] ?? [];
+        $rounding = $settings['rounding'] ?? [];
+
+        $startModeCandidate = (string)($rounding['start']['mode'] ?? 'floor');
+        $startMode = in_array($startModeCandidate, ['floor','ceil'], true) ? $startModeCandidate : 'floor';
+
+        $endModeCandidate = (string)($rounding['end']['mode'] ?? 'ceil');
+        $endMode = in_array($endModeCandidate, ['floor','ceil'], true) ? $endModeCandidate : 'ceil';
+
+        return new TimesheetService(
+            $c->get(ActivityRepository::class),
+            $c->get(TagRepository::class),
+            $c->get(TimesheetRepository::class),
+            $c->get(RoundingHelper::class),
+            $c->get(ValidationHelper::class),
+            $c->get(LoggerInterface::class),
+            [
+                'rounding' => [
+                    'active' => (bool)($rounding['active'] ?? false),
+                    'start' => [
+                        'mode' => $startMode,
+                        'minutes' => max(1, (int)($rounding['start']['minutes'] ?? 5)),
+                    ],
+                    'end' => [
+                        'mode' => $endMode,
+                        'minutes' => max(1, (int)($rounding['end']['minutes'] ?? 5)),
+                    ],
+                ],
+            ],
             $c->get('translations')
         );
     });
