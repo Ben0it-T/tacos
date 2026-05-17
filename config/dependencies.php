@@ -35,6 +35,7 @@ use App\Repository\TimesheetRepository;
 use App\Repository\UserRepository;
 
 use App\Controller\LoginController;
+use App\Controller\PasswordResetController;
 
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\RotatingFileHandler;
@@ -436,6 +437,21 @@ return function (ContainerInterface $container): void {
             $c->get(Twig::class),
             $c->get('flash'),
             $c->get(AuthService::class),
+            $c->get('translations')
+        );
+    });
+
+    $container->set(PasswordResetController::class, function (ContainerInterface $c) {
+        $settings = $c->get('settings')['auth'] ?? [];
+
+        return new PasswordResetController(
+            $c->get(Twig::class),
+            $c->get('flash'),
+            $c->get(PasswordRequestService::class),
+            [
+                'pwdMinLength'            => max(1, (int)($settings['pwdMinLength'] ?? 16)),
+                'pwdRequestRetryLifetime' => max(1, (int)($settings['pwdRequestRetryLifetime'] ?? 3600)),
+            ],
             $c->get('translations')
         );
     });

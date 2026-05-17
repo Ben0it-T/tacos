@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Service\PasswordRequestService;
-use Psr\Container\ContainerInterface;
+use App\Security\ResetPasswordResult;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Flash\Messages;
@@ -13,99 +13,106 @@ use Slim\Views\Twig;
 
 final class PasswordResetController
 {
-    private $container;
-    private $passwordRequest;
+    private Twig $twig;
+    private Messages $flash;
+    private PasswordRequestService $passwordRequestService;
+    private array $options;
+    private array $translations;
 
-    public function __construct(ContainerInterface $container, PasswordRequestService $passwordRequest)
+    public function __construct(Twig $twig, Messages $flash, PasswordRequestService $passwordRequestService, array $options, array $translations)
     {
-        $this->container = $container;
-        $this->passwordRequest = $passwordRequest;
+        $this->twig = $twig;
+        $this->flash = $flash;
+        $this->passwordRequestService = $passwordRequestService;
+        $this->options = $options;
+        $this->translations = $translations;
     }
 
     public function requestForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $twig = $this->container->get(Twig::class);
         $viewData = array();
-        $flash = $this->container->get('flash');
-        $viewData['message'] = $flash->getFirstMessage('password-request');
+        $viewData['message'] = $this->flash->getFirstMessage('password-request');
 
-        return $twig->render($response, 'forgot-password.html.twig', $viewData);
+        return $this->twig->render($response, 'forgot-password.html.twig', $viewData);
     }
 
     public function requestAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $data = $request->getParsedBody();
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-        $translations = $this->container->get('translations');
-        $retryLifetime = intval($this->container->get('settings')['auth']['pwdRequestRetryLifetime']);
+        $retryLifetime = intval($this->options['pwdRequestRetryLifetime']);
         $retryLifetimeStr = sprintf("%d", $retryLifetime/60);
 
-        if (!empty($data['_username'])) {
-            $resetLinkBase = $routeParser->fullUrlFor($request->getUri(), 'change_password', array('key' => ''));
-            $this->passwordRequest->newPasswordRequest($data['_username'], $resetLinkBase);
+        $username = $data['_username'] ?? '';
+        if ($username !== '') {
+            $resetLinkBase = $this->fullUrlFor($request, 'change_password', array('key' => ''));
+            $this->passwordRequestService->newPasswordRequest($username, $resetLinkBase);
         }
 
-        $message = str_replace("%timelimit%", $retryLifetimeStr, $translations['form_message_password_request']);
-        $this->container->get('flash')->addMessage('password-request', $message);
+        $message = str_replace("%timelimit%", $retryLifetimeStr, $this->translations['form_message_password_request']);
+        $this->flash->addMessage('password-request', $message);
 
         // redirect
-        $url = $routeParser->urlFor('forgot_password');
+        $url = $this->getUrlFor($request, 'forgot_password');
         return $response->withStatus(302)->withHeader('Location', $url);
     }
 
     public function changeForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        if ($this->passwordRequest->validateToken($args['key'])) {
-            $twig = $this->container->get(Twig::class);
+        $token = $args['key'] ?? '';
+        if ($this->passwordRequestService->validateToken($token)) {
             $viewData = array();
-            $viewData['form']['minlength'] = $this->container->get('settings')['auth']['pwdMinLength'];
+            $viewData['form']['minlength'] = $this->options['pwdMinLength'];
 
-            $flash = $this->container->get('flash');
-            $viewData['message'] = $flash->getFirstMessage('change_password');
-            return $twig->render($response, 'change-password.html.twig', $viewData);
+            $viewData['message'] = $this->flash->getFirstMessage('change_password');
+            return $this->twig->render($response, 'change-password.html.twig', $viewData);
         }
 
         // redirect
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-        $url = $routeParser->urlFor('login');
+        $url = $this->getUrlFor($request, 'login');
         return $response->withStatus(302)->withHeader('Location', $url);
     }
 
     public function changeAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $data = $request->getParsedBody();
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
+        $password1 = $data['_password1'] ?? '';
+        $password2 = $data['_password2'] ?? '';
+        $token = $args['key'] ?? '';
 
-        if ($this->passwordRequest->validateToken($args['key'])) {
-            $translations = $this->container->get('translations');
-            $flash = $this->container->get('flash');
-            $validation = true;
-            $minLength = $this->container->get('settings')['auth']['pwdMinLength'];
-            if (!$this->passwordRequest->validatePasswordStrength($data['_password1'])) {
-                $validation = false;
-                $message = str_replace("%minLength%", sprintf("%d", $minLength), $translations['form_error_password_strength']);
-                $flash->addMessage('change_password', $message);
-            }
-            else if (strcmp($data['_password1'], $data['_password2']) !== 0) {
-                $validation = false;
-                $flash->addMessage('change_password', $translations['form_error_password_not_egal']);
-            }
+        $result = $this->passwordRequestService->updatePasswordFromToken($token, $password1, $password2);
 
-            if ($validation) {
-                if ($this->passwordRequest->setUserPassword($args['key'], $data['_password1'])) {
-                    $flash->addMessage('change_password', $translations['form_message_password_changed']);
-                    $url = $routeParser->urlFor('login');
-                    return $response->withStatus(302)->withHeader('Location', $url);
-                }
-            }
+        switch ($result) {
+            case ResetPasswordResult::INVALID_PASSWORD:
+                $message = str_replace("%minLength%", sprintf("%d", $this->options['pwdMinLength']), $this->translations['form_error_password_strength']);
+                $this->flash->addMessage('change_password', $message);
+                $url = $this->getUrlFor($request, 'change_password', array('key' => $token));
+                return $response->withStatus(302)->withHeader('Location', $url);
 
-            // redirect
-            $url = $routeParser->urlFor('change_password', array('key' => $args['key']));
-            return $response->withStatus(302)->withHeader('Location', $url);
+            case ResetPasswordResult::PASSWORD_MISMATCH:
+                $this->flash->addMessage('change_password', $this->translations['form_error_password_not_egal']);
+                $url = $this->getUrlFor($request, 'change_password', array('key' => $token));
+                return $response->withStatus(302)->withHeader('Location', $url);
+
+            case ResetPasswordResult::SUCCESS:
+                $this->flash->addMessage('change_password', $this->translations['form_message_password_changed']);
+                $url = $this->getUrlFor($request, 'login');
+                return $response->withStatus(302)->withHeader('Location', $url);
+
+            default:
+                // INVALID_TOKEN
+                // ERROR
+                $url = $this->getUrlFor($request, 'login');
+                return $response->withStatus(302)->withHeader('Location', $url);
         }
+    }
 
-        // redirect
-        $url = $routeParser->urlFor('login');
-        return $response->withStatus(302)->withHeader('Location', $url);
+    private function getUrlFor(ServerRequestInterface $request, string $routeName, array $data = []): string
+    {
+        return RouteContext::fromRequest($request)->getRouteParser()->urlFor($routeName, $data);
+    }
+
+    private function fullUrlFor(ServerRequestInterface $request, string $routeName, array $data = []): string
+    {
+        return RouteContext::fromRequest($request)->getRouteParser()->fullUrlFor($request->getUri(), $routeName, $data);
     }
 }

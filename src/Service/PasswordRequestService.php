@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Repository\UserRepository;
+use App\Security\ResetPasswordResult;
 
 use PHPMailer\PHPMailer\PHPMailer;
 use Psr\Log\LoggerInterface;
@@ -32,7 +33,7 @@ final class PasswordRequestService
     public function newPasswordRequest(string $identifier, string $resetLinkBase): void {
         $this->unsetPasswordRequests(); // Todo: cron
 
-        if (!empty($identifier)) {
+        if ($identifier !== '') {
             $user = $this->userRepository->findOneByIdentifier($identifier);
             if ($user) {
                 if (!empty($user->getEmail())) {
@@ -44,7 +45,7 @@ final class PasswordRequestService
                         $user->setRequestDate((new \DateTimeImmutable())->format('Y-m-d H:i:s'));
                         if ($this->userRepository->setUserPasswordRequest($user)) {
                             $this->logger->info(
-                                "[PasswordRequestService] Token has been set for user '".$user->getId()."'",
+                                "[PasswordRequestService] Token set for user '".$user->getId()."'",
                                 [
                                     'userId'   => $user->getId()
                                 ]
@@ -63,7 +64,7 @@ final class PasswordRequestService
 
                             if ($this->mailer->send()) {
                                 $this->logger->info(
-                                    "[PasswordRequestService] Mail has been set for user '".$user->getId()."'",
+                                    "[PasswordRequestService] Reset email sent for user '".$user->getId()."'",
                                     [
                                         'userId'   => $user->getId()
                                     ]
@@ -71,7 +72,7 @@ final class PasswordRequestService
                             }
                             else {
                                 $this->logger->error(
-                                    "[PasswordRequestService] Mail has not been set for user '".$user->getId()."'",
+                                    "[PasswordRequestService] Reset email failed for user '".$user->getId()."'",
                                     [
                                         'userId'   => $user->getId(),
                                         'errorInfo'=> $this->mailer->ErrorInfo,
@@ -86,10 +87,49 @@ final class PasswordRequestService
     }
 
     /**
+     * Update user password from token
+     *
+     * @param string $token
+     * @param string $password1
+     * @param string $password2
+     * @return ResetPasswordResult
+     */
+    public function updatePasswordFromToken(string $token, string $password1, string $password2): ResetPasswordResult {
+        if (!$this->validateToken($token)) {
+            return ResetPasswordResult::INVALID_TOKEN;
+        }
+
+        if (!$this->validatePasswordStrength($password1)) {
+            return ResetPasswordResult::INVALID_PASSWORD;
+        }
+        else if (strcmp($password1, $password2) !== 0) {
+            return ResetPasswordResult::PASSWORD_MISMATCH;
+        }
+
+        if ($this->setUserPassword($token, $password1)) {
+            return ResetPasswordResult::SUCCESS;
+        }
+
+        return ResetPasswordResult::ERROR;
+    }
+
+    /**
+     * Validate token
+     *
+     * @param string $token
+     * @return bool
+     */
+    public function validateToken(string $token): bool {
+        $requestToken = hash('sha256', $this->options['pwdRequestSalt'] . $token);
+
+        return $this->userRepository->isTokenExists($requestToken, intval($this->options['pwdRequestTokenLifetime']));
+    }
+
+    /**
      * Unset Users password requests
      *
      */
-    public function unsetPasswordRequests(): void {
+    private function unsetPasswordRequests(): void {
         $this->userRepository->unsetUsersPasswordRequests(intval($this->options['pwdRequestTokenLifetime']));
     }
 
@@ -100,7 +140,7 @@ final class PasswordRequestService
      * @param string $password
      * @return bool
      */
-    public function setUserPassword(string $token, string $password): bool {
+    private function setUserPassword(string $token, string $password): bool {
         if ($this->validateToken($token) && $this->validatePasswordStrength($password)) {
             $requestToken = hash('sha256', $this->options['pwdRequestSalt'] . $token);
             $user = $this->userRepository->findOneByToken($requestToken, intval($this->options['pwdRequestTokenLifetime']));
@@ -117,7 +157,7 @@ final class PasswordRequestService
                 }
 
                 $this->logger->info(
-                    "[PasswordRequestService] Password has been updated for user '".$user->getId()."'",
+                    "[PasswordRequestService] Password updated for user '".$user->getId()."'",
                     [
                         'userId'   => $user->getId()
                     ]
@@ -132,24 +172,12 @@ final class PasswordRequestService
     }
 
     /**
-     * Validate token
-     *
-     * @param string $token
-     * @return bool
-     */
-    public function validateToken(string $token): bool {
-        $requestToken = hash('sha256', $this->options['pwdRequestSalt'] . $token);
-
-        return $this->userRepository->isTokenExists($requestToken, intval($this->options['pwdRequestTokenLifetime']));
-    }
-
-    /**
      * Validate password strength
      *
      * @param string $password
      * @return bool
      */
-    public function validatePasswordStrength(string $password): bool {
+    private function validatePasswordStrength(string $password): bool {
         $minLength    = intval($this->options['pwdMinLength']);
         $length       = mb_strlen($password) < $minLength ? false : true;
         $uppercase    = preg_match('/[A-Z]/', $password);
