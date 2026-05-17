@@ -129,43 +129,19 @@ final class ProjectsController
         $allowedActivitiesIds = array_map(static fn($a) => $a->getId(), $allowedActivities);
 
         $teams = $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
-        $teamsIds = array_map(fn($t) => $t->getId(), $teams);
+        $teamsIds = array_map(static fn($t) => $t->getId(), $teams);
         $usersIds = [];
         if (!empty($teamsIds)) {
             $users = $this->userService->findAllUsersInTeams($teamsIds);
-            $usersIds = array_map(fn($u) => $u->getId(), $users);
+            $usersIds = array_map(static fn($u) => $u->getId(), $users);
         }
 
         // Get timesheets
-        // Todo: move to TimesheetService (ex. getProjectTimesheetsSummary)
         $criteria = array(
             'users' => $usersIds,
             'projects' => [$project->getId()],
         );
-        $allTags = $this->tagService->findAll();
-        $timesheets = $this->timesheetService->findTimesheetsByCriteria($criteria);
-        $duration = 0;
-        for ($i=0; $i < count($timesheets); $i++) {
-            // Duration
-            $duration += $timesheets[$i]['duration'];
-            $timesheets[$i]['duration'] = $this->timesheetService->timeToString($timesheets[$i]['duration']);
-            // Tags
-            $timesheets[$i]['tags'] = array();
-            if (!is_null($timesheets[$i]['tagIds'])) {
-                $tagsIds = explode(',', $timesheets[$i]['tagIds']);
-                foreach ($tagsIds as $tagId) {
-                    $tag = $allTags[$tagId] ?? null;
-                    if ($tag === null) {
-                        continue;
-                    }
-
-                    $timesheets[$i]['tags'][] = array(
-                        'name' => $tag->getName(),
-                        'color' => $tag->getColor()
-                    );
-                }
-            }
-        }
+        list($timesheets, $duration) = $this->timesheetService->buildProjectTimesheetsSummary($criteria);
 
         return $this->twig->render($response, 'project-details.html.twig', [
             'project'           => $project,

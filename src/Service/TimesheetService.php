@@ -229,6 +229,54 @@ final class TimesheetService
     }
 
     /**
+     * Get buildProjectTimesheetsSummary
+     *
+     * @param array $criteria
+     * @return array{0: array, 1: int}
+     */
+    public function buildProjectTimesheetsSummary(array $criteria): array {
+        if (!isset($criteria['users']) || empty($criteria['users'])) {
+            return [[], 0];
+        }
+
+        if (!isset($criteria['projects']) || empty($criteria['projects'])) {
+            return [[], 0];
+        }
+
+        if (count($criteria['projects']) !== 1) {
+            return [[], 0];
+        }
+
+        $timesheets = $this->findTimesheetsByCriteria($criteria);
+
+        $tags = $this->tagRepository->findAll();
+        $duration = 0;
+
+        foreach ($timesheets as &$ts) {
+            $duration += $ts['duration'];
+            $ts['duration'] = $this->timeToString($ts['duration']);
+            $ts['tags'] = [];
+
+            if (!is_null($ts['tagIds'])) {
+                foreach (explode(',', $ts['tagIds']) as $tagId) {
+                    $tag = $tags[$tagId] ?? null;
+                    if ($tag === null) {
+                        continue;
+                    }
+
+                    $ts['tags'][] = [
+                        'name'  => $tag->getName(),
+                        'color' => $tag->getColor(),
+                    ];
+                }
+            }
+        }
+        unset($ts);
+
+        return [$timesheets, $duration];
+    }
+
+    /**
      * Get report data
      *
      * @param int $userId
