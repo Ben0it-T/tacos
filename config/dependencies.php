@@ -41,6 +41,7 @@ use App\Controller\DashboardController;
 use App\Controller\LoginController;
 use App\Controller\PasswordResetController;
 use App\Controller\ProfileController;
+use App\Controller\ProjectsController;
 
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\RotatingFileHandler;
@@ -523,6 +524,27 @@ return function (ContainerInterface $container): void {
             [
                 'loginMinLength' => max(1, (int)($settings['loginMinLength'] ?? 5)),
                 'pwdMinLength'   => max(1, (int)($settings['pwdMinLength'] ?? 16)),
+            ],
+            $c->get('translations')
+        );
+    });
+
+    $container->set(ProjectsController::class, function (ContainerInterface $c) {
+        $settings = $c->get('settings')['theme'] ?? [];
+
+        return new ProjectsController(
+            $c->get(Twig::class),
+            $c->get('flash'),
+            $c->get(ActivityService::class),
+            $c->get(CustomerService::class),
+            $c->get(ProjectService::class),
+            $c->get(TagService::class),
+            $c->get(TeamService::class),
+            $c->get(TimesheetService::class),
+            $c->get(UserService::class),
+            $c->get(ControllerHelper::class),
+            [
+                'colorChoices' => (string)($settings['colorChoices'] ?? ''),
             ],
             $c->get('translations')
         );

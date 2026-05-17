@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\Project;
+use App\Entity\User;
+use App\Helper\ControllerHelper;
 use App\Service\ActivityService;
 use App\Service\CustomerService;
 use App\Service\ProjectService;
@@ -11,28 +14,31 @@ use App\Service\TeamService;
 use App\Service\TimesheetService;
 use App\Service\UserService;
 
-use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 use Slim\Flash\Messages;
-use Slim\Routing\RouteContext;
 use Slim\Views\Twig;
 
 final class ProjectsController
 {
-    private $container;
-    private $activityService;
-    private $customerService;
-    private $projectService;
-    private $tagService;
-    private $teamService;
-    private $timesheetService;
-    private $userService;
+    private Twig $twig;
+    private Messages $flash;
+    private ActivityService $activityService;
+    private CustomerService $customerService;
+    private ProjectService $projectService;
+    private TagService $tagService;
+    private TeamService $teamService;
+    private TimesheetService $timesheetService;
+    private UserService $userService;
+    private ControllerHelper $helper;
+    private array $options;
+    private array $translations;
 
-    public function __construct(ContainerInterface $container, ActivityService $activityService, CustomerService $customerService, ProjectService $projectService, TagService $tagService, TeamService $teamService, TimesheetService $timesheetService, UserService $userService)
+    public function __construct(Twig $twig, Messages $flash, ActivityService $activityService, CustomerService $customerService, ProjectService $projectService, TagService $tagService, TeamService $teamService, TimesheetService $timesheetService, UserService $userService, ControllerHelper $helper, array $options, array $translations)
     {
-        $this->container = $container;
+        $this->twig = $twig;
+        $this->flash = $flash;
         $this->activityService = $activityService;
         $this->customerService = $customerService;
         $this->projectService = $projectService;
@@ -40,333 +46,241 @@ final class ProjectsController
         $this->teamService = $teamService;
         $this->timesheetService = $timesheetService;
         $this->userService = $userService;
+        $this->helper = $helper;
+        $this->options = $options;
+        $this->translations = $translations;
     }
 
     public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $twig  = $this->container->get(Twig::class);
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
-
-        $routeContext = RouteContext::fromRequest($request);
-        $routeParser = $routeContext->getRouteParser();
-
-        $session = $request->getAttribute('session');
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
-
-        // Get customers
-        if ($currentUser->getRole() === 3) {
-            $customers = $this->customerService->findAll(1);
-        }
-        else {
-            $customers = $this->customerService->findAllByTeamleaderId($currentUser->getId(), 1);
-        }
-        $customersList = array();
-        foreach ($customers as $entry) {
-            $customersList[] = array(
-                'id' => $entry->getId(),
-                'name' => $entry->getName(),
-            );
+        $currentUser = $this->helper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->helper->redirect($request, $response, 'login');
         }
 
-        // Get teams
-        $teams = ($currentUser->getRole() === 3) ? $this->teamService->findAllTeams() : $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
-        $teamsList = array();
-        foreach ($teams as $team) {
-            $teamsList[] = array(
-                'id' => $team->getId(),
-                'name' => $team->getName(),
-            );
-        }
+        $customers = $this->helper->isAdmin($currentUser)
+            ? $this->customerService->findAll(1)
+            : $this->customerService->findAllByTeamleaderId($currentUser->getId(), 1);
 
-        // Get colors
-        $colorChoices = $this->container->get('settings')['theme']['colorChoices'];
-        $colorsList = array();
-        foreach (explode(',',$colorChoices) as $key => $value) {
-            list($colorName, $colorValue) = explode('|', $value);
-            //$colorsList[$colorName] = $colorValue;
-            $colorsList[$key] = array(
-                'name' => $colorName,
-                'value' => $colorValue,
-            );
-        }
+        $teams = $this->helper->isAdmin($currentUser)
+            ? $this->teamService->findAllTeams()
+            : $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
 
-        // Get projects
-        if ($currentUser->getRole() === 3) {
-            $projects = $this->projectService->findAllProjectsWithTeamsCountAndCustomer();
-        }
-        else {
-            $projects = $this->projectService->findAllProjectsWithTeamsCountAndCustomerByTeamleaderId($currentUser->getId());
-        }
+        $colors = $this->helper->parseColorChoices((string)($this->options['colorChoices'] ?? ''));
 
-        for ($i=0; $i < count($projects); $i++) {
-            $projects[$i]['editLink'] = $routeParser->urlFor('projects_edit', array('projectId' => $projects[$i]['id']));
-            $projects[$i]['viewLink'] = $routeParser->urlFor('projects_details', array('projectId' => $projects[$i]['id']));
-        }
+        $projects = $this->helper->isAdmin($currentUser)
+            ? $this->projectService->findAllProjectsWithTeamsCountAndCustomer()
+            : $this->projectService->findAllProjectsWithTeamsCountAndCustomerByTeamleaderId($currentUser->getId());
 
-        $viewData = array();
-        $viewData['userRole'] = $currentUser->getRole();
-        $viewData['colors'] = $colorsList;
-        $viewData['customers'] = $customersList;
-        $viewData['teams'] = $teamsList;
-        $viewData['projects'] = $projects;
+        $projects = $this->addProjectLinks($request, $projects);
 
-        $viewData['flashMsgSuccess'] = $flash->getFirstMessage('success');
-        $viewData['flashMsgError'] = $flash->getFirstMessage('error');
-
-        return $twig->render($response, 'projects.html.twig', $viewData);
+        return $this->twig->render($response, 'projects.html.twig', [
+            'userRole'        => $currentUser->getRole(),
+            'colors'          => $colors,
+            'customers'       => $this->helper->mapIdNameList($customers),
+            'teams'           => $this->helper->mapIdNameList($teams),
+            'projects'        => $projects,
+            'flashMsgSuccess' => $this->flash->getFirstMessage('success'),
+            'flashMsgError'   => $this->flash->getFirstMessage('error'),
+        ]);
     }
 
     public function createAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
+        $currentUser = $this->helper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->helper->redirect($request, $response, 'login');
+        }
 
-        $data = $request->getParsedBody();
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-
+        $data = (array) $request->getParsedBody();
         $errors = $this->projectService->createProject($data);
 
-        if (empty($errors)) {
-            $flash->addMessage('success', $translations['form_success_create_project']);
+        if ($errors === '') {
+            $this->flash->addMessage('success', $this->translations['form_success_create_project']);
         }
         else {
-            $flash->addMessage('error', $errors);
+            $this->flash->addMessage('error', $errors);
         }
 
-        // redirect
-        $url = $routeParser->urlFor('projects');
-        return $response->withStatus(302)->withHeader('Location', $url);
+        return $this->helper->redirect($request, $response, 'projects');
     }
 
     public function projectDetails(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $twig  = $this->container->get(Twig::class);
-        $translations = $this->container->get('translations');
-
-        $routeContext = RouteContext::fromRequest($request);
-        $routeParser = $routeContext->getRouteParser();
-
-        $session = $request->getAttribute('session');
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
-
-        if ($currentUser->getRole() === 3) {
-            $project = $this->projectService->findProject(intval($args['projectId']));
-        }
-        else {
-            $project = $this->projectService->findOneByIdAndTeamleaderId(intval($args['projectId']), intval($currentUser->getId()));
+        $currentUser = $this->helper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->helper->redirect($request, $response, 'login');
         }
 
-        if ($project) {
+        $projectId = (int)($args['projectId'] ?? 0);
+        $project = $this->getAccessibleProject($currentUser, $projectId, strict: false);
 
-            // Get selected Customer
-            $selectedCustomer = $this->customerService->findCustomer($project->getCustomerId());
+        if (!$project) {
+            return $this->helper->redirect($request, $response, 'projects');
+        }
 
-            // Get selected Teams
-            $selectedTeams = $this->teamService->findAllTeamsByProjectId($project->getId());
+        $selectedCustomer = $this->customerService->findCustomer($project->getCustomerId());
 
-            // Get activities
-            $globalActivities = $this->activityService->findAllGlobalActivities();
-            $projectActivities = $this->activityService->findAllProjectActivitiesByProjectId($project->getId());
-            $allowedActivities = $this->activityService->findAllByProjectId($project->getId());
-            $allowedActivitiesIds = array();
-            foreach ($allowedActivities as $entry) {
-                $allowedActivitiesIds[] = $entry->getId();
-            }
+        $selectedTeams = $this->teamService->findAllTeamsByProjectId($project->getId());
 
-            // Get Teams
-            $teams = $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
-            $teamsIds = array();
-            if (count($teams) > 0) {
-                foreach ($teams as $team) {
-                    $teamsIds[] = $team->getId();
-                }
-            }
+        $globalActivities = $this->activityService->findAllGlobalActivities();
+        $projectActivities = $this->activityService->findAllProjectActivitiesByProjectId($project->getId());
+        $allowedActivities = $this->activityService->findAllByProjectId($project->getId());
+        $allowedActivitiesIds = array_map(static fn($a) => $a->getId(), $allowedActivities);
 
-            // Get users in teams
+        $teams = $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
+        $teamsIds = array_map(fn($t) => $t->getId(), $teams);
+        $usersIds = [];
+        if (!empty($teamsIds)) {
             $users = $this->userService->findAllUsersInTeams($teamsIds);
-            $usersIds = array();
-            if (count($users) > 0) {
-                foreach ($users as $usr) {
-                    $usersIds[] = $usr->getId();
-                }
-            }
-
-            // Get timesheets
-            $criteria = array(
-                'users' => $usersIds,
-                'projects' => [$project->getId()],
-            );
-            $allTags = $this->tagService->findAll();
-            $timesheets = $this->timesheetService->findTimesheetsByCriteria($criteria);
-            $duration = 0;
-            for ($i=0; $i < count($timesheets); $i++) {
-                // Duration
-                $duration += $timesheets[$i]['duration'];
-                $timesheets[$i]['duration'] = $this->timesheetService->timeToString($timesheets[$i]['duration']);
-                // Tags
-                $timesheets[$i]['tags'] = array();
-                if (!is_null($timesheets[$i]['tagIds'])) {
-                    $tagsIds = explode(',', $timesheets[$i]['tagIds']);
-                    foreach ($tagsIds as $tagId) {
-                        $timesheets[$i]['tags'][] = array(
-                            'name' => $allTags[$tagId]->getName(),
-                            'color' => $allTags[$tagId]->getColor()
-                        );
-                    }
-                }
-            }
-
-            $viewData = array();
-            $viewData['project'] = $project;
-            $viewData['selectedCustomer'] = $selectedCustomer;
-            $viewData['selectedTeams'] = $selectedTeams;
-            $viewData['globalActivities'] = $globalActivities;
-            $viewData['projectActivities'] = $projectActivities;
-            $viewData['allowedActivitiesIds'] = $allowedActivitiesIds;
-            $viewData['timesheets'] = $timesheets;
-            $viewData['duration'] = $duration > 0 ? $this->timesheetService->timeToString($duration) : "";
-
-            return $twig->render($response, 'project-details.html.twig', $viewData);
+            $usersIds = array_map(fn($u) => $u->getId(), $users);
         }
 
-        // redirect
-        $url = $routeParser->urlFor('projects');
-        return $response->withStatus(302)->withHeader('Location', $url);
+        // Get timesheets
+        // Todo: move to TimesheetService (ex. getProjectTimesheetsSummary)
+        $criteria = array(
+            'users' => $usersIds,
+            'projects' => [$project->getId()],
+        );
+        $allTags = $this->tagService->findAll();
+        $timesheets = $this->timesheetService->findTimesheetsByCriteria($criteria);
+        $duration = 0;
+        for ($i=0; $i < count($timesheets); $i++) {
+            // Duration
+            $duration += $timesheets[$i]['duration'];
+            $timesheets[$i]['duration'] = $this->timesheetService->timeToString($timesheets[$i]['duration']);
+            // Tags
+            $timesheets[$i]['tags'] = array();
+            if (!is_null($timesheets[$i]['tagIds'])) {
+                $tagsIds = explode(',', $timesheets[$i]['tagIds']);
+                foreach ($tagsIds as $tagId) {
+                    $tag = $allTags[$tagId] ?? null;
+                    if ($tag === null) {
+                        continue;
+                    }
+
+                    $timesheets[$i]['tags'][] = array(
+                        'name' => $tag->getName(),
+                        'color' => $tag->getColor()
+                    );
+                }
+            }
+        }
+
+        return $this->twig->render($response, 'project-details.html.twig', [
+            'project'           => $project,
+            'selectedCustomer'  => $selectedCustomer,
+            'selectedTeams'   => $selectedTeams,
+            'globalActivities'  => $globalActivities,
+            'projectActivities'  => $projectActivities,
+            'allowedActivitiesIds'  => $allowedActivitiesIds,
+            'timesheets'  => $timesheets,
+            'duration'  => $duration > 0 ? $this->timesheetService->timeToString($duration) : "",
+        ]);
     }
 
     public function editForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $twig  = $this->container->get(Twig::class);
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
-
-        $routeContext = RouteContext::fromRequest($request);
-        $routeParser = $routeContext->getRouteParser();
-
-        $session = $request->getAttribute('session');
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
-
-        if ($currentUser->getRole() === 3) {
-            $project = $this->projectService->findProject(intval($args['projectId']));
-        }
-        else {
-            $project = $this->projectService->findOneByIdAndTeamleaderIdStrict(intval($args['projectId']), intval($currentUser->getId()));
+        $currentUser = $this->helper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->helper->redirect($request, $response, 'login');
         }
 
-        if ($project) {
-            // Get customers
-            if ($currentUser->getRole() === 3) {
-                $customers = $this->customerService->findAll(1);
-            }
-            else {
-                $customers = $this->customerService->findAllByTeamleaderId($currentUser->getId(), 1);
-            }
-            $customersList = array();
-            foreach ($customers as $entry) {
-                $customersList[] = array(
-                    'id' => $entry->getId(),
-                    'name' => $entry->getName(),
-                );
-            }
+        $projectId = (int)($args['projectId'] ?? 0);
+        $project = $this->getAccessibleProject($currentUser, $projectId, strict: true);
 
-            // Get teams
-            $teams = ($currentUser->getRole() === 3) ? $this->teamService->findAllTeams() : $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
-            $teamsList = array();
-            foreach ($teams as $team) {
-                $teamsList[] = array(
-                    'id' => $team->getId(),
-                    'name' => $team->getName(),
-                );
-            }
-
-            $selectedTeams = $this->teamService->findAllTeamsByProjectId($project->getId());
-            $selectedTeamsIds = array();
-            foreach ($selectedTeams as $selectedTeam) {
-                $selectedTeamsIds[] = $selectedTeam->getId();
-            }
-
-            // Get activities
-            $globalActivities = $this->activityService->findAllGlobalActivities();
-            $projectActivities = $this->activityService->findAllProjectActivitiesByProjectId($project->getId());
-            $projectAuthorisedActivities = $this->activityService->findAllByProjectId($project->getId());
-            $projectAuthorisedActivitiesList = array();
-            foreach ($projectAuthorisedActivities as $entry) {
-                $projectAuthorisedActivitiesList[] = $entry->getId();
-            }
-
-            // Get colors
-            $colorChoices = $this->container->get('settings')['theme']['colorChoices'];
-            $colorsList = array();
-            foreach (explode(',',$colorChoices) as $key => $value) {
-                list($colorName, $colorValue) = explode('|', $value);
-                //$colorsList[$colorName] = $colorValue;
-                $colorsList[$key] = array(
-                    'name' => $colorName,
-                    'value' => $colorValue,
-                );
-            }
-
-
-
-            $viewData = array();
-            $viewData['project'] = $project;
-            $viewData['colors'] = $colorsList;
-            $viewData['customers'] = $customersList;
-            $viewData['teams'] = $teamsList;
-            $viewData['selectedTeams'] = $selectedTeams;
-            $viewData['selectedTeamsIds'] = $selectedTeamsIds;
-
-            $viewData['globalActivities'] = $globalActivities;
-            $viewData['projectActivities'] = $projectActivities;
-            $viewData['projectActivitiesIds'] = $projectAuthorisedActivitiesList;
-
-
-            $viewData['flashMsgSuccess'] = $flash->getFirstMessage('success');
-            $viewData['flashMsgError'] = $flash->getFirstMessage('error');
-
-            return $twig->render($response, 'project-edit.html.twig', $viewData);
+        if (!$project) {
+            return $this->helper->redirect($request, $response, 'projects');
         }
 
-        // redirect
-        $url = $routeParser->urlFor('projects');
-        return $response->withStatus(302)->withHeader('Location', $url);
+        $customers = $this->helper->isAdmin($currentUser)
+            ? $this->customerService->findAll(1)
+            : $this->customerService->findAllByTeamleaderId($currentUser->getId(), 1);
+
+        $teams = $this->helper->isAdmin($currentUser)
+            ? $this->teamService->findAllTeams()
+            : $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
+
+        $selectedTeams = $this->teamService->findAllTeamsByProjectId($project->getId());
+        $selectedTeamsIds = array_map(static fn($t) => $t->getId(), $selectedTeams);
+
+        $globalActivities = $this->activityService->findAllGlobalActivities();
+        $projectActivities = $this->activityService->findAllProjectActivitiesByProjectId($project->getId());
+        $allowedActivities = $this->activityService->findAllByProjectId($project->getId());
+        $allowedActivitiesIds = array_map(static fn($a) => $a->getId(), $allowedActivities);
+
+        $colors = $this->helper->parseColorChoices((string)($this->options['colorChoices'] ?? ''));
+
+        return $this->twig->render($response, 'project-edit.html.twig', [
+            'project'              => $project,
+            'colors'               => $colors,
+            'customers'            => $this->helper->mapIdNameList($customers),
+            'teams'                => $this->helper->mapIdNameList($teams),
+            'selectedTeams'        => $selectedTeams,
+            'selectedTeamsIds'     => $selectedTeamsIds,
+            'globalActivities'     => $globalActivities,
+            'projectActivities'    => $projectActivities,
+            'projectActivitiesIds' => $allowedActivitiesIds,
+            'flashMsgSuccess'      => $this->flash->getFirstMessage('success'),
+            'flashMsgError'        => $this->flash->getFirstMessage('error'),
+        ]);
     }
 
     public function editAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
-
-        $data = $request->getParsedBody();
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-
-        $session = $request->getAttribute('session');
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
-
-        if ($currentUser->getRole() === 3) {
-            $project = $this->projectService->findProject(intval($args['projectId']));
-        }
-        else {
-            $project = $this->projectService->findOneByIdAndTeamleaderIdStrict(intval($args['projectId']), intval($currentUser->getId()));
+        $currentUser = $this->helper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->helper->redirect($request, $response, 'login');
         }
 
-        if ($project) {
-            $errors = $this->projectService->updateProject($project, $data);
+        $projectId = (int)($args['projectId'] ?? 0);
+        $project = $this->getAccessibleProject($currentUser, $projectId, strict: true);
 
-            if (empty($errors)) {
-                $flash->addMessage('success', $translations['form_success_update']);
-            }
-            else {
-                $flash->addMessage('error', $errors);
-                $url = $routeParser->urlFor('projects_edit', array('projectId' => $args['projectId']));
-                return $response->withStatus(302)->withHeader('Location', $url);
-            }
+        if (!$project) {
+            return $this->helper->redirect($request, $response, 'projects');
         }
 
-        // redirect
-        $url = $routeParser->urlFor('projects');
-        return $response->withStatus(302)->withHeader('Location', $url);
+        $data = (array) $request->getParsedBody();
+        $errors = $this->projectService->updateProject($project, $data);
+
+        if ($errors === '') {
+            $this->flash->addMessage('success', $this->translations['form_success_update']);
+            return $this->helper->redirect($request, $response, 'projects');
+        }
+
+        $this->flash->addMessage('error', $errors);
+        return $this->helper->redirect($request, $response, 'projects_edit', ['projectId' => $projectId]);
     }
 
+    // Helpers
+    private function addProjectLinks(ServerRequestInterface $request, array $projects): array
+    {
+        foreach ($projects as &$project) {
+            if (!isset($project['id'])) {
+                continue;
+            }
+            $id = (int) $project['id'];
+
+            $project['editLink'] = $this->helper->getUrlFor($request, 'projects_edit', ['projectId' => $id]);
+            $project['viewLink'] = $this->helper->getUrlFor($request, 'projects_details', ['projectId' => $id]);
+        }
+        unset($project);
+
+        return $projects;
+    }
+
+    private function getAccessibleProject(User $user, int $projectId, bool $strict): Project|false
+    {
+        if ($projectId <= 0) {
+            return false;
+        }
+
+        if ($this->helper->isAdmin($user)) {
+            return $this->projectService->findProject($projectId);
+        }
+
+        return $strict
+            ? $this->projectService->findOneByIdAndTeamleaderIdStrict($projectId, $user->getId())
+            : $this->projectService->findOneByIdAndTeamleaderId($projectId, $user->getId());
+    }
 }

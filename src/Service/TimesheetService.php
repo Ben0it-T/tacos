@@ -184,7 +184,7 @@ final class TimesheetService
      * @return array of Timesheet with User, Projet, Activity and Tags
      */
     public function findTimesheetsByCriteria(array $criteria): array {
-        if (!isset($criteria['users'])) {
+        if (!isset($criteria['users']) || empty($criteria['users'])) {
             return [];
         }
 
