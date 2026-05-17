@@ -36,6 +36,7 @@ use App\Repository\TimesheetRepository;
 use App\Repository\UserRepository;
 
 use App\Controller\ActivitiesController;
+use App\Controller\CustomersController;
 use App\Controller\LoginController;
 use App\Controller\PasswordResetController;
 
@@ -447,6 +448,23 @@ return function (ContainerInterface $container): void {
             $c->get(Twig::class),
             $c->get('flash'),
             $c->get(ActivityService::class),
+            $c->get(ProjectService::class),
+            $c->get(TeamService::class),
+            $c->get(ControllerHelper::class),
+            [
+                'colorChoices' => (string)($settings['colorChoices'] ?? ''),
+            ],
+            $c->get('translations')
+        );
+    });
+
+    $container->set(CustomersController::class, function (ContainerInterface $c) {
+        $settings = $c->get('settings')['theme'] ?? [];
+
+        return new CustomersController(
+            $c->get(Twig::class),
+            $c->get('flash'),
+            $c->get(CustomerService::class),
             $c->get(ProjectService::class),
             $c->get(TeamService::class),
             $c->get(ControllerHelper::class),
