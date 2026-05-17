@@ -489,6 +489,7 @@ return function (ContainerInterface $container): void {
             $c->get(Twig::class),
             $c->get('flash'),
             $c->get(AuthService::class),
+            $c->get(ControllerHelper::class),
             $c->get('translations')
         );
     });
