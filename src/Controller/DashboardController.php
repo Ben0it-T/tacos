@@ -3,58 +3,48 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Helper\ControllerHelper;
 use App\Service\TimesheetService;
-use App\Service\UserService;
 
-use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-use Slim\Flash\Messages;
-use Slim\Routing\RouteContext;
 use Slim\Views\Twig;
 
 final class DashboardController
 {
-    private $container;
-    private $timesheetService;
-    private $userService;
+    private Twig $twig;
+    private TimesheetService $timesheetService;
+    private ControllerHelper $helper;
 
-    public function __construct(ContainerInterface $container, TimesheetService $timesheetService, UserService $userService)
+    public function __construct(Twig $twig, TimesheetService $timesheetService, ControllerHelper $helper)
     {
-        $this->container = $container;
+        $this->twig = $twig;
         $this->timesheetService = $timesheetService;
-        $this->userService = $userService;
+        $this->helper = $helper;
     }
 
     public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $twig  = $this->container->get(Twig::class);
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
+        $currentUser = $this->helper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->helper->redirect($request, $response, 'login');
+        }
 
-        $routeContext = RouteContext::fromRequest($request);
-        $routeParser = $routeContext->getRouteParser();
-
-        $session = $request->getAttribute('session');
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
-
-        // Active records
         $activeRecords = $this->timesheetService->countActiveRecordsByUserId($currentUser->getId());
 
         // Working hours today
         $workingHours = array(
-            'today' => $this->timesheetService->timeToString(intval($this->timesheetService->getTotalDurationByUserIdAndPeriod('today', $currentUser->getId()))),
-            'week' => $this->timesheetService->timeToString(intval($this->timesheetService->getTotalDurationByUserIdAndPeriod('week', $currentUser->getId()))),
-            'lastweek' => $this->timesheetService->timeToString(intval($this->timesheetService->getTotalDurationByUserIdAndPeriod('lastweek', $currentUser->getId()))),
-            'month' => $this->timesheetService->timeToString(intval($this->timesheetService->getTotalDurationByUserIdAndPeriod('month', $currentUser->getId()))),
+            'today'     => $this->timesheetService->timeToString(intval($this->timesheetService->getTotalDurationByUserIdAndPeriod('today', $currentUser->getId()))),
+            'week'      => $this->timesheetService->timeToString(intval($this->timesheetService->getTotalDurationByUserIdAndPeriod('week', $currentUser->getId()))),
+            'lastweek'  => $this->timesheetService->timeToString(intval($this->timesheetService->getTotalDurationByUserIdAndPeriod('lastweek', $currentUser->getId()))),
+            'month'     => $this->timesheetService->timeToString(intval($this->timesheetService->getTotalDurationByUserIdAndPeriod('month', $currentUser->getId()))),
             'lastmonth' => $this->timesheetService->timeToString(intval($this->timesheetService->getTotalDurationByUserIdAndPeriod('lastmonth', $currentUser->getId()))),
         );
 
-        $viewData = array();
-        $viewData['activeRecords'] = $activeRecords;
-        $viewData['workingHours'] = $workingHours;
-
-        return $twig->render($response, 'dashboard.html.twig', $viewData);
+        return $this->twig->render($response, 'dashboard.html.twig', [
+            'activeRecords' => $activeRecords,
+            'workingHours'  => $workingHours,
+        ]);
     }
 }

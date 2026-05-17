@@ -37,6 +37,7 @@ use App\Repository\UserRepository;
 
 use App\Controller\ActivitiesController;
 use App\Controller\CustomersController;
+use App\Controller\DashboardController;
 use App\Controller\LoginController;
 use App\Controller\PasswordResetController;
 
@@ -472,6 +473,14 @@ return function (ContainerInterface $container): void {
                 'colorChoices' => (string)($settings['colorChoices'] ?? ''),
             ],
             $c->get('translations')
+        );
+    });
+
+    $container->set(DashboardController::class, function (ContainerInterface $c) {
+        return new DashboardController(
+            $c->get(Twig::class),
+            $c->get(TimesheetService::class),
+            $c->get(ControllerHelper::class)
         );
     });
 
