@@ -3,94 +3,85 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Helper\ControllerHelper;
 use App\Service\TeamService;
 use App\Service\UserService;
 
-use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 use Slim\Flash\Messages;
-use Slim\Routing\RouteContext;
 use Slim\Views\Twig;
 
 final class ProfileController
 {
-    private $container;
-    private $teamService;
-    private $userService;
+    private Twig $twig;
+    private Messages $flash;
+    private TeamService $teamService;
+    private UserService $userService;
+    private ControllerHelper $helper;
+    private array $options;
+    private array $translations;
 
 
-    public function __construct(ContainerInterface $container, TeamService $teamService, UserService $userService)
+    public function __construct(Twig $twig, Messages $flash, TeamService $teamService, UserService $userService, ControllerHelper $helper, array $options, array $translations)
     {
-        $this->container = $container;
+        $this->twig = $twig;
+        $this->flash = $flash;
         $this->teamService = $teamService;
         $this->userService = $userService;
+        $this->helper = $helper;
+        $this->options = $options;
+        $this->translations = $translations;
     }
 
     public function editForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $twig  = $this->container->get(Twig::class);
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
+        $currentUser = $this->helper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->helper->redirect($request, $response, 'login');
+        }
 
-        $routeContext = RouteContext::fromRequest($request);
-        $routeParser = $routeContext->getRouteParser();
-        $session = $request->getAttribute('session');
+        $role = $this->userService->findRole($currentUser->getRole());
+        $teams = $this->teamService->findAllTeamsWithTeamleadByUserId($currentUser->getId());
 
-        $user = $this->userService->findUser($session['auth']['userId']);
-        $role = $this->userService->findRole($user->getRole());
-        $teams = $this->teamService->findAllTeamsWithTeamleadByUserId($user->getId());
-
-        $viewData = array();
-        $viewData['form'] = array(
-            'loginMinLength' => $this->container->get('settings')['auth']['loginMinLength'],
-            'pwdMinLength' => $this->container->get('settings')['auth']['pwdMinLength'],
-        );
-        $viewData['user'] = array(
-            'name' => $user->getName(),
-            'username' => $user->getUsername(),
-            'email' => $user->getEmail(),
-            'role' => $translations[strtolower($role->getName())],
-            'roleId' => $user->getRole(),
-            'lastLogin' => $user->getLastLogin(),
-            'registrationDate' => $user->getRegistrationDate(),
-            'teams' => $teams,
-        );
-
-        $viewData['flashMsgSuccess'] = $flash->getFirstMessage('success');
-        $viewData['flashMsgError'] = $flash->getFirstMessage('error');
-
-        return $twig->render($response, 'profile.html.twig', $viewData);
+        return $this->twig->render($response, 'profile.html.twig', [
+            'form' => [
+                'loginMinLength'   => $this->options['loginMinLength'],
+                'pwdMinLength'     => $this->options['pwdMinLength'],
+            ],
+            'user' => [
+                'name'             => $currentUser->getName(),
+                'username'         => $currentUser->getUsername(),
+                'email'            => $currentUser->getEmail(),
+                'role'             => $this->translations[strtolower($role->getName())] ?? $role->getName(),
+                'roleId'           => $currentUser->getRole(),
+                'lastLogin'        => $currentUser->getLastLogin(),
+                'registrationDate' => $currentUser->getRegistrationDate(),
+                'teams'            => $teams,
+            ],
+            'flashMsgSuccess'      => $this->flash->getFirstMessage('success'),
+            'flashMsgError'        => $this->flash->getFirstMessage('error'),
+        ]);
     }
 
     public function editAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
-
-        $data = $request->getParsedBody();
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-        $session = $request->getAttribute('session');
-
-        $user = $this->userService->findUser($session['auth']['userId']);
-
-        if ($user) {
-            $errors = $this->userService->updateUserProfile($user, $data);
-            if (empty($errors)) {
-                $flash->addMessage('success', $translations['form_success_update']);
-            }
-            else {
-                $flash->addMessage('error', $errors);
-            }
-
-            // redirect
-            $url = $routeParser->urlFor('profile');
-            return $response->withStatus(302)->withHeader('Location', $url);
+        $currentUser = $this->helper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->helper->redirect($request, $response, 'logout');
         }
 
-        // redirect
-        $url = $routeParser->urlFor('logout');
-        return $response->withStatus(302)->withHeader('Location', $url);
+        $data = (array) $request->getParsedBody();
+        $errors = $this->userService->updateUserProfile($currentUser, $data);
+
+        if ($errors === '') {
+            $this->flash->addMessage('success', $this->translations['form_success_update']);
+        }
+        else {
+            $this->flash->addMessage('error', $errors);
+        }
+
+        return $this->helper->redirect($request, $response, 'profile');
     }
 }

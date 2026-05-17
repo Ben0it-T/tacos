@@ -40,6 +40,7 @@ use App\Controller\CustomersController;
 use App\Controller\DashboardController;
 use App\Controller\LoginController;
 use App\Controller\PasswordResetController;
+use App\Controller\ProfileController;
 
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\RotatingFileHandler;
@@ -510,5 +511,21 @@ return function (ContainerInterface $container): void {
         );
     });
 
+    $container->set(ProfileController::class, function (ContainerInterface $c) {
+        $settings = $c->get('settings')['auth'] ?? [];
+
+        return new ProfileController(
+            $c->get(Twig::class),
+            $c->get('flash'),
+            $c->get(TeamService::class),
+            $c->get(UserService::class),
+            $c->get(ControllerHelper::class),
+            [
+                'loginMinLength' => max(1, (int)($settings['loginMinLength'] ?? 5)),
+                'pwdMinLength'   => max(1, (int)($settings['pwdMinLength'] ?? 16)),
+            ],
+            $c->get('translations')
+        );
+    });
 
 };
