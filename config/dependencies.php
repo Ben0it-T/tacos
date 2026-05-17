@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+use App\Helper\ControllerHelper;
 use App\Helper\RoundingHelper;
 use App\Helper\SqlHelper;
 use App\Helper\ValidationHelper;
@@ -34,6 +35,7 @@ use App\Repository\TeamRepository;
 use App\Repository\TimesheetRepository;
 use App\Repository\UserRepository;
 
+use App\Controller\ActivitiesController;
 use App\Controller\LoginController;
 use App\Controller\PasswordResetController;
 
@@ -143,6 +145,12 @@ return function (ContainerInterface $container): void {
     //
     // Helpers
     //
+
+    $container->set(ControllerHelper::class, function (ContainerInterface $c) {
+        return new ControllerHelper(
+            $c->get(UserService::class)
+        );
+    });
 
     $container->set(RoundingHelper::class, function () {
         return new RoundingHelper();
@@ -431,6 +439,23 @@ return function (ContainerInterface $container): void {
     //
     // Controllers
     //
+
+    $container->set(ActivitiesController::class, function (ContainerInterface $c) {
+        $settings = $c->get('settings')['theme'] ?? [];
+
+        return new ActivitiesController(
+            $c->get(Twig::class),
+            $c->get('flash'),
+            $c->get(ActivityService::class),
+            $c->get(ProjectService::class),
+            $c->get(TeamService::class),
+            $c->get(ControllerHelper::class),
+            [
+                'colorChoices' => (string)($settings['colorChoices'] ?? ''),
+            ],
+            $c->get('translations')
+        );
+    });
 
     $container->set(LoginController::class, function (ContainerInterface $c) {
         return new LoginController(
