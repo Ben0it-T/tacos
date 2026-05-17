@@ -501,6 +501,7 @@ return function (ContainerInterface $container): void {
             $c->get(Twig::class),
             $c->get('flash'),
             $c->get(PasswordRequestService::class),
+            $c->get(ControllerHelper::class),
             [
                 'pwdMinLength'            => max(1, (int)($settings['pwdMinLength'] ?? 16)),
                 'pwdRequestRetryLifetime' => max(1, (int)($settings['pwdRequestRetryLifetime'] ?? 3600)),
