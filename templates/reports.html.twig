@@ -42,10 +42,9 @@
                     <label for="format" class="col-form-label col-sm-3 ">{{ trans.form_label_format }}</label>
                     <div class="col-sm-9">
                         <select class="form-select" id="format" name="format" tabindex="3">
-                            <option value="1" {% if selectedFormat == 1 %} selected {% endif %}>{{ trans.form_label_format_time }}</option>
-                            <option value="2" {% if selectedFormat == 2 %} selected {% endif %}>{{ trans.form_label_format_minutes }}</option>
-                            <option value="3" {% if selectedFormat == 3 %} selected {% endif %}>{{ trans.form_label_format_pcent }}</option>
-                            <option value="4" {% if selectedFormat == 4 %} selected {% endif %}>{{ trans.form_label_format_number }}</option>
+                            {% for format in formats %}
+                                <option value="{{ loop.index }}" {% if loop.index in selectedFormat %} selected {% endif %}>{{ format }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                 </div>

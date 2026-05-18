@@ -114,4 +114,47 @@ final class ControllerHelper
 
         return $colors;
     }
+
+    /**
+     * Get session
+     *
+     * @param ServerRequestInterface $request
+     * @return array<string, mixed>
+     */
+    public function getSession(ServerRequestInterface $request): array
+    {
+        $session = $request->getAttribute('session');
+        return is_array($session) ? $session : [];
+    }
+
+    /**
+     * Get session value
+     *
+     * @param ServerRequestInterface $request
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
+     */
+    public function getSessionValue(ServerRequestInterface $request, string $key, $default = null)
+    {
+        $session = $this->getSession($request);
+        return $session[$key] ?? $default;
+    }
+
+    /**
+     * Set session value
+     *
+     * @param string $key
+     * @param mixed $value
+     * @return void
+     */
+    public function setSessionValue(string $key, $value): void
+    {
+        if (!isset($_SESSION)) {
+            return;
+        }
+
+        $_SESSION[$key] = $value;
+    }
+
 }

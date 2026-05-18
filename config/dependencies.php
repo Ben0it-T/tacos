@@ -42,6 +42,7 @@ use App\Controller\LoginController;
 use App\Controller\PasswordResetController;
 use App\Controller\ProfileController;
 use App\Controller\ProjectsController;
+use App\Controller\ReportsController;
 
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\RotatingFileHandler;
@@ -547,6 +548,15 @@ return function (ContainerInterface $container): void {
             [
                 'colorChoices' => (string)($settings['colorChoices'] ?? ''),
             ],
+            $c->get('translations')
+        );
+    });
+
+    $container->set(ReportsController::class, function (ContainerInterface $c) {
+        return new ReportsController(
+            $c->get(Twig::class),
+            $c->get(TimesheetService::class),
+            $c->get(ControllerHelper::class),
             $c->get('translations')
         );
     });

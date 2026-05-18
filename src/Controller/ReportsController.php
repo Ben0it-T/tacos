@@ -3,52 +3,71 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Helper\ControllerHelper;
 use App\Service\TimesheetService;
-use App\Service\UserService;
 
-use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-use Slim\Routing\RouteContext;
 use Slim\Views\Twig;
 
 final class ReportsController
 {
-    private $container;
-    private $timesheetService;
-    private $userService;
+    private Twig $twig;
+    private TimesheetService $timesheetService;
+    private ControllerHelper $helper;
+    private array $translations;
 
-    public function __construct(ContainerInterface $container, TimesheetService $timesheetService, UserService $userService)
+    public function __construct(Twig $twig, TimesheetService $timesheetService, ControllerHelper $helper, array $translations)
     {
-        $this->container = $container;
+        $this->twig = $twig;
         $this->timesheetService = $timesheetService;
-        $this->userService = $userService;
+        $this->helper = $helper;
+        $this->translations = $translations;
     }
 
     public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $twig  = $this->container->get(Twig::class);
-        $translations = $this->container->get('translations');
-        $routeContext = RouteContext::fromRequest($request);
-        $routeParser = $routeContext->getRouteParser();
-        $session = $request->getAttribute('session');
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
+        $currentUser = $this->helper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->helper->redirect($request, $response, 'login');
+        }
+
+        $session = $this->helper->getSessionValue($request, 'reports', []);
 
         // Report List
-        $reports = array(
-            1 => $translations['form_label_project'],
-            2 => $translations['form_label_project_number'],
-            3 => $translations['form_label_activity'],
-            4 => $translations['form_label_activity_number'],
-            5 => $translations['form_label_customer'],
-            6 => $translations['form_label_customer_number'],
-        );
+        $reports = [
+            1 => $this->translations['form_label_project'],
+            2 => $this->translations['form_label_project_number'],
+            3 => $this->translations['form_label_activity'],
+            4 => $this->translations['form_label_activity_number'],
+            5 => $this->translations['form_label_customer'],
+            6 => $this->translations['form_label_customer_number'],
+        ];
 
-        $data = $request->getQueryParams();
+        // Format List
+        $formats = [
+            1 => $this->translations['form_label_format_time'],
+            2 => $this->translations['form_label_format_minutes'],
+            3 => $this->translations['form_label_format_pcent'],
+            4 => $this->translations['form_label_format_number'],
+        ];
+
+        $data = (array) $request->getQueryParams();
+
         // Filter : date
         if (isset($data['date']) && !empty($data['date'])) {
-            list($date1, $date2) = explode(" - ", $data['date']);
+            $today = date("Y-m-d");
+
+            $parts = explode(" - ", $data['date'], 2);
+
+            if (count($parts) === 2) {
+                [$date1, $date2] = $parts;
+            } else {
+                $date1 = $today;
+                $date2 = $today;
+            }
+
             $dateStart = date_create($date1);
             if ($dateStart instanceof \DateTime) {
                 $dateStart = date_format($dateStart,"Y-m-d");
@@ -65,9 +84,9 @@ final class ReportsController
                 $dateEnd = $dateStart;
             }
         }
-        else if (isset($session['reports']['dateStart'])) {
-            $dateStart = $session['reports']['dateStart'];
-            $dateEnd = $session['reports']['dateEnd'];
+        else if (isset($session['dateStart'])) {
+            $dateStart = $session['dateStart'];
+            $dateEnd = $session['dateEnd'];
         }
         // Filter : report
         if (isset($data['report']) && !empty($data['report'])) {
@@ -75,41 +94,46 @@ final class ReportsController
                 $selectedReport = $data['report'];
             }
         }
-        else if (isset($session['reports']['report'])) {
-            $selectedReport = $session['reports']['report'];
+        else if (isset($session['report'])) {
+            $selectedReport = $session['report'];
         }
         // Filter : format
         if (isset($data['format']) && !empty($data['format'])) {
-            if (array_key_exists($data['format'], $reports)) {
+            if (array_key_exists($data['format'], $formats)) {
                 $selectedFormat = $data['format'];
             }
         }
-        else if (isset($session['reports']['format'])) {
-            $selectedFormat = $session['reports']['format'];
+        else if (isset($session['format'])) {
+            $selectedFormat = $session['format'];
         }
 
-        $startOfTheWeek = $translations['dateFormats_startOfTheWeek'];
+        $startOfTheWeek = (int) $this->translations['dateFormats_startOfTheWeek'];
         $day = (date('w')+(7-$startOfTheWeek))%7;
-        $dateStart = isset($dateStart) ? $dateStart : date("Y-m-d", strtotime('-'.$day.' days'));
-        $dateEnd = isset($dateEnd) ? $dateEnd : date("Y-m-d", strtotime('+'.(6-$day).' days'));
-        $selectedReport = isset($selectedReport) ? $selectedReport : 1;
-        $selectedFormat = isset($selectedFormat) ? $selectedFormat : 1;
-        $_SESSION['reports']['dateStart'] = $dateStart;
-        $_SESSION['reports']['dateEnd'] = $dateEnd;
-        $_SESSION['reports']['report'] = $selectedReport;
-        $_SESSION['reports']['format'] = $selectedFormat;
+        $dateStart = $dateStart ?? date("Y-m-d", strtotime('-'.$day.' days'));
+        $dateEnd = $dateEnd ?? date("Y-m-d", strtotime('+'.(6-$day).' days'));
+        $selectedReport = $selectedReport ?? 1;
+        $selectedFormat = $selectedFormat ?? 1;
+        $this->helper->setSessionValue('reports', [
+            'dateStart' => $dateStart,
+            'dateEnd' => $dateEnd,
+            'report' => $selectedReport,
+            'format' => $selectedFormat,
+        ]);
 
         // Get data
         $res = $this->timesheetService->getReportData($currentUser->getId(), $dateStart, $dateEnd, intval($selectedReport), intval($selectedFormat));
-        $viewData = array();
-        $viewData['daterange']['start'] = $dateStart;
-        $viewData['daterange']['end'] = $dateEnd;
-        $viewData['selectedReport'] = $selectedReport;
-        $viewData['selectedFormat'] = $selectedFormat;
-        $viewData['reports'] = $reports;
-        $viewData['pivot'] = isset($res['pivot']) ? $res['pivot'] : array();
-        $viewData['chart'] = isset($res['chart']) ? $res['chart'] : array();
 
-        return $twig->render($response, 'reports.html.twig', $viewData);
+        return $this->twig->render($response, 'reports.html.twig', [
+            'daterange' => [
+                'start' => $dateStart,
+                'end'   => $dateEnd,
+            ],
+            'selectedReport' => $selectedReport,
+            'selectedFormat' => $selectedFormat,
+            'reports' => $reports,
+            'formats' => $formats,
+            'pivot'   => $res['pivot'] ?? [],
+            'chart'   => $res['chart'] ?? [],
+        ]);
     }
 }
