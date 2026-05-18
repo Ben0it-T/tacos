@@ -324,12 +324,13 @@ return function (ContainerInterface $container): void {
     $container->set(TimesheetService::class, function (ContainerInterface $c) {
         $settings = $c->get('settings')['timesheet'] ?? [];
         $rounding = $settings['rounding'] ?? [];
+        $modes    = ['floor','ceil','closest','none'];
 
         $startModeCandidate = (string)($rounding['start']['mode'] ?? 'floor');
-        $startMode = in_array($startModeCandidate, ['floor','ceil'], true) ? $startModeCandidate : 'floor';
+        $startMode = in_array($startModeCandidate, $modes, true) ? $startModeCandidate : 'floor';
 
         $endModeCandidate = (string)($rounding['end']['mode'] ?? 'ceil');
-        $endMode = in_array($endModeCandidate, ['floor','ceil'], true) ? $endModeCandidate : 'ceil';
+        $endMode = in_array($endModeCandidate, $modes, true) ? $endModeCandidate : 'ceil';
 
         return new TimesheetService(
             $c->get(ActivityRepository::class),
