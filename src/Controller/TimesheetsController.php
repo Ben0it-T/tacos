@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Helper\ControllerHelper;
+use App\Helper\RoundingHelper;
 use App\Service\ActivityService;
 use App\Service\CustomerService;
 use App\Service\ProjectService;
@@ -11,32 +13,32 @@ use App\Service\TeamService;
 use App\Service\TimesheetService;
 use App\Service\UserService;
 
-use App\Helper\RoundingHelper;
-
-use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Log\LoggerInterface;
 
 use Slim\Flash\Messages;
-use Slim\Routing\RouteContext;
 use Slim\Views\Twig;
 
 final class TimesheetsController
 {
-    private $container;
-    private $activityService;
-    private $customerService;
-    private $projectService;
-    private $tagService;
-    private $teamService;
-    private $timesheetService;
-    private $userService;
-    private $roundingHelper;
+    private Twig $twig;
+    private Messages $flash;
+    private ActivityService $activityService;
+    private CustomerService $customerService;
+    private ProjectService $projectService;
+    private TagService $tagService;
+    private TeamService $teamService;
+    private TimesheetService $timesheetService;
+    private UserService $userService;
+    private RoundingHelper $roundingHelper;
+    private ControllerHelper $controllerHelper;
+    private array $options;
+    private array $translations;
 
-    public function __construct(ContainerInterface $container, ActivityService $activityService, CustomerService $customerService, ProjectService $projectService, TagService $tagService, TeamService $teamService, TimesheetService $timesheetService, UserService $userService, RoundingHelper $roundingHelper)
+    public function __construct(Twig $twig, Messages $flash, ActivityService $activityService, CustomerService $customerService, ProjectService $projectService, TagService $tagService, TeamService $teamService, TimesheetService $timesheetService, UserService $userService, RoundingHelper $roundingHelper, ControllerHelper $controllerHelper, array $options, array $translations)
     {
-        $this->container = $container;
+        $this->twig = $twig;
+        $this->flash = $flash;
         $this->activityService = $activityService;
         $this->customerService = $customerService;
         $this->projectService = $projectService;
@@ -45,19 +47,17 @@ final class TimesheetsController
         $this->timesheetService = $timesheetService;
         $this->userService = $userService;
         $this->roundingHelper = $roundingHelper;
+        $this->controllerHelper = $controllerHelper;
+        $this->options = $options;
+        $this->translations = $translations;
     }
 
     public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $twig  = $this->container->get(Twig::class);
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
-
-        $routeContext = RouteContext::fromRequest($request);
-        $routeParser = $routeContext->getRouteParser();
-
-        $session = $request->getAttribute('session');
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
+        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->controllerHelper->redirect($request, $response, 'login');
+        }
 
         // Get projects
         $projects = $this->projectService->findAllByUserId($currentUser->getId(), 1);
@@ -91,6 +91,7 @@ final class TimesheetsController
         }
 
         // Get Query Params
+        $session = $request->getAttribute('session');
         $queryParams = $this->timesheetService->getQueryParams($request->getQueryParams(), $session['timesheets'] ?? []);
         $queryParams['users'] = [$currentUser->getId()];
 
@@ -127,7 +128,7 @@ final class TimesheetsController
         $allTags = $this->tagService->findAll();
         $timesheets = $this->timesheetService->findTimesheetsByCriteria($queryParams);
         $duration = 0;
-        $timesheetRestart = $this->container->get('settings')['timesheet']['restart'];
+        $timesheetRestart = $this->options['restart'];
         for ($i=0; $i < count($timesheets); $i++) {
             // Restart timesheet
             $canRestart = false;
@@ -152,10 +153,10 @@ final class TimesheetsController
                 }
             }
             // Links
-            $timesheets[$i]['deleteLink'] = $routeParser->urlFor('timesheets_delete', array('timesheetId' => $timesheets[$i]['id']));
-            $timesheets[$i]['editLink'] = $routeParser->urlFor('timesheets_edit', array('timesheetId' => $timesheets[$i]['id']));
-            $timesheets[$i]['restartLink'] = $canRestart ? $routeParser->urlFor('timesheets_restart', array('timesheetId' => $timesheets[$i]['id'])) : '';
-            $timesheets[$i]['stopLink'] = $routeParser->urlFor('timesheets_stop', array('timesheetId' => $timesheets[$i]['id']));
+            $timesheets[$i]['deleteLink'] = $this->controllerHelper->getUrlFor($request, 'timesheets_delete', array('timesheetId' => $timesheets[$i]['id']));
+            $timesheets[$i]['editLink'] = $this->controllerHelper->getUrlFor($request, 'timesheets_edit', array('timesheetId' => $timesheets[$i]['id']));
+            $timesheets[$i]['restartLink'] = $canRestart ? $this->controllerHelper->getUrlFor($request, 'timesheets_restart', array('timesheetId' => $timesheets[$i]['id'])) : '';
+            $timesheets[$i]['stopLink'] = $this->controllerHelper->getUrlFor($request, 'timesheets_stop', array('timesheetId' => $timesheets[$i]['id']));
         }
 
         // Render
@@ -173,23 +174,18 @@ final class TimesheetsController
         $viewData['timesheets'] = $timesheets;
         $viewData['duration'] = $duration > 0 ? $this->timesheetService->timeToString($duration) : "";
         // flash
-        $viewData['flashMsgSuccess'] = $flash->getFirstMessage('success');
-        $viewData['flashMsgError'] = $flash->getFirstMessage('error');
+        $viewData['flashMsgSuccess'] = $this->flash->getFirstMessage('success');
+        $viewData['flashMsgError'] = $this->flash->getFirstMessage('error');
 
-        return $twig->render($response, 'timesheets.html.twig', $viewData);
+        return $this->twig->render($response, 'timesheets.html.twig', $viewData);
     }
 
     public function indexTeams(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $twig  = $this->container->get(Twig::class);
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
-
-        $routeContext = RouteContext::fromRequest($request);
-        $routeParser = $routeContext->getRouteParser();
-
-        $session = $request->getAttribute('session');
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
+        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->controllerHelper->redirect($request, $response, 'login');
+        }
 
         // Get Teams
         $teams = $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
@@ -216,8 +212,10 @@ final class TimesheetsController
 
         // Get projects.
         $projects = $this->projectService->findAllByTeamleaderId($currentUser->getId(), 1);
+        $projectsIds = array();
         $projectsList = array();
         foreach ($projects as $entry) {
+            $projectsIds[] = $entry->getId();
             $projectsList[] = array(
                 'id' => $entry->getId(),
                 'name' => $entry->getName(),
@@ -244,6 +242,7 @@ final class TimesheetsController
         }
 
         // Get Query Params
+        $session = $request->getAttribute('session');
         $queryParams = $this->timesheetService->getQueryParams($request->getQueryParams(), $session['teamsTimesheets'] ?? []);
 
         // Check Query Params
@@ -325,23 +324,18 @@ final class TimesheetsController
         $viewData['timesheets'] = $timesheets;
         $viewData['duration'] = $duration > 0 ? $this->timesheetService->timeToString($duration) : "";
         // flash
-        $viewData['flashMsgSuccess'] = $flash->getFirstMessage('success');
-        $viewData['flashMsgError'] = $flash->getFirstMessage('error');
+        $viewData['flashMsgSuccess'] = $this->flash->getFirstMessage('success');
+        $viewData['flashMsgError'] = $this->flash->getFirstMessage('error');
 
-        return $twig->render($response, 'teams-timesheets.html.twig', $viewData);
+        return $this->twig->render($response, 'teams-timesheets.html.twig', $viewData);
     }
 
     public function createForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $twig  = $this->container->get(Twig::class);
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
-
-        $routeContext = RouteContext::fromRequest($request);
-        $routeParser = $routeContext->getRouteParser();
-
-        $session = $request->getAttribute('session');
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
+        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->controllerHelper->redirect($request, $response, 'login');
+        }
 
         // Get customers
         $customers = $this->customerService->findAllByUserId($currentUser->getId(), 1);
@@ -377,7 +371,7 @@ final class TimesheetsController
         $tags = $this->tagService->findAllVisible();
 
         // Start date
-        $rounding = $this->container->get('settings')['timesheet']['rounding'];
+        $rounding = $this->options['rounding'];
         $start = new \DateTime("now");
         if ($rounding['active']) $start = $this->roundingHelper->roundDateTime($start, $rounding['start']['minutes'], $rounding['start']['mode']);
 
@@ -389,49 +383,42 @@ final class TimesheetsController
         $viewData['startDate'] = date_format($start,"Y-m-d H:i");
         $viewData['endDate'] = date("Y-m-d H:i", mktime(23, 59, 59, intval(date("n")), intval(date("j")), intval(date("Y"))));
 
-        $viewData['flashMsgSuccess'] = $flash->getFirstMessage('success');
-        $viewData['flashMsgError'] = $flash->getFirstMessage('error');
+        $viewData['flashMsgSuccess'] = $this->flash->getFirstMessage('success');
+        $viewData['flashMsgError'] = $this->flash->getFirstMessage('error');
 
-        return $twig->render($response, 'timesheet-create.html.twig', $viewData);
+        return $this->twig->render($response, 'timesheet-create.html.twig', $viewData);
     }
 
     public function createAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
-
-        $session = $request->getAttribute('session');
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
+        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->controllerHelper->redirect($request, $response, 'login');
+        }
 
         $data = $request->getParsedBody();
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
 
         $data['userId'] = $currentUser->getId();
         $errors = $this->timesheetService->createTimesheet($data);
 
         if (empty($errors)) {
-            $flash->addMessage('success', $translations['form_success_create_activity']);
+            $this->flash->addMessage('success', $this->translations['form_success_create_activity']);
         }
         else {
-            $flash->addMessage('error', $errors);
+            $this->flash->addMessage('error', $errors);
         }
 
         // redirect
-        $url = $routeParser->urlFor('timesheets');
+        $url = $this->controllerHelper->getUrlFor($request, 'timesheets');
         return $response->withStatus(302)->withHeader('Location', $url);
     }
 
     public function editForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $twig  = $this->container->get(Twig::class);
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
-
-        $routeContext = RouteContext::fromRequest($request);
-        $routeParser = $routeContext->getRouteParser();
-
-        $session = $request->getAttribute('session');
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
+        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->controllerHelper->redirect($request, $response, 'login');
+        }
 
         $timesheet = $this->timesheetService->findTimesheetByIdAndUserId(intval($args['timesheetId']), $currentUser->getId());
 
@@ -496,84 +483,72 @@ final class TimesheetsController
             $viewData['activities'] = $activitiesList;
             $viewData['tags'] = $tags;
 
-            $viewData['flashMsgSuccess'] = $flash->getFirstMessage('success');
-            $viewData['flashMsgError'] = $flash->getFirstMessage('error');
+            $viewData['flashMsgSuccess'] = $this->flash->getFirstMessage('success');
+            $viewData['flashMsgError'] = $this->flash->getFirstMessage('error');
 
-            return $twig->render($response, 'timesheet-edit.html.twig', $viewData);
+            return $this->twig->render($response, 'timesheet-edit.html.twig', $viewData);
         }
 
 
         // redirect
-        $url = $routeParser->urlFor('timesheets');
+        $url = $this->controllerHelper->getUrlFor($request, 'timesheets');
         return $response->withStatus(302)->withHeader('Location', $url);
     }
 
     public function editAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
+        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->controllerHelper->redirect($request, $response, 'login');
+        }
 
         $data = $request->getParsedBody();
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-
-        $session = $request->getAttribute('session');
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
 
         $timesheet = $this->timesheetService->findTimesheetByIdAndUserId(intval($args['timesheetId']), $currentUser->getId());
 
         if ($timesheet) {
             $errors = $this->timesheetService->updateTimesheet($timesheet, $data);
             if (empty($errors)) {
-                $flash->addMessage('success', $translations['form_success_update']);
+                $this->flash->addMessage('success', $this->translations['form_success_update']);
             }
             else {
-                $flash->addMessage('error', $errors);
+                $this->flash->addMessage('error', $errors);
             }
 
             // redirect
-            $url = $routeParser->urlFor('timesheets_edit', array('timesheetId' => $timesheet->getId()));
+            $url = $this->controllerHelper->getUrlFor($request, 'timesheets_edit', array('timesheetId' => $timesheet->getId()));
             return $response->withStatus(302)->withHeader('Location', $url);
         }
 
         // redirect
-        $url = $routeParser->urlFor('timesheets');
+        $url = $this->controllerHelper->getUrlFor($request, 'timesheets');
         return $response->withStatus(302)->withHeader('Location', $url);
     }
 
     public function restartAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
-
-        $session = $request->getAttribute('session');
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-
-        $session = $request->getAttribute('session');
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
+        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->controllerHelper->redirect($request, $response, 'login');
+        }
 
         $timesheet = $this->timesheetService->findTimesheetByIdAndUserId(intval($args['timesheetId']), $currentUser->getId());
         if ($timesheet) {
             $this->timesheetService->restartTimesheet($timesheet);
-            $flash->addMessage('success', $translations['form_success_create_activity']);
+            $this->flash->addMessage('success', $this->translations['form_success_create_activity']);
         }
 
         // redirect
-        $url = $routeParser->urlFor('timesheets');
+        $url = $this->controllerHelper->getUrlFor($request, 'timesheets');
         return $response->withStatus(302)->withHeader('Location', $url);
     }
 
     public function deleteForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $twig  = $this->container->get(Twig::class);
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
-
-        $routeContext = RouteContext::fromRequest($request);
-        $routeParser = $routeContext->getRouteParser();
-
-        $session = $request->getAttribute('session');
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
+        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->controllerHelper->redirect($request, $response, 'login');
+        }
 
         $timesheet = $this->timesheetService->findTimesheetByIdAndUserId(intval($args['timesheetId']), $currentUser->getId());
 
@@ -590,51 +565,45 @@ final class TimesheetsController
                 'tags' => $this->tagService->findAllByTimesheetId($timesheet->getId()),
             );
 
-            return $twig->render($response, 'timesheet-delete.html.twig', $viewData);
+            return $this->twig->render($response, 'timesheet-delete.html.twig', $viewData);
         }
 
         // redirect
-        $url = $routeParser->urlFor('timesheets');
+        $url = $this->controllerHelper->getUrlFor($request, 'timesheets');
         return $response->withStatus(302)->withHeader('Location', $url);
     }
 
     public function deleteAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
-
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-
-        $session = $request->getAttribute('session');
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
+        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->controllerHelper->redirect($request, $response, 'login');
+        }
 
         $timesheet = $this->timesheetService->findTimesheetByIdAndUserId(intval($args['timesheetId']), $currentUser->getId());
 
         if ($timesheet) {
             $errors = $this->timesheetService->deleteTimesheet($timesheet);
             if (empty($errors)) {
-                $flash->addMessage('success', $translations['form_success_delete_record']);
+                $this->flash->addMessage('success', $this->translations['form_success_delete_record']);
             }
             else {
-                $flash->addMessage('error', $errors);
+                $this->flash->addMessage('error', $errors);
             }
 
         }
 
         // redirect
-        $url = $routeParser->urlFor('timesheets');
+        $url = $this->controllerHelper->getUrlFor($request, 'timesheets');
         return $response->withStatus(302)->withHeader('Location', $url);
     }
 
     public function stopAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
-
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-
-        $session = $request->getAttribute('session');
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
+        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->controllerHelper->redirect($request, $response, 'login');
+        }
 
         $timesheet = $this->timesheetService->findTimesheetByIdAndUserId(intval($args['timesheetId']), $currentUser->getId());
 
@@ -642,29 +611,31 @@ final class TimesheetsController
             $timesheet->setEnd(date("Y-m-d H:i"));
             $errors = $this->timesheetService->stopTimesheet($timesheet);
             if (empty($errors)) {
-                $flash->addMessage('success', $translations['form_success_update']);
+                $this->flash->addMessage('success', $this->translations['form_success_update']);
             }
             else {
-                $flash->addMessage('error', $errors);
+                $this->flash->addMessage('error', $errors);
             }
         }
 
         // redirect
-        $url = $routeParser->urlFor('timesheets');
+        $url = $this->controllerHelper->getUrlFor($request, 'timesheets');
         return $response->withStatus(302)->withHeader('Location', $url);
     }
 
     public function exportTimesheets(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
+        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->controllerHelper->redirect($request, $response, 'login');
+        }
+
         $session = $request->getAttribute('session');
 
         if (!isset($session['timesheets'])) {
-            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-            $url = $routeParser->urlFor('timesheets');
+            $url = $this->controllerHelper->getUrlFor($request, 'timesheets');
             return $response->withStatus(302)->withHeader('Location', $url);
         }
-
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
 
         $criteria = array(
             'start' => $session['timesheets']['start'],
@@ -739,15 +710,17 @@ final class TimesheetsController
 
     public function exportTeamsTimesheets(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
+        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->controllerHelper->redirect($request, $response, 'login');
+        }
+
         $session = $request->getAttribute('session');
 
         if (!isset($session['teamsTimesheets'])) {
-            $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-            $url = $routeParser->urlFor('timesheets_teams');
+            $url = $this->controllerHelper->getUrlFor($request, 'timesheets_teams');
             return $response->withStatus(302)->withHeader('Location', $url);
         }
-
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
 
         $criteria = array(
             'start' => $session['teamsTimesheets']['start'],
