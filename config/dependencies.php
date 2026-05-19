@@ -46,6 +46,7 @@ use App\Controller\ReportsController;
 use App\Controller\TagsController;
 use App\Controller\TeamsController;
 use App\Controller\UsersController;
+use App\Controller\TimesheetsController;
 use App\Controller\XhrController;
 
 use Monolog\Formatter\LineFormatter;
@@ -623,6 +624,54 @@ return function (ContainerInterface $container): void {
             $c->get(ProjectService::class),
             $c->get(UserService::class),
             $c->get(ControllerHelper::class)
+        );
+    });
+
+    $container->set(TimesheetsController::class, function (ContainerInterface $c) {
+        $settings = $c->get('settings')['timesheet'] ?? [];
+
+        $restart  = $settings['restart'] ?? [];
+        $rounding = $settings['rounding'] ?? [];
+
+        $modes    = ['floor','ceil','closest','none'];
+
+        $startModeCandidate = (string)($rounding['start']['mode'] ?? 'floor');
+        $startMode = in_array($startModeCandidate, $modes, true) ? $startModeCandidate : 'floor';
+
+        $endModeCandidate = (string)($rounding['end']['mode'] ?? 'ceil');
+        $endMode = in_array($endModeCandidate, $modes, true) ? $endModeCandidate : 'ceil';
+
+
+        return new TimesheetsController(
+            $c->get(Twig::class),
+            $c->get('flash'),
+            $c->get(ActivityService::class),
+            $c->get(CustomerService::class),
+            $c->get(ProjectService::class),
+            $c->get(TagService::class),
+            $c->get(TeamService::class),
+            $c->get(TimesheetService::class),
+            $c->get(UserService::class),
+            $c->get(RoundingHelper::class),
+            $c->get(ControllerHelper::class),
+            [
+                'restart' => [
+                    'active'   => (bool)($restart['active'] ?? false),
+                    'interval' => max(1, (int)($restart['interval'] ?? 3)),
+                ],
+                'rounding' => [
+                    'active' => (bool)($rounding['active'] ?? false),
+                    'start' => [
+                        'mode' => $startMode,
+                        'minutes' => max(1, (int)($rounding['start']['minutes'] ?? 5)),
+                    ],
+                    'end' => [
+                        'mode' => $endMode,
+                        'minutes' => max(1, (int)($rounding['end']['minutes'] ?? 5)),
+                    ],
+                ],
+            ],
+            $c->get('translations')
         );
     });
 
