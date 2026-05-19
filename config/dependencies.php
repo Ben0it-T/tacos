@@ -43,6 +43,7 @@ use App\Controller\PasswordResetController;
 use App\Controller\ProfileController;
 use App\Controller\ProjectsController;
 use App\Controller\ReportsController;
+use App\Controller\TagsController;
 
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\RotatingFileHandler;
@@ -557,6 +558,21 @@ return function (ContainerInterface $container): void {
             $c->get(Twig::class),
             $c->get(TimesheetService::class),
             $c->get(ControllerHelper::class),
+            $c->get('translations')
+        );
+    });
+
+    $container->set(TagsController::class, function (ContainerInterface $c) {
+        $settings = $c->get('settings')['theme'] ?? [];
+
+        return new TagsController(
+            $c->get(Twig::class),
+            $c->get('flash'),
+            $c->get(TagService::class),
+            $c->get(ControllerHelper::class),
+            [
+                'colorChoices' => (string)($settings['colorChoices'] ?? ''),
+            ],
             $c->get('translations')
         );
     });

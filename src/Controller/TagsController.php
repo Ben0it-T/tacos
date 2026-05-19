@@ -3,155 +3,136 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Helper\ControllerHelper;
 use App\Service\TagService;
 
-use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 use Slim\Flash\Messages;
-use Slim\Routing\RouteContext;
 use Slim\Views\Twig;
 
 final class TagsController
 {
-    private $container;
-    private $tagService;
+    private Twig $twig;
+    private Messages $flash;
+    private TagService $tagService;
+    private ControllerHelper $helper;
+    private array $options;
+    private array $translations;
 
-    public function __construct(ContainerInterface $container, TagService $tagService)
+    public function __construct(Twig $twig, Messages $flash, TagService $tagService, ControllerHelper $helper, array $options, array $translations)
     {
-        $this->container = $container;
+        $this->twig = $twig;
+        $this->flash = $flash;
         $this->tagService = $tagService;
+        $this->helper = $helper;
+        $this->options = $options;
+        $this->translations = $translations;
     }
 
     public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $twig  = $this->container->get(Twig::class);
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
+        $currentUser = $this->helper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->helper->redirect($request, $response, 'login');
+        }
 
-        $routeContext = RouteContext::fromRequest($request);
-        $routeParser = $routeContext->getRouteParser();
-
-        // Get tags
         $tags = $this->tagService->findAll();
-        $tagsList = array();
-        foreach ($tags as $tag) {
-            $tagsList[] = array(
-                'name' => $tag->getName(),
-                'color' => $tag->getColor(),
-                'visible' => $tag->getVisible(),
-                'editLink' => $routeParser->urlFor('tags_edit', array('tagId' => $tag->getId())),
-            );
-        }
+        $tagsList = $this->mapTagsForList($request, $tags);
 
-        // Get colors
-        $colorChoices = $this->container->get('settings')['theme']['colorChoices'];
-        $colorsList = array();
-        foreach (explode(',',$colorChoices) as $key => $value) {
-            list($colorName, $colorValue) = explode('|', $value);
-            //$colorsList[$colorName] = $colorValue;
-            $colorsList[$key] = array(
-                'name' => $colorName,
-                'value' => $colorValue,
-            );
-        }
+        $colors = $this->helper->parseColorChoices((string)($this->options['colorChoices'] ?? ''));
 
-        $viewData = array();
-        $viewData['tags'] = $tagsList;
-        $viewData['colors'] = $colorsList;
-
-        $viewData['flashMsgSuccess'] = $flash->getFirstMessage('success');
-        $viewData['flashMsgError'] = $flash->getFirstMessage('error');
-
-        return $twig->render($response, 'tags.html.twig', $viewData);
+        return $this->twig->render($response, 'tags.html.twig', [
+            'tags'            => $tagsList,
+            'colors'          => $colors,
+            'flashMsgSuccess' => $this->flash->getFirstMessage('success'),
+            'flashMsgError'   => $this->flash->getFirstMessage('error'),
+        ]);
     }
 
     public function createAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
+        $currentUser = $this->helper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->helper->redirect($request, $response, 'login');
+        }
 
-        $data = $request->getParsedBody();
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-
+        $data = (array) $request->getParsedBody();
         $errors = $this->tagService->createTag($data);
 
-        if (empty($errors)) {
-            $flash->addMessage('success', $translations['form_success_create_activity']);
+        if ($errors === '') {
+            $this->flash->addMessage('success', $this->translations['form_success_create_tag']);
         }
         else {
-            $flash->addMessage('error', $errors);
+            $this->flash->addMessage('error', $errors);
         }
 
-        // redirect
-        $url = $routeParser->urlFor('tags');
-        return $response->withStatus(302)->withHeader('Location', $url);
+        return $this->helper->redirect($request, $response, 'tags');
     }
 
     public function editForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $twig  = $this->container->get(Twig::class);
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
-
-        $routeContext = RouteContext::fromRequest($request);
-        $routeParser = $routeContext->getRouteParser();
-
-        $tag = $this->tagService->findTag(intval($args['tagId']));
-        if ($tag) {
-            // Get colors
-            $colorChoices = $this->container->get('settings')['theme']['colorChoices'];
-            $colorsList = array();
-            foreach (explode(',',$colorChoices) as $key => $value) {
-                list($colorName, $colorValue) = explode('|', $value);
-                //$colorsList[$colorName] = $colorValue;
-                $colorsList[$key] = array(
-                    'name' => $colorName,
-                    'value' => $colorValue,
-                );
-            }
-
-            $viewData = array();
-            $viewData['tag'] = $tag;
-            $viewData['colors'] = $colorsList;
-
-            $viewData['flashMsgSuccess'] = $flash->getFirstMessage('success');
-            $viewData['flashMsgError'] = $flash->getFirstMessage('error');
-
-            return $twig->render($response, 'tag-edit.html.twig', $viewData);
+        $currentUser = $this->helper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->helper->redirect($request, $response, 'login');
         }
 
-        // redirect
-        $url = $routeParser->urlFor('tags');
-        return $response->withStatus(302)->withHeader('Location', $url);
+        $tagId = (int)($args['tagId'] ?? 0);
+        $tag = $this->tagService->findTag($tagId);
+
+        if (!$tag) {
+            return $this->helper->redirect($request, $response, 'tags');
+        }
+
+        $colors = $this->helper->parseColorChoices((string)($this->options['colorChoices'] ?? ''));
+
+        return $this->twig->render($response, 'tag-edit.html.twig', [
+            'tag'            => $tag,
+            'colors'          => $colors,
+            'flashMsgSuccess' => $this->flash->getFirstMessage('success'),
+            'flashMsgError'   => $this->flash->getFirstMessage('error'),
+        ]);
     }
 
     public function editAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
-
-        $data = $request->getParsedBody();
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-
-        $tag = $this->tagService->findTag(intval($args['tagId']));
-        if ($tag) {
-            $errors = $this->tagService->updateTag($tag, $data);
-
-            if (empty($errors)) {
-                $flash->addMessage('success', $translations['form_success_update']);
-            }
-            else {
-                $flash->addMessage('error', $errors);
-                $url = $routeParser->urlFor('tags_edit', array('tagId' => $args['tagId']));
-                return $response->withStatus(302)->withHeader('Location', $url);
-            }
+        $currentUser = $this->helper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->helper->redirect($request, $response, 'login');
         }
 
-        // redirect
-        $url = $routeParser->urlFor('tags');
-        return $response->withStatus(302)->withHeader('Location', $url);
+        $tagId = (int)($args['tagId'] ?? 0);
+        $tag = $this->tagService->findTag($tagId);
+
+        if (!$tag) {
+            return $this->helper->redirect($request, $response, 'tags');
+        }
+
+        $data = (array) $request->getParsedBody();
+        $errors = $this->tagService->updateTag($tag, $data);
+
+        if ($errors === '') {
+            $this->flash->addMessage('success', $this->translations['form_success_update']);
+            return $this->helper->redirect($request, $response, 'tags');
+        }
+
+        $this->flash->addMessage('error', $errors);
+        return $this->helper->redirect($request, $response, 'tags_edit', ['tagId' => $tagId]);
     }
 
+    // Helpers
+    private function mapTagsForList(ServerRequestInterface $request, array $tags): array
+    {
+        $list = [];
+        foreach ($tags as $tag) {
+            $list[] = [
+                'name'     => $tag->getName(),
+                'color'    => $tag->getColor(),
+                'visible'  => $tag->getVisible(),
+                'editLink' => $this->helper->getUrlFor($request, 'tags_edit', ['tagId' => $tag->getId()]),
+            ];
+        }
+        return $list;
+    }
 }

@@ -115,6 +115,7 @@ return array(
     'form_success_create_activity' => "Activity created.",
     'form_success_create_customer' => "Customer created.",
     'form_success_create_project' => "Project created.",
+    'form_success_create_tag' => "Tag created.",
     'form_success_create_team' => "Team created.",
     'form_success_create_user' => "User created.",
     'form_success_delete_record' => "Record deleted.",

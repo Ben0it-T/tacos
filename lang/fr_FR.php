@@ -115,6 +115,7 @@ return array(
     'form_success_create_activity' => "Activité créée.",
     'form_success_create_customer' => "Client créé.",
     'form_success_create_project' => "Projet créé.",
+    'form_success_create_tag' => "Étiquette créée.",
     'form_success_create_team' => "Equipe créée.",
     'form_success_create_user' => "Utilisateur créé.",
     'form_success_delete_record' => "Enregistrement supprimé.",
