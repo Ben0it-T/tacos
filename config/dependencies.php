@@ -46,6 +46,7 @@ use App\Controller\ReportsController;
 use App\Controller\TagsController;
 use App\Controller\TeamsController;
 use App\Controller\UsersController;
+use App\Controller\XhrController;
 
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\RotatingFileHandler;
@@ -613,6 +614,15 @@ return function (ContainerInterface $container): void {
                 'pwdMinLength'   => max(1, (int)($settings['pwdMinLength'] ?? 16)),
             ],
             $c->get('translations')
+        );
+    });
+
+    $container->set(XhrController::class, function (ContainerInterface $c) {
+        return new XhrController(
+            $c->get(ActivityService::class),
+            $c->get(ProjectService::class),
+            $c->get(UserService::class),
+            $c->get(ControllerHelper::class)
         );
     });
 
