@@ -303,8 +303,8 @@ final class UserService
         $name = $this->validationHelper->sanitizeName($data['user_edit_form_name']);
         $username = $this->validationHelper->sanitizeUsername($data['user_edit_form_username']);
         $email = $this->validationHelper->sanitizeEmail($data['user_edit_form_email']);
-        $role = intval($data['user_edit_form_role']);
-        $status = isset($data['user_edit_form_status']) ? 1 : 0;
+        $role = (int) $data['user_edit_form_role'];
+        $status = (int) $data['user_edit_form_status'];
         $password1 = $data['user_edit_form_password1'] ?? '';
         $password2 = $data['user_edit_form_password2'] ?? '';
 
