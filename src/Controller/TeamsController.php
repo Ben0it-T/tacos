@@ -3,231 +3,196 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Helper\ControllerHelper;
 use App\Service\CustomerService;
 use App\Service\ProjectService;
 use App\Service\TeamService;
 use App\Service\UserService;
 
-use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 use Slim\Flash\Messages;
-use Slim\Routing\RouteContext;
 use Slim\Views\Twig;
-
 
 final class TeamsController
 {
-    private $container;
-    private $customerService;
-    private $projectService;
-    private $teamService;
-    private $userService;
+    private Twig $twig;
+    private Messages $flash;
+    private CustomerService $customerService;
+    private ProjectService $projectService;
+    private TeamService $teamService;
+    private UserService $userService;
+    private ControllerHelper $helper;
+    private array $options;
+    private array $translations;
 
-    public function __construct(ContainerInterface $container, CustomerService $customerService, ProjectService $projectService, TeamService $teamService, UserService $userService)
+    public function __construct(Twig $twig, Messages $flash, CustomerService $customerService, ProjectService $projectService, TeamService $teamService, UserService $userService, ControllerHelper $helper, array $options, array $translations)
     {
-        $this->container = $container;
+        $this->twig = $twig;
+        $this->flash = $flash;
         $this->customerService = $customerService;
         $this->projectService = $projectService;
         $this->teamService = $teamService;
         $this->userService = $userService;
+        $this->helper = $helper;
+        $this->options = $options;
+        $this->translations = $translations;
     }
 
     public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $twig  = $this->container->get(Twig::class);
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
-
-        $routeContext = RouteContext::fromRequest($request);
-        $routeParser = $routeContext->getRouteParser();
-
-        $session = $request->getAttribute('session');
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
-
-        $teams = ($currentUser->getRole() === 3) ? $this->teamService->findAllTeamsWithUserCountAndTeamleads() : $this->teamService->findAllTeamsWithUserCountAndTeamleadsByTeamleaderId($currentUser->getId());
-        for ($i=0; $i < count($teams); $i++) {
-            $teams[$i]['editLink'] = $routeParser->urlFor('teams_edit', array('teamId' => $teams[$i]['id']));
-            $teams[$i]['viewLink'] = $routeParser->urlFor('teams_details', array('teamId' => $teams[$i]['id']));
+        $currentUser = $this->helper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->helper->redirect($request, $response, 'login');
         }
+
+        $teams = $this->helper->isAdmin($currentUser)
+            ? $this->teamService->findAllTeamsWithUserCountAndTeamleads()
+            : $this->teamService->findAllTeamsWithUserCountAndTeamleadsByTeamleaderId($currentUser->getId());
+
+        $teams = $this->addTeamLinks($request, $teams);
 
         $users = $this->userService->findAllUsers(1);
-        $usersList = array();
-        foreach ($users as $user) {
-            $usersList[] = array(
-                'id' => $user->getId(),
-                'name' => $user->getName(),
-            );
-        }
 
-        $colorChoices = $this->container->get('settings')['theme']['colorChoices'];
-        $colorsList = array();
-        foreach (explode(',',$colorChoices) as $key => $value) {
-            list($colorName, $colorValue) = explode('|', $value);
-            //$colorsList[$colorName] = $colorValue;
-            $colorsList[$key] = array(
-                'name' => $colorName,
-                'value' => $colorValue,
-            );
-        }
+        $colors = $this->helper->parseColorChoices((string)($this->options['colorChoices'] ?? ''));
 
-        $viewData = array();
-        $viewData['canCreateTeam'] = ($currentUser->getRole() === 3) ? true : false;
-        $viewData['colors'] = $colorsList;
-        $viewData['teams'] = $teams;
-        $viewData['users'] = $usersList;
-
-        $viewData['flashMsgSuccess'] = $flash->getFirstMessage('success');
-        $viewData['flashMsgError'] = $flash->getFirstMessage('error');
-
-        return $twig->render($response, 'teams.html.twig', $viewData);
+        return $this->twig->render($response, 'teams.html.twig', [
+            'canCreateTeam'   => $this->helper->isAdmin($currentUser),
+            'colors'          => $colors,
+            'teams'           => $teams,
+            'users'           => $this->helper->mapIdNameList($users),
+            'flashMsgSuccess' => $this->flash->getFirstMessage('success'),
+            'flashMsgError'   => $this->flash->getFirstMessage('error'),
+        ]);
     }
 
     public function createAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
-
-        $data = $request->getParsedBody();
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-
+        $data = (array) $request->getParsedBody();
         $errors = $this->teamService->createTeam($data);
 
-        if (empty($errors)) {
-            $flash->addMessage('success', $translations['form_success_create_team']);
+        if ($errors === '') {
+            $this->flash->addMessage('success', $this->translations['form_success_create_team']);
         }
         else {
-            $flash->addMessage('error', $errors);
+            $this->flash->addMessage('error', $errors);
         }
 
-        // redirect
-        $url = $routeParser->urlFor('teams');
-        return $response->withStatus(302)->withHeader('Location', $url);
+        return $this->helper->redirect($request, $response, 'teams');
     }
 
     public function teamsDetails(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $twig  = $this->container->get(Twig::class);
-        $translations = $this->container->get('translations');
-
-        $routeContext = RouteContext::fromRequest($request);
-        $routeParser = $routeContext->getRouteParser();
-
-        $session = $request->getAttribute('session');
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
-
-        $team = ($currentUser->getRole() === 3) ? $this->teamService->findTeam(intval($args['teamId'])) : $this->teamService->findTeamByIdAndTeamleader(intval($args['teamId']), $currentUser->getId());
-        if ($team) {
-            $teamMembers = $this->userService->findAllUsersByTeamId($team->getId());
-            $teamleaders = $this->userService->findAllTeamleadersByTeamId($team->getId());
-            $customers = $this->customerService->findAllByTeamId($team->getId());
-            $projects = $this->projectService->findAllProjectsWithCustomerByTeamId($team->getId());
-
-            $viewData = array();
-            $viewData['team'] = $team;
-            $viewData['teamMembers'] = $teamMembers;
-            $viewData['teamleaders'] = $teamleaders;
-            $viewData['customers'] = $customers;
-            $viewData['projects'] = $projects;
-
-            return $twig->render($response, 'team-details.html.twig', $viewData);
+        $currentUser = $this->helper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->helper->redirect($request, $response, 'login');
         }
 
-        // redirect
-        $url = $routeParser->urlFor('teams');
-        return $response->withStatus(302)->withHeader('Location', $url);
+        $teamId = (int)($args['teamId'] ?? 0);
+        $team = $this->helper->isAdmin($currentUser)
+            ? $this->teamService->findTeam($teamId)
+            : $this->teamService->findTeamByIdAndTeamleader($teamId, $currentUser->getId());
 
+        if (!$team) {
+            return $this->helper->redirect($request, $response, 'teams');
+        }
+
+        $teamMembers = $this->userService->findAllUsersByTeamId($team->getId());
+        $teamleaders = $this->userService->findAllTeamleadersByTeamId($team->getId());
+        $customers   = $this->customerService->findAllByTeamId($team->getId());
+        $projects    = $this->projectService->findAllProjectsWithCustomerByTeamId($team->getId());
+
+        return $this->twig->render($response, 'team-details.html.twig', [
+            'team'        => $team,
+            'teamMembers' => $teamMembers,
+            'teamleaders' => $teamleaders,
+            'customers'   => $customers,
+            'projects'    => $projects,
+        ]);
     }
 
     public function editForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $twig  = $this->container->get(Twig::class);
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
-
-        $routeContext = RouteContext::fromRequest($request);
-        $routeParser = $routeContext->getRouteParser();
-
-        $session = $request->getAttribute('session');
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
-
-        $team = ($currentUser->getRole() === 3) ? $this->teamService->findTeam(intval($args['teamId'])) : $this->teamService->findTeamByIdAndTeamleader(intval($args['teamId']), $currentUser->getId());
-        if ($team) {
-            $users = $this->userService->findAllUsers(1);
-            $usersList = array();
-            foreach ($users as $user) {
-                $usersList[] = array(
-                    'id' => $user->getId(),
-                    'name' => $user->getName(),
-                );
-            }
-
-            $teamMembers = $this->userService->findAllUsersByTeamId($team->getId());
-            $teamMembersIds = array();
-            foreach ($teamMembers as $teamMember) {
-                $teamMembersIds[] = $teamMember['id'];
-            }
-
-            $teamleaders = $this->userService->findAllTeamleadersByTeamId($team->getId());
-
-            $colorChoices = $this->container->get('settings')['theme']['colorChoices'];
-            $colorsList = array();
-            foreach (explode(',',$colorChoices) as $key => $value) {
-                list($colorName, $colorValue) = explode('|', $value);
-                //$colorsList[$colorName] = $colorValue;
-                $colorsList[$key] = array(
-                    'name' => $colorName,
-                    'value' => $colorValue,
-                );
-            }
-
-            $viewData = array();
-            $viewData['team'] = $team;
-            $viewData['colors'] = $colorsList;
-            $viewData['users'] = $usersList;
-            $viewData['teamMembers'] = $teamMembers;
-            $viewData['teamMembersIds'] = $teamMembersIds;
-            $viewData['teamleaders'] = $teamleaders;
-
-            $viewData['flashMsgSuccess'] = $flash->getFirstMessage('success');
-            $viewData['flashMsgError'] = $flash->getFirstMessage('error');
-
-            return $twig->render($response, 'team-edit.html.twig', $viewData);
+        $currentUser = $this->helper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->helper->redirect($request, $response, 'login');
         }
 
-        // redirect
-        $url = $routeParser->urlFor('teams');
-        return $response->withStatus(302)->withHeader('Location', $url);
+        $teamId = (int)($args['teamId'] ?? 0);
+
+        $team = $this->helper->isAdmin($currentUser)
+            ? $this->teamService->findTeam($teamId)
+            : $this->teamService->findTeamByIdAndTeamleader($teamId, $currentUser->getId());
+
+        if (!$team) {
+            return $this->helper->redirect($request, $response, 'teams');
+        }
+
+        $users = $this->userService->findAllUsers(1);
+
+        $teamMembers = $this->userService->findAllUsersByTeamId($team->getId());
+        $teamMembersIds = array_map(static fn($t) => $t['id'], $teamMembers);
+
+        $teamleaders = $this->userService->findAllTeamleadersByTeamId($team->getId());
+
+        $colors = $this->helper->parseColorChoices((string)($this->options['colorChoices'] ?? ''));
+
+        return $this->twig->render($response, 'team-edit.html.twig', [
+            'team'             => $team,
+            'colors'           => $colors,
+            'users'            => $this->helper->mapIdNameList($users),
+            'teamMembers'      => $teamMembers,
+            'teamMembersIds'   => $teamMembersIds,
+            'teamleaders'      => $teamleaders,
+            'flashMsgSuccess'  => $this->flash->getFirstMessage('success'),
+            'flashMsgError'    => $this->flash->getFirstMessage('error'),
+
+        ]);
     }
 
     public function editAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $flash = $this->container->get('flash');
-        $translations = $this->container->get('translations');
-
-        $data = $request->getParsedBody();
-        $routeParser = RouteContext::fromRequest($request)->getRouteParser();
-
-        $session = $request->getAttribute('session');
-        $currentUser = $this->userService->findUser($session['auth']['userId']);
-
-        $team = ($currentUser->getRole() === 3) ? $this->teamService->findTeam(intval($args['teamId'])) : $this->teamService->findTeamByIdAndTeamleader(intval($args['teamId']), $currentUser->getId());
-        if ($team) {
-            $errors = $this->teamService->updateTeam($team, $data);
-
-            if (empty($errors)) {
-                $flash->addMessage('success', $translations['form_success_update']);
-            }
-            else {
-                $flash->addMessage('error', $errors);
-                $url = $routeParser->urlFor('teams_edit', array('teamId' => $args['teamId']));
-                return $response->withStatus(302)->withHeader('Location', $url);
-            }
+        $currentUser = $this->helper->getCurrentUser($request);
+        if (!$currentUser) {
+            return $this->helper->redirect($request, $response, 'login');
         }
 
-        // redirect
-        $url = $routeParser->urlFor('teams');
-        return $response->withStatus(302)->withHeader('Location', $url);
+        $teamId = (int)($args['teamId'] ?? 0);
+
+        $team = $this->helper->isAdmin($currentUser)
+            ? $this->teamService->findTeam($teamId)
+            : $this->teamService->findTeamByIdAndTeamleader($teamId, $currentUser->getId());
+
+        if (!$team) {
+            return $this->helper->redirect($request, $response, 'teams');
+        }
+
+        $data = (array) $request->getParsedBody();
+        $errors = $this->teamService->updateTeam($team, $data);
+        if ($errors === '') {
+            $this->flash->addMessage('success', $this->translations['form_success_update']);
+            return $this->helper->redirect($request, $response, 'teams');
+        }
+
+        $this->flash->addMessage('error', $errors);
+        return $this->helper->redirect($request, $response, 'teams_edit', ['teamId' => $teamId]);
+    }
+
+    // Helpers
+    private function addTeamLinks(ServerRequestInterface $request, array $teams): array
+    {
+        foreach ($teams as &$team) {
+            if (!isset($team['id'])) {
+                continue;
+            }
+            $id = (int) $team['id'];
+
+            $team['editLink'] = $this->helper->getUrlFor($request, 'teams_edit', ['teamId' => $id]);
+            $team['viewLink'] = $this->helper->getUrlFor($request, 'teams_details', ['teamId' => $id]);
+        }
+        unset($team);
+
+        return $teams;
     }
 }

@@ -44,6 +44,7 @@ use App\Controller\ProfileController;
 use App\Controller\ProjectsController;
 use App\Controller\ReportsController;
 use App\Controller\TagsController;
+use App\Controller\TeamsController;
 
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\RotatingFileHandler;
@@ -569,6 +570,24 @@ return function (ContainerInterface $container): void {
             $c->get(Twig::class),
             $c->get('flash'),
             $c->get(TagService::class),
+            $c->get(ControllerHelper::class),
+            [
+                'colorChoices' => (string)($settings['colorChoices'] ?? ''),
+            ],
+            $c->get('translations')
+        );
+    });
+
+    $container->set(TeamsController::class, function (ContainerInterface $c) {
+        $settings = $c->get('settings')['theme'] ?? [];
+
+        return new TeamsController(
+            $c->get(Twig::class),
+            $c->get('flash'),
+            $c->get(CustomerService::class),
+            $c->get(ProjectService::class),
+            $c->get(TeamService::class),
+            $c->get(UserService::class),
             $c->get(ControllerHelper::class),
             [
                 'colorChoices' => (string)($settings['colorChoices'] ?? ''),
