@@ -91,8 +91,7 @@ final class TimesheetsController
         }
 
         // Get Query Params
-        $session = $request->getAttribute('session');
-        $queryParams = $this->timesheetService->getQueryParams($request->getQueryParams(), $session['timesheets'] ?? []);
+        $queryParams = $this->getTimesheetFilters($request, 'timesheets');
         $queryParams['users'] = [$currentUser->getId()];
 
         // Check selected Projects
@@ -117,12 +116,13 @@ final class TimesheetsController
         }
 
         // Store filters
-        $_SESSION['timesheets'] = array();
-        $_SESSION['timesheets']['start'] = $queryParams['start'];
-        $_SESSION['timesheets']['end'] = $queryParams['end'];
-        $_SESSION['timesheets']['projects'] = $queryParams['projects'];
-        $_SESSION['timesheets']['activities'] = $queryParams['activities'];
-        $_SESSION['timesheets']['tags'] = $queryParams['tags'];
+        $this->controllerHelper->setSessionValue('timesheets', [
+            'start'      => $queryParams['start'],
+            'end'        => $queryParams['end'],
+            'projects'   => $queryParams['projects'],
+            'activities' => $queryParams['activities'],
+            'tags'       => $queryParams['tags'],
+        ]);
 
         // Get timesheets
         $allTags = $this->tagService->findAll();
@@ -242,8 +242,8 @@ final class TimesheetsController
         }
 
         // Get Query Params
-        $session = $request->getAttribute('session');
-        $queryParams = $this->timesheetService->getQueryParams($request->getQueryParams(), $session['teamsTimesheets'] ?? []);
+        $queryParams = $this->getTimesheetFilters($request, 'teamsTimesheets');
+
 
         // Check Query Params
         // Check selected Users
@@ -275,13 +275,14 @@ final class TimesheetsController
         }
 
         // Store filters
-        $_SESSION['teamsTimesheets'] = array();
-        $_SESSION['teamsTimesheets']['start'] = $queryParams['start'];
-        $_SESSION['teamsTimesheets']['end'] = $queryParams['end'];
-        $_SESSION['teamsTimesheets']['users'] = $queryParams['users'];
-        $_SESSION['teamsTimesheets']['projects'] = $queryParams['projects'];
-        $_SESSION['teamsTimesheets']['activities'] = $queryParams['activities'];
-        $_SESSION['teamsTimesheets']['tags'] = $queryParams['tags'];
+        $this->controllerHelper->setSessionValue('teamsTimesheets', [
+            'start'      => $queryParams['start'],
+            'end'        => $queryParams['end'],
+            'users'      => $queryParams['users'],
+            'projects'   => $queryParams['projects'],
+            'activities' => $queryParams['activities'],
+            'tags'       => $queryParams['tags'],
+        ]);
 
         $criteria = $queryParams;
         $criteria['users'] = empty($queryParams['users']) ? $usersIds : $queryParams['users'];
@@ -630,21 +631,11 @@ final class TimesheetsController
             return $this->controllerHelper->redirect($request, $response, 'login');
         }
 
-        $session = $request->getAttribute('session');
+        $criteria = $this->buildTimesheetCriteriaFromSession($request, $currentUser);
 
-        if (!isset($session['timesheets'])) {
-            $url = $this->controllerHelper->getUrlFor($request, 'timesheets');
-            return $response->withStatus(302)->withHeader('Location', $url);
+        if ($criteria === null) {
+            return $this->controllerHelper->redirect($request, $response, 'timesheets');
         }
-
-        $criteria = array(
-            'start' => $session['timesheets']['start'],
-            'end' => $session['timesheets']['end'],
-            'users' => [$currentUser->getId()],
-            'projects' => $session['timesheets']['projects'],
-            'activities' => $session['timesheets']['activities'],
-            'tags' => $session['timesheets']['tags']
-        );
 
         // Set
         $delimiter = ";";
@@ -715,21 +706,11 @@ final class TimesheetsController
             return $this->controllerHelper->redirect($request, $response, 'login');
         }
 
-        $session = $request->getAttribute('session');
+        $criteria = $this->buildTeamsTimesheetCriteriaFromSession($request);
 
-        if (!isset($session['teamsTimesheets'])) {
-            $url = $this->controllerHelper->getUrlFor($request, 'timesheets_teams');
-            return $response->withStatus(302)->withHeader('Location', $url);
+        if ($criteria === null) {
+            return $this->controllerHelper->redirect($request, $response, 'timesheets_teams');
         }
-
-        $criteria = array(
-            'start' => $session['teamsTimesheets']['start'],
-            'end' => $session['teamsTimesheets']['end'],
-            'users' => $session['teamsTimesheets']['users'],
-            'projects' => $session['teamsTimesheets']['projects'],
-            'activities' => $session['teamsTimesheets']['activities'],
-            'tags' => $session['teamsTimesheets']['tags']
-        );
 
         // Get Teams
         $teams = $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
@@ -816,5 +797,109 @@ final class TimesheetsController
             ->withAddedHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->withHeader('Cache-Control', 'post-check=0, pre-check=0')
             ->withHeader('Pragma', 'no-cache');
+    }
+
+    // Helpers
+    private function getTimesheetFilters(ServerRequestInterface $request, string $key): array
+    {
+        $filters = $this->controllerHelper->getSessionValue($request, $key, []);
+        $filters = is_array($filters) ? $filters : [];
+        $queryParams = $this->timesheetService->getQueryParams($request->getQueryParams(), $filters);
+        return is_array($queryParams) ? $queryParams : [];
+    }
+
+    private function buildTimesheetCriteriaFromSession(ServerRequestInterface $request, $currentUser): ?array
+    {
+        $session = $this->controllerHelper->getSessionValue($request, 'timesheets', []);
+
+        $schema = [
+            'start'      => ['type' => 'string', 'required' => true],
+            'end'        => ['type' => 'string', 'required' => true],
+            'projects'   => ['type' => 'array',  'required' => false],
+            'activities' => ['type' => 'array',  'required' => false],
+            'tags'       => ['type' => 'array',  'required' => false],
+        ];
+
+
+        if (!$this->validateTimesheetSession($session, $schema)) {
+            return null;
+        }
+
+        return [
+            'start'      => $session['start'],
+            'end'        => $session['end'],
+            'users'      => [$currentUser->getId()],
+            'projects'   => $session['projects'] ?? [],
+            'activities' => $session['activities'] ?? [],
+            'tags'       => $session['tags'] ?? [],
+        ];
+    }
+
+    private function buildTeamsTimesheetCriteriaFromSession(ServerRequestInterface $request): ?array
+    {
+        $session = $this->controllerHelper->getSessionValue($request, 'teamsTimesheets', []);
+
+        $schema = [
+            'start'      => ['type' => 'string', 'required' => true],
+            'end'        => ['type' => 'string', 'required' => true],
+            'users'      => ['type' => 'array',  'required' => true],
+            'projects'   => ['type' => 'array',  'required' => false],
+            'activities' => ['type' => 'array',  'required' => false],
+            'tags'       => ['type' => 'array',  'required' => false],
+        ];
+
+
+        if (!$this->validateTimesheetSession($session, $schema)) {
+            return null;
+        }
+
+        return [
+            'start'      => $session['start'],
+            'end'        => $session['end'],
+            'users'      => $session['users'],
+            'projects'   => $session['projects'] ?? [],
+            'activities' => $session['activities'] ?? [],
+            'tags'       => $session['tags'] ?? [],
+        ];
+    }
+
+    private function validateTimesheetSession(array $session, array $schema): bool
+    {
+        if (empty($session)) {
+            return false;
+        }
+
+        foreach ($schema as $key => $rule) {
+            $required = (bool)($rule['required'] ?? false);
+            $type     = (string)($rule['type'] ?? '');
+
+            if (!array_key_exists($key, $session)) {
+                if ($required) {
+                    return false;
+                }
+                continue;
+            }
+
+            $value = $session[$key];
+
+            switch ($type) {
+                case 'array':
+                    if (!is_array($value)) {
+                        return false;
+                    }
+                    break;
+
+                case 'string':
+                    if (!is_string($value) || trim($value) === '') {
+                        return false;
+                    }
+                    break;
+
+                default:
+                    return false;
+            }
+        }
+
+        return true;
     }
 }
