@@ -507,7 +507,7 @@ final class TimesheetService
         // Validate userId
         if ($userId === 0) {
             // Oops
-            return $errorMsg;
+            return $this->translations['error_occurred'];
         }
 
         // Validate Dates
