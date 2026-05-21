@@ -78,8 +78,8 @@ final class ControllerHelper
     {
         return array_map(static function ($e): array {
             return [
-                'id'   => $e->getId(),
-                'name' => $e->getName(),
+                'id'   => (int) $e->getId(),
+                'name' => (string) $e->getName(),
             ];
         }, $entities);
     }
