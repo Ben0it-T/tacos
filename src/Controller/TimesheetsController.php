@@ -59,63 +59,26 @@ final class TimesheetsController
             return $this->controllerHelper->redirect($request, $response, 'login');
         }
 
-        // Get projects
-        $projects = $this->projectService->findAllByUserId($currentUser->getId(), 1);
-        $projectsIds = array();
-        $projectsList = array();
-        foreach ($projects as $entry) {
-            $projectsIds[] = $entry->getId();
-            $projectsList[] = array(
-                'id' => $entry->getId(),
-                'name' => $entry->getName(),
-            );
-        }
-
-        // Get activities
-        $activities = $this->activityService->findAllByUserId($currentUser->getId(), 1);
-        $activitiesIds = array();
-        $activitiesList = array();
-        foreach ($activities as $entry) {
-            $activitiesIds[] = $entry->getId();
-            $activitiesList[] = array(
-                'id' => $entry->getId(),
-                'name' => $entry->getName(),
-            );
-        }
-
-        // Get tags
-        $tags = $this->tagService->findAllVisible();
-        $tagsIds = array();
-        foreach ($tags as $entry) {
-            $tagsIds[] = $entry->getId();
-        }
-
-        // Get Query Params
+        // Query Params
         $queryParams = $this->getTimesheetFilters($request, 'timesheets');
         $queryParams['users'] = [$currentUser->getId()];
 
-        // Check selected Projects
-        for ($i=0; $i < count($queryParams['projects']) ; $i++) {
-            if (!in_array($queryParams['projects'][$i], $projectsIds)) {
-                unset($queryParams['projects'][$i]);
-            }
-        }
+        // Projects
+        $projects = $this->projectService->findAllByUserId($currentUser->getId(), 1);
+        $projectsIds = array_map(static fn($p) => $p->getId(), $projects);
+        $queryParams['projects'] = $this->cleanQueryParamIds($queryParams['projects'], $projectsIds);
 
-        // Check selected Activities
-        for ($i=0; $i < count($queryParams['activities']) ; $i++) {
-            if (!in_array($queryParams['activities'][$i], $activitiesIds)) {
-                unset($queryParams['activities'][$i]);
-            }
-        }
+        // Activities
+        $activities = $this->activityService->findAllByUserId($currentUser->getId(), 1);
+        $activitiesIds = array_map(static fn($a) => $a->getId(), $activities);
+        $queryParams['activities'] = $this->cleanQueryParamIds($queryParams['activities'], $activitiesIds);
 
-        // Check selected Tags
-        for ($i=0; $i < count($queryParams['tags']) ; $i++) {
-            if (!in_array($queryParams['tags'][$i], $tagsIds)) {
-                unset($queryParams['tags'][$i]);
-            }
-        }
+        // Tags
+        $tags = $this->tagService->findAllVisible();
+        $tagsIds = array_map(static fn($t) => $t->getId(), $tags);
+        $queryParams['tags'] = $this->cleanQueryParamIds($queryParams['tags'], $tagsIds);
 
-        // Store filters
+        // Store params
         $this->controllerHelper->setSessionValue('timesheets', [
             'start'      => $queryParams['start'],
             'end'        => $queryParams['end'],
@@ -125,59 +88,42 @@ final class TimesheetsController
         ]);
 
         // Get timesheets
-        $allTags = $this->tagService->findAll();
         $timesheets = $this->timesheetService->findTimesheetsByCriteria($queryParams);
+        $allTags = $this->tagService->findAll();
         $duration = 0;
-        $timesheetRestart = $this->options['restart'];
-        for ($i=0; $i < count($timesheets); $i++) {
-            // Restart timesheet
-            $canRestart = false;
-            if ($timesheetRestart['active']) {
-                $interval = date_diff(date_create("now"), date_create($timesheets[$i]['start']));
-                if ($interval->format('%a') <= $timesheetRestart['interval']) {
-                    $canRestart = true;
-                }
-            }
+        $restartCfg = $this->options['restart'];
+        foreach ($timesheets as &$ts) {
+            // Restart
+            $canRestart = $this->canRestartTimesheet($ts, $restartCfg);
+
             // Duration
-            $duration += $timesheets[$i]['duration'];
-            $timesheets[$i]['duration'] = $this->timesheetService->timeToString($timesheets[$i]['duration']);
+            $duration += (int)$ts['duration'];
+            $ts['duration'] = $this->timesheetService->timeToString((int)$ts['duration']);
+
             // Tags
-            $timesheets[$i]['tags'] = array();
-            if (!is_null($timesheets[$i]['tagIds'])) {
-                $tagsIds = explode(',', $timesheets[$i]['tagIds']);
-                foreach ($tagsIds as $tagId) {
-                    $timesheets[$i]['tags'][] = array(
-                        'name' => $allTags[$tagId]->getName(),
-                        'color' => $allTags[$tagId]->getColor()
-                    );
-                }
-            }
+            $ts['tags'] = $this->mapTimesheetTags($ts, $allTags);
+
             // Links
-            $timesheets[$i]['deleteLink'] = $this->controllerHelper->getUrlFor($request, 'timesheets_delete', array('timesheetId' => $timesheets[$i]['id']));
-            $timesheets[$i]['editLink'] = $this->controllerHelper->getUrlFor($request, 'timesheets_edit', array('timesheetId' => $timesheets[$i]['id']));
-            $timesheets[$i]['restartLink'] = $canRestart ? $this->controllerHelper->getUrlFor($request, 'timesheets_restart', array('timesheetId' => $timesheets[$i]['id'])) : '';
-            $timesheets[$i]['stopLink'] = $this->controllerHelper->getUrlFor($request, 'timesheets_stop', array('timesheetId' => $timesheets[$i]['id']));
+            $ts = $this->addTimesheetLinks($request, $ts, $canRestart);
         }
+        unset($ts);
 
-        // Render
-        $viewData = array();
-        // Form
-        $viewData['daterange']['start'] = $queryParams['start'];
-        $viewData['daterange']['end'] = $queryParams['end'];
-        $viewData['selectedProjects'] = $queryParams['projects'];
-        $viewData['selectedActivities'] = $queryParams['activities'];
-        $viewData['selectedTags'] = $queryParams['tags'];
-        $viewData['projects'] = $projectsList;
-        $viewData['activities'] = $activitiesList;
-        $viewData['tags'] = $tags;
-        // timesheets
-        $viewData['timesheets'] = $timesheets;
-        $viewData['duration'] = $duration > 0 ? $this->timesheetService->timeToString($duration) : "";
-        // flash
-        $viewData['flashMsgSuccess'] = $this->flash->getFirstMessage('success');
-        $viewData['flashMsgError'] = $this->flash->getFirstMessage('error');
-
-        return $this->twig->render($response, 'timesheets.html.twig', $viewData);
+        return $this->twig->render($response, 'timesheets.html.twig', [
+            'daterange' => [
+                'start' => $queryParams['start'],
+                'end'   => $queryParams['end'],
+            ],
+            'selectedProjects'   => $queryParams['projects'],
+            'selectedActivities' => $queryParams['activities'],
+            'selectedTags'       => $queryParams['tags'],
+            'projects'           => $this->controllerHelper->mapIdNameList($projects),
+            'activities'         => $this->controllerHelper->mapIdNameList($activities),
+            'tags'               => $tags,
+            'timesheets'         => $timesheets,
+            'duration'           => $duration > 0 ? $this->timesheetService->timeToString($duration) : "",
+            'flashMsgSuccess'    => $this->flash->getFirstMessage('success'),
+            'flashMsgError'      => $this->flash->getFirstMessage('error'),
+        ]);
     }
 
     public function indexTeams(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -187,92 +133,32 @@ final class TimesheetsController
             return $this->controllerHelper->redirect($request, $response, 'login');
         }
 
-        // Get Teams
-        $teams = $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
-        $teamsIds = array();
-        if (count($teams) > 0) {
-            foreach ($teams as $team) {
-                $teamsIds[] = $team->getId();
-            }
-        }
-
-        // Get users in teams
-        $users = $this->userService->findAllUsersInTeams($teamsIds, 1);
-        $usersIds = array();
-        $usersList = array();
-        if (count($users) > 0) {
-            foreach ($users as $usr) {
-                $usersIds[] = $usr->getId();
-                $usersList[] = array(
-                    'id' => $usr->getId(),
-                    'name' => $usr->getName(),
-                );
-            }
-        }
-
-        // Get projects.
-        $projects = $this->projectService->findAllByTeamleaderId($currentUser->getId(), 1);
-        $projectsIds = array();
-        $projectsList = array();
-        foreach ($projects as $entry) {
-            $projectsIds[] = $entry->getId();
-            $projectsList[] = array(
-                'id' => $entry->getId(),
-                'name' => $entry->getName(),
-            );
-        }
-
-        // Get activities
-        $activities = $this->activityService->findAllByTeamleaderId($currentUser->getId(), 1);
-        $activitiesIds = array();
-        $activitiesList = array();
-        foreach ($activities as $entry) {
-            $activitiesIds[] = $entry->getId();
-            $activitiesList[] = array(
-                'id' => $entry->getId(),
-                'name' => $entry->getName(),
-            );
-        }
-
-        // Get tags
-        $tags = $this->tagService->findAllVisible();
-        $tagsIds = array();
-        foreach ($tags as $entry) {
-            $tagsIds[] = $entry->getId();
-        }
-
-        // Get Query Params
+        // Query Params
         $queryParams = $this->getTimesheetFilters($request, 'teamsTimesheets');
 
+        // Teams
+        $teams = $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
+        $teamsIds = array_map(static fn($t) => $t->getId(), $teams);
 
-        // Check Query Params
-        // Check selected Users
-        for ($i=0; $i < count($queryParams['users']) ; $i++) {
-            if (!in_array($queryParams['users'][$i], $usersIds)) {
-                unset($queryParams['users'][$i]);
-            }
-        }
+        // Users
+        $users = $this->userService->findAllUsersInTeams($teamsIds, 1);
+        $usersIds = array_map(static fn($u) => $u->getId(), $users);
+        $queryParams['users'] = $this->cleanQueryParamIds($queryParams['users'], $usersIds);
 
-        // Check selected Projects
-        for ($i=0; $i < count($queryParams['projects']) ; $i++) {
-            if (!in_array($queryParams['projects'][$i], $projectsIds)) {
-                unset($queryParams['projects'][$i]);
-            }
-        }
+        // Projects
+        $projects = $this->projectService->findAllByTeamleaderId($currentUser->getId(), 1);
+        $projectsIds = array_map(static fn($p) => $p->getId(), $projects);
+        $queryParams['projects'] = $this->cleanQueryParamIds($queryParams['projects'], $projectsIds);
 
-        // Check selected Activities
-        for ($i=0; $i < count($queryParams['activities']) ; $i++) {
-            if (!in_array($queryParams['activities'][$i], $activitiesIds)) {
-                unset($queryParams['activities'][$i]);
-            }
-        }
+        // Activities
+        $activities = $this->activityService->findAllByTeamleaderId($currentUser->getId(), 1);
+        $activitiesIds = array_map(static fn($a) => $a->getId(), $activities);
+        $queryParams['activities'] = $this->cleanQueryParamIds($queryParams['activities'], $activitiesIds);
 
-        // Check selected Tags
-        for ($i=0; $i < count($queryParams['tags']) ; $i++) {
-            if (!in_array($queryParams['tags'][$i], $tagsIds)) {
-                unset($queryParams['tags'][$i]);
-            }
-        }
+        // Tags
+        $tags = $this->tagService->findAllVisible();
+        $tagsIds = array_map(static fn($t) => $t->getId(), $tags);
+        $queryParams['tags'] = $this->cleanQueryParamIds($queryParams['tags'], $tagsIds);
 
         // Store filters
         $this->controllerHelper->setSessionValue('teamsTimesheets', [
@@ -288,47 +174,37 @@ final class TimesheetsController
         $criteria['users'] = empty($queryParams['users']) ? $usersIds : $queryParams['users'];
 
         // Get timesheets
-        $allTags = $this->tagService->findAll();
         $timesheets = $this->timesheetService->findTimesheetsByCriteria($criteria);
+        $allTags = $this->tagService->findAll();
         $duration = 0;
-        for ($i=0; $i < count($timesheets); $i++) {
+        foreach ($timesheets as &$ts) {
             // Duration
-            $duration += $timesheets[$i]['duration'];
-            $timesheets[$i]['duration'] = $this->timesheetService->timeToString($timesheets[$i]['duration']);
+            $duration += (int)$ts['duration'];
+            $ts['duration'] = $this->timesheetService->timeToString((int)$ts['duration']);
+
             // Tags
-            $timesheets[$i]['tags'] = array();
-            if (!is_null($timesheets[$i]['tagIds'])) {
-                $tagsIds = explode(',', $timesheets[$i]['tagIds']);
-                foreach ($tagsIds as $tagId) {
-                    $timesheets[$i]['tags'][] = array(
-                        'name' => $allTags[$tagId]->getName(),
-                        'color' => $allTags[$tagId]->getColor()
-                    );
-                }
-            }
+            $ts['tags'] = $this->mapTimesheetTags($ts, $allTags);
         }
+        unset($ts);
 
-        // Render
-        $viewData = array();
-        // Form
-        $viewData['daterange']['start'] = $queryParams['start'];
-        $viewData['daterange']['end'] = $queryParams['end'];
-        $viewData['selectedUsers'] = $queryParams['users'];
-        $viewData['selectedProjects'] = $queryParams['projects'];
-        $viewData['selectedActivities'] = $queryParams['activities'];
-        $viewData['selectedTags'] = $queryParams['tags'];
-        $viewData['users'] = $usersList;
-        $viewData['projects'] = $projectsList;
-        $viewData['activities'] = $activitiesList;
-        $viewData['tags'] = $tags;
-        // timesheets
-        $viewData['timesheets'] = $timesheets;
-        $viewData['duration'] = $duration > 0 ? $this->timesheetService->timeToString($duration) : "";
-        // flash
-        $viewData['flashMsgSuccess'] = $this->flash->getFirstMessage('success');
-        $viewData['flashMsgError'] = $this->flash->getFirstMessage('error');
-
-        return $this->twig->render($response, 'teams-timesheets.html.twig', $viewData);
+        return $this->twig->render($response, 'teams-timesheets.html.twig', [
+            'daterange' => [
+                'start' => $queryParams['start'],
+                'end'   => $queryParams['end'],
+            ],
+            'selectedUsers'      => $queryParams['users'],
+            'selectedProjects'   => $queryParams['projects'],
+            'selectedActivities' => $queryParams['activities'],
+            'selectedTags'       => $queryParams['tags'],
+            'users'              => $this->controllerHelper->mapIdNameList($users),
+            'projects'           => $this->controllerHelper->mapIdNameList($projects),
+            'activities'         => $this->controllerHelper->mapIdNameList($activities),
+            'tags'               => $tags,
+            'timesheets'         => $timesheets,
+            'duration'           => $duration > 0 ? $this->timesheetService->timeToString($duration) : "",
+            'flashMsgSuccess'    => $this->flash->getFirstMessage('success'),
+            'flashMsgError'      => $this->flash->getFirstMessage('error'),
+        ]);
     }
 
     public function createForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -800,12 +676,17 @@ final class TimesheetsController
     }
 
     // Helpers
-    private function getTimesheetFilters(ServerRequestInterface $request, string $key): array
+    private function addTimesheetLinks(ServerRequestInterface $request, array $timesheet, bool $canRestart): array
     {
-        $filters = $this->controllerHelper->getSessionValue($request, $key, []);
-        $filters = is_array($filters) ? $filters : [];
-        $queryParams = $this->timesheetService->getQueryParams($request->getQueryParams(), $filters);
-        return is_array($queryParams) ? $queryParams : [];
+        $id = (int) $timesheet['id'];
+        $timesheet['deleteLink']  = $this->controllerHelper->getUrlFor($request, 'timesheets_delete',  ['timesheetId' => $id]);
+        $timesheet['editLink']    = $this->controllerHelper->getUrlFor($request, 'timesheets_edit',    ['timesheetId' => $id]);
+        $timesheet['stopLink']    = $this->controllerHelper->getUrlFor($request, 'timesheets_stop',    ['timesheetId' => $id]);
+        $timesheet['restartLink'] = $canRestart
+            ? $this->controllerHelper->getUrlFor($request, 'timesheets_restart', ['timesheetId' => $id])
+            : '';
+
+        return $timesheet;
     }
 
     private function buildTimesheetCriteriaFromSession(ServerRequestInterface $request, $currentUser): ?array
@@ -819,7 +700,6 @@ final class TimesheetsController
             'activities' => ['type' => 'array',  'required' => false],
             'tags'       => ['type' => 'array',  'required' => false],
         ];
-
 
         if (!$this->validateTimesheetSession($session, $schema)) {
             return null;
@@ -848,7 +728,6 @@ final class TimesheetsController
             'tags'       => ['type' => 'array',  'required' => false],
         ];
 
-
         if (!$this->validateTimesheetSession($session, $schema)) {
             return null;
         }
@@ -861,6 +740,31 @@ final class TimesheetsController
             'activities' => $session['activities'] ?? [],
             'tags'       => $session['tags'] ?? [],
         ];
+    }
+
+    private function canRestartTimesheet(array $timesheet, array $restartCfg): bool
+    {
+        $startStr = $timesheet['start'] ?? '';
+        if ($startStr === '') {
+            return false;
+        }
+
+        $now = new \DateTimeImmutable();
+        $start = new \DateTimeImmutable($startStr);
+
+        $days = $start->diff($now)->days;
+
+        return $restartCfg['active']
+            && $days !== false
+            && $days <= (int)($restartCfg['interval'] ?? 0);
+    }
+
+    private function getTimesheetFilters(ServerRequestInterface $request, string $key): array
+    {
+        $filters = $this->controllerHelper->getSessionValue($request, $key, []);
+        $filters = is_array($filters) ? $filters : [];
+        $queryParams = $this->timesheetService->getQueryParams($request->getQueryParams(), $filters);
+        return is_array($queryParams) ? $queryParams : [];
     }
 
     private function validateTimesheetSession(array $session, array $schema): bool
@@ -901,5 +805,54 @@ final class TimesheetsController
         }
 
         return true;
+    }
+
+    /**
+     * @param array<int, mixed> $selected
+     * @param array<int, int> $allowedIds
+     * @return array<int, int>
+     */
+    private function cleanQueryParamIds(array $selected, array $allowedIds): array
+    {
+        $allowed = array_flip(array_map('intval', $allowedIds));
+
+        $clean = [];
+        foreach ($selected as $id) {
+            $id = (int) $id;
+            if (isset($allowed[$id])) {
+                $clean[] = $id;
+            }
+        }
+
+        return $clean;
+    }
+
+    /**
+     * @param array<string, mixed> $timesheet
+     * @param array<int, object> $tags
+     * @return array<int, array{name:string, color:string}>
+     */
+    private function mapTimesheetTags(array $timesheet, array $tags): array
+    {
+        $res = [];
+
+        if (empty($timesheet['tagIds'])) {
+            return $res;
+        }
+
+        foreach (explode(',', $timesheet['tagIds']) as $tagId) {
+            $tagId = (int) $tagId;
+            $tag = $tags[$tagId] ?? null;
+            if ($tag === null) {
+                continue;
+            }
+
+            $res[] = [
+                'name'  => $tag->getName(),
+                'color' => $tag->getColor(),
+            ];
+        }
+
+        return $res;
     }
 }
