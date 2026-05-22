@@ -6,31 +6,55 @@ namespace App\Helper;
 final class RoundingHelper
 {
     /**
-     * Round time
+     * Round a DateTime to the nearest interval.
+     *
+     * Modes:
+     * - floor
+     * - ceil
+     * - closest
+     * - none (no rounding)
      * 
-     * @param datetime $datetime
-     * @param integer $minutes
+     * @param \DateTime $datetime
+     * @param int $minutes
      * @param string $mode
-     * @return datetime
+     * @return \DateTime
      */
-    public function roundDateTime($datetime, $minutes, $mode) {
+    public function roundDateTime(\DateTime $datetime, int $minutes, string $mode): \DateTime {
+        $datetime = clone $datetime;
+
+        if ($minutes <= 0) {
+            return $datetime;
+        }
+
         $seconds = $minutes * 60;
         $timestamp = $datetime->getTimestamp();
         $diff = $timestamp % $seconds;
 
-        if ($mode === "ceil") {
-            $datetime->setTimestamp($timestamp - $diff + $seconds);
+        if ($diff === 0) {
+            return $datetime;
         }
-        elseif ($mode === "floor") {
-            $datetime->setTimestamp($timestamp - $diff);
-        }
-        elseif ($mode === "closest") {
-            if ($diff > ($seconds / 2)) {
-                $datetime->setTimestamp($timestamp - $diff + $seconds);
-            }
-            else {
+
+        switch ($mode) {
+            case 'floor':
                 $datetime->setTimestamp($timestamp - $diff);
-            }
+                break;
+
+            case 'ceil':
+                $datetime->setTimestamp($timestamp - $diff + $seconds);
+                break;
+
+            case 'closest':
+                $datetime->setTimestamp(
+                    $diff > ($seconds / 2)
+                        ? $timestamp - $diff + $seconds
+                        : $timestamp - $diff
+                );
+                break;
+
+            case 'none':
+            default:
+                // no rounding
+                break;
         }
 
         return $datetime;
