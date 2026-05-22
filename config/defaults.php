@@ -75,7 +75,7 @@ $settings['lang'] = [
 // Auth settings
 $settings['auth'] = [
     'loginMinLength' => 5,
-    'pwdMinLength'   => 12,
+    'pwdMinLength'   => 16,
     'pwdRequestSalt' => '|----unique-phrase----|',
     'pwdRequestRetryLifetime' => 3600,
     'pwdRequestTokenLifetime' => 86400,

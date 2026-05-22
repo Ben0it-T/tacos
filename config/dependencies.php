@@ -290,8 +290,8 @@ return function (ContainerInterface $container): void {
             $c->get(PHPMailer::class),
             $c->get(LoggerInterface::class),
             [
-              'pwdRequestRetryLifetime' => max(1, (int)($settings['pwdRequestRetryLifetime'] ?? 300)),
-              'pwdRequestTokenLifetime' => max(1, (int)($settings['pwdRequestTokenLifetime'] ?? 3600)),
+              'pwdRequestRetryLifetime' => max(1, (int)($settings['pwdRequestRetryLifetime'] ?? 3600)),
+              'pwdRequestTokenLifetime' => max(1, (int)($settings['pwdRequestTokenLifetime'] ?? 86400)),
               'pwdRequestSalt'          => (string)$settings['pwdRequestSalt'],
               'pwdMinLength'            => max(1, (int)($settings['pwdMinLength'] ?? 16)),
             ],
