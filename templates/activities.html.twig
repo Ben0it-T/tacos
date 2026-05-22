@@ -44,7 +44,7 @@
                             </td>
                             <td>{{ activity.number }}</td>
                             <td>
-                                {% if activity.projectName is defined %}
+                                {% if activity.projectName is not empty %}
                                     <div class="d-inline-flex align-items-center text-nowrap">
                                         <span class="badge p-1 border border-light rounded-circle" style="background-color: {{ activity.projectColor }};"><span class="visually-hidden">color</span></span>
                                         <span class="ms-1">{{ activity.projectName }}</span>
