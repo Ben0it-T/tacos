@@ -31,11 +31,11 @@ final class TimesheetsController
     private TimesheetService $timesheetService;
     private UserService $userService;
     private RoundingHelper $roundingHelper;
-    private ControllerHelper $controllerHelper;
+    private ControllerHelper $helper;
     private array $options;
     private array $translations;
 
-    public function __construct(Twig $twig, Messages $flash, ActivityService $activityService, CustomerService $customerService, ProjectService $projectService, TagService $tagService, TeamService $teamService, TimesheetService $timesheetService, UserService $userService, RoundingHelper $roundingHelper, ControllerHelper $controllerHelper, array $options, array $translations)
+    public function __construct(Twig $twig, Messages $flash, ActivityService $activityService, CustomerService $customerService, ProjectService $projectService, TagService $tagService, TeamService $teamService, TimesheetService $timesheetService, UserService $userService, RoundingHelper $roundingHelper, ControllerHelper $helper, array $options, array $translations)
     {
         $this->twig = $twig;
         $this->flash = $flash;
@@ -47,16 +47,16 @@ final class TimesheetsController
         $this->timesheetService = $timesheetService;
         $this->userService = $userService;
         $this->roundingHelper = $roundingHelper;
-        $this->controllerHelper = $controllerHelper;
+        $this->helper = $helper;
         $this->options = $options;
         $this->translations = $translations;
     }
 
     public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser($request);
         if (!$currentUser) {
-            return $this->controllerHelper->redirect($request, $response, 'login');
+            return $this->helper->redirect($request, $response, 'login');
         }
 
         // Query Params
@@ -79,7 +79,7 @@ final class TimesheetsController
         $queryParams['tags'] = $this->cleanQueryParamIds($queryParams['tags'], $tagsIds);
 
         // Store params
-        $this->controllerHelper->setSessionValue('timesheets', [
+        $this->helper->setSessionValue('timesheets', [
             'start'      => $queryParams['start'],
             'end'        => $queryParams['end'],
             'projects'   => $queryParams['projects'],
@@ -116,8 +116,8 @@ final class TimesheetsController
             'selectedProjects'   => $queryParams['projects'],
             'selectedActivities' => $queryParams['activities'],
             'selectedTags'       => $queryParams['tags'],
-            'projects'           => $this->controllerHelper->mapIdNameList($projects),
-            'activities'         => $this->controllerHelper->mapIdNameList($activities),
+            'projects'           => $this->helper->mapIdNameList($projects),
+            'activities'         => $this->helper->mapIdNameList($activities),
             'tags'               => $tags,
             'timesheets'         => $timesheets,
             'duration'           => $duration > 0 ? $this->timesheetService->timeToString($duration) : "",
@@ -128,9 +128,9 @@ final class TimesheetsController
 
     public function indexTeams(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser($request);
         if (!$currentUser) {
-            return $this->controllerHelper->redirect($request, $response, 'login');
+            return $this->helper->redirect($request, $response, 'login');
         }
 
         // Query Params
@@ -161,7 +161,7 @@ final class TimesheetsController
         $queryParams['tags'] = $this->cleanQueryParamIds($queryParams['tags'], $tagsIds);
 
         // Store filters
-        $this->controllerHelper->setSessionValue('teamsTimesheets', [
+        $this->helper->setSessionValue('teamsTimesheets', [
             'start'      => $queryParams['start'],
             'end'        => $queryParams['end'],
             'users'      => $queryParams['users'],
@@ -196,9 +196,9 @@ final class TimesheetsController
             'selectedProjects'   => $queryParams['projects'],
             'selectedActivities' => $queryParams['activities'],
             'selectedTags'       => $queryParams['tags'],
-            'users'              => $this->controllerHelper->mapIdNameList($users),
-            'projects'           => $this->controllerHelper->mapIdNameList($projects),
-            'activities'         => $this->controllerHelper->mapIdNameList($activities),
+            'users'              => $this->helper->mapIdNameList($users),
+            'projects'           => $this->helper->mapIdNameList($projects),
+            'activities'         => $this->helper->mapIdNameList($activities),
             'tags'               => $tags,
             'timesheets'         => $timesheets,
             'duration'           => $duration > 0 ? $this->timesheetService->timeToString($duration) : "",
@@ -209,360 +209,259 @@ final class TimesheetsController
 
     public function createForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser($request);
         if (!$currentUser) {
-            return $this->controllerHelper->redirect($request, $response, 'login');
+            return $this->helper->redirect($request, $response, 'login');
         }
 
-        // Get customers
         $customers = $this->customerService->findAllByUserId($currentUser->getId(), 1);
-        $customersList = array();
-        foreach ($customers as $entry) {
-            $customersList[] = array(
-                'id' => $entry->getId(),
-                'name' => $entry->getName(),
-            );
-        }
-
-        // Get projects
         $projects = $this->projectService->findAllByUserId($currentUser->getId(), 1);
-        $projectsList = array();
-        foreach ($projects as $entry) {
-            $projectsList[] = array(
-                'id' => $entry->getId(),
-                'name' => $entry->getName(),
-            );
-        }
-
-        // Get activities
         $activities = $this->activityService->findAllByUserId($currentUser->getId(), 1);
-        $activitiesList = array();
-        foreach ($activities as $entry) {
-            $activitiesList[] = array(
-                'id' => $entry->getId(),
-                'name' => $entry->getName(),
-            );
-        }
-
-        // Get tags
         $tags = $this->tagService->findAllVisible();
 
-        // Start date
         $rounding = $this->options['rounding'];
         $start = new \DateTime("now");
         if ($rounding['active']) $start = $this->roundingHelper->roundDateTime($start, $rounding['start']['minutes'], $rounding['start']['mode']);
 
-        $viewData = array();
-        $viewData['customers'] = $customersList;
-        $viewData['projects'] = $projectsList;
-        $viewData['activities'] = $activitiesList;
-        $viewData['tags'] = $tags;
-        $viewData['startDate'] = date_format($start,"Y-m-d H:i");
-        $viewData['endDate'] = date("Y-m-d H:i", mktime(23, 59, 59, intval(date("n")), intval(date("j")), intval(date("Y"))));
-
-        $viewData['flashMsgSuccess'] = $this->flash->getFirstMessage('success');
-        $viewData['flashMsgError'] = $this->flash->getFirstMessage('error');
-
-        return $this->twig->render($response, 'timesheet-create.html.twig', $viewData);
+        return $this->twig->render($response, 'timesheet-create.html.twig', [
+            'customers'       => $this->helper->mapIdNameList($customers),
+            'projects'        => $this->helper->mapIdNameList($projects),
+            'activities'      => $this->helper->mapIdNameList($activities),
+            'tags'            => $tags,
+            'startDate'       => date_format($start,"Y-m-d H:i"),
+            'endDate'         => date("Y-m-d H:i", mktime(23, 59, 59, intval(date("n")), intval(date("j")), intval(date("Y")))),
+            'flashMsgSuccess' => $this->flash->getFirstMessage('success'),
+            'flashMsgError'   => $this->flash->getFirstMessage('error'),
+        ]);
     }
 
     public function createAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser($request);
         if (!$currentUser) {
-            return $this->controllerHelper->redirect($request, $response, 'login');
+            return $this->helper->redirect($request, $response, 'login');
         }
 
-        $data = $request->getParsedBody();
-
+        $data = (array) $request->getParsedBody();
         $data['userId'] = $currentUser->getId();
         $errors = $this->timesheetService->createTimesheet($data);
 
-        if (empty($errors)) {
+        if ($errors === '') {
             $this->flash->addMessage('success', $this->translations['form_success_create_activity']);
         }
         else {
             $this->flash->addMessage('error', $errors);
         }
 
-        // redirect
-        $url = $this->controllerHelper->getUrlFor($request, 'timesheets');
-        return $response->withStatus(302)->withHeader('Location', $url);
+        return $this->helper->redirect($request, $response, 'timesheets');
     }
 
     public function editForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser($request);
         if (!$currentUser) {
-            return $this->controllerHelper->redirect($request, $response, 'login');
+            return $this->helper->redirect($request, $response, 'login');
         }
 
-        $timesheet = $this->timesheetService->findTimesheetByIdAndUserId(intval($args['timesheetId']), $currentUser->getId());
+        $timesheetId = (int)($args['timesheetId'] ?? 0);
+        $timesheet = $this->timesheetService->findTimesheetByIdAndUserId($timesheetId, $currentUser->getId());
 
-        if ($timesheet) {
-
-            // Get customers
-            $customers = $this->customerService->findAllByUserId($currentUser->getId(), 1);
-            $customersList = array();
-            foreach ($customers as $entry) {
-                $customersList[] = array(
-                    'id' => $entry->getId(),
-                    'name' => $entry->getName(),
-                );
-            }
-
-            // Get projects
-            $projects = $this->projectService->findAllByUserId($currentUser->getId(), 1);
-            $projectsList = array();
-            foreach ($projects as $entry) {
-                $projectsList[] = array(
-                    'id' => $entry->getId(),
-                    'name' => $entry->getName(),
-                );
-            }
-
-            // Get activities
-            $activities = $this->activityService->findAllByUserId($currentUser->getId(), 1);
-            $activitiesList = array();
-            foreach ($activities as $entry) {
-                $activitiesList[] = array(
-                    'id' => $entry->getId(),
-                    'name' => $entry->getName(),
-                );
-            }
-
-            // Get tags
-            $tags = $this->tagService->findAllVisible();
-
-            // Get selected tags
-            $selectedTags = $this->tagService->findAllByTimesheetId($timesheet->getId());
-            $selectedTagsIds = array();
-            foreach ($selectedTags as $selectedTag) {
-                $selectedTagsIds[] = $selectedTag->getId();
-            }
-
-            // Get current project activities
-            $projectActivities = $this->activityService->findAllByProjectId($timesheet->getProjectId());
-            $projectActivitiesIds = array();
-            foreach ($projectActivities as $projectActivity) {
-                $projectActivitiesIds[] = $projectActivity->getId();
-            }
-
-            $viewData = array();
-            $viewData['timesheet'] = $timesheet;
-            $viewData['selectedTags'] = $selectedTags;
-            $viewData['projectActivitiesIds'] = $projectActivitiesIds;
-            $viewData['selectedTagsIds'] = $selectedTagsIds;
-            $viewData['durationTmp'] = $this->timesheetService->timeToString($timesheet->getDuration());
-
-            $viewData['customers'] = $customersList;
-            $viewData['projects'] = $projectsList;
-            $viewData['activities'] = $activitiesList;
-            $viewData['tags'] = $tags;
-
-            $viewData['flashMsgSuccess'] = $this->flash->getFirstMessage('success');
-            $viewData['flashMsgError'] = $this->flash->getFirstMessage('error');
-
-            return $this->twig->render($response, 'timesheet-edit.html.twig', $viewData);
+        if (!$timesheet) {
+            return $this->helper->redirect($request, $response, 'timesheets');
         }
 
+        $customers = $this->customerService->findAllByUserId($currentUser->getId(), 1);
+        $projects = $this->projectService->findAllByUserId($currentUser->getId(), 1);
+        $activities = $this->activityService->findAllByUserId($currentUser->getId(), 1);
+        $tags = $this->tagService->findAllVisible();
 
-        // redirect
-        $url = $this->controllerHelper->getUrlFor($request, 'timesheets');
-        return $response->withStatus(302)->withHeader('Location', $url);
+        $selectedTags = $this->tagService->findAllByTimesheetId($timesheet->getId());
+        $selectedTagsIds = array_map(static fn($t) => $t->getId(), $selectedTags);
+
+        $projectActivities = $this->activityService->findAllByProjectId($timesheet->getProjectId());
+        $projectActivitiesIds = array_map(static fn($pa) => $pa->getId(), $projectActivities);
+
+        return $this->twig->render($response, 'timesheet-edit.html.twig', [
+            'timesheet'            => $timesheet,
+            'selectedTags'         => $selectedTags,
+            'projectActivitiesIds' => $projectActivitiesIds,
+            'selectedTagsIds'      => $selectedTagsIds,
+            'durationTmp'          => $this->timesheetService->timeToString($timesheet->getDuration()),
+            'customers'            => $this->helper->mapIdNameList($customers),
+            'projects'             => $this->helper->mapIdNameList($projects),
+            'activities'           => $this->helper->mapIdNameList($activities),
+            'tags'                 => $tags,
+            'flashMsgSuccess'      => $this->flash->getFirstMessage('success'),
+            'flashMsgError'        => $this->flash->getFirstMessage('error'),
+        ]);
     }
 
     public function editAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser($request);
         if (!$currentUser) {
-            return $this->controllerHelper->redirect($request, $response, 'login');
+            return $this->helper->redirect($request, $response, 'login');
         }
 
-        $data = $request->getParsedBody();
+        $data = (array) $request->getParsedBody();
 
-        $timesheet = $this->timesheetService->findTimesheetByIdAndUserId(intval($args['timesheetId']), $currentUser->getId());
+        $timesheetId = (int)($args['timesheetId'] ?? 0);
+        $timesheet = $this->timesheetService->findTimesheetByIdAndUserId($timesheetId, $currentUser->getId());
 
-        if ($timesheet) {
-            $errors = $this->timesheetService->updateTimesheet($timesheet, $data);
-            if (empty($errors)) {
-                $this->flash->addMessage('success', $this->translations['form_success_update']);
-            }
-            else {
-                $this->flash->addMessage('error', $errors);
-            }
-
-            // redirect
-            $url = $this->controllerHelper->getUrlFor($request, 'timesheets_edit', array('timesheetId' => $timesheet->getId()));
-            return $response->withStatus(302)->withHeader('Location', $url);
+        if (!$timesheet) {
+            return $this->helper->redirect($request, $response, 'timesheets');
         }
 
-        // redirect
-        $url = $this->controllerHelper->getUrlFor($request, 'timesheets');
-        return $response->withStatus(302)->withHeader('Location', $url);
+        $errors = $this->timesheetService->updateTimesheet($timesheet, $data);
+        if ($errors === '') {
+            $this->flash->addMessage('success', $this->translations['form_success_update']);
+            return $this->helper->redirect($request, $response, 'timesheets_edit', ['timesheetId' => $timesheetId]);
+        }
+
+        $this->flash->addMessage('error', $errors);
+        return $this->helper->redirect($request, $response, 'timesheets_edit', ['timesheetId' => $timesheetId]);
     }
 
     public function restartAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser($request);
         if (!$currentUser) {
-            return $this->controllerHelper->redirect($request, $response, 'login');
+            return $this->helper->redirect($request, $response, 'login');
         }
 
-        $timesheet = $this->timesheetService->findTimesheetByIdAndUserId(intval($args['timesheetId']), $currentUser->getId());
-        if ($timesheet) {
-            $this->timesheetService->restartTimesheet($timesheet);
+        $timesheetId = (int)($args['timesheetId'] ?? 0);
+        $timesheet = $this->timesheetService->findTimesheetByIdAndUserId($timesheetId, $currentUser->getId());
+
+        if (!$timesheet) {
+            return $this->helper->redirect($request, $response, 'timesheets');
+        }
+
+        $errors = $this->timesheetService->restartTimesheet($timesheet);
+
+        if ($errors === '') {
             $this->flash->addMessage('success', $this->translations['form_success_create_activity']);
         }
+        else {
+            $this->flash->addMessage('error', $errors);
+        }
 
-        // redirect
-        $url = $this->controllerHelper->getUrlFor($request, 'timesheets');
-        return $response->withStatus(302)->withHeader('Location', $url);
+        return $this->helper->redirect($request, $response, 'timesheets');
     }
 
     public function deleteForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser($request);
         if (!$currentUser) {
-            return $this->controllerHelper->redirect($request, $response, 'login');
+            return $this->helper->redirect($request, $response, 'login');
         }
 
-        $timesheet = $this->timesheetService->findTimesheetByIdAndUserId(intval($args['timesheetId']), $currentUser->getId());
+        $timesheetId = (int)($args['timesheetId'] ?? 0);
+        $timesheet = $this->timesheetService->findTimesheetByIdAndUserId($timesheetId, $currentUser->getId());
 
-        if ($timesheet) {
-            $viewData = array();
-            $viewData['timesheet'] = array(
-                'id' => $timesheet->getId(),
-                'start' => $timesheet->getStart(),
-                'end' => $timesheet->getEnd(),
-                'duration' => $this->timesheetService->timeToString($timesheet->getDuration()),
-                'project' => $this->projectService->findProject($timesheet->getProjectId()),
-                'activity' => $this->activityService->findActivity($timesheet->getActivityId()),
+        if (!$timesheet) {
+            return $this->helper->redirect($request, $response, 'timesheets');
+        }
+
+        return $this->twig->render($response, 'timesheet-delete.html.twig', [
+            'timesheet' => [
+                'id'          => $timesheet->getId(),
+                'start'       => $timesheet->getStart(),
+                'end'         => $timesheet->getEnd(),
+                'duration'    => $this->timesheetService->timeToString($timesheet->getDuration()),
+                'project'     => $this->projectService->findProject($timesheet->getProjectId()),
+                'activity'    => $this->activityService->findActivity($timesheet->getActivityId()),
                 'description' => $timesheet->getComment(),
-                'tags' => $this->tagService->findAllByTimesheetId($timesheet->getId()),
-            );
-
-            return $this->twig->render($response, 'timesheet-delete.html.twig', $viewData);
-        }
-
-        // redirect
-        $url = $this->controllerHelper->getUrlFor($request, 'timesheets');
-        return $response->withStatus(302)->withHeader('Location', $url);
+                'tags'        => $this->tagService->findAllByTimesheetId($timesheet->getId()),
+            ],
+        ]);
     }
 
     public function deleteAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser($request);
         if (!$currentUser) {
-            return $this->controllerHelper->redirect($request, $response, 'login');
+            return $this->helper->redirect($request, $response, 'login');
         }
 
-        $timesheet = $this->timesheetService->findTimesheetByIdAndUserId(intval($args['timesheetId']), $currentUser->getId());
+        $timesheetId = (int)($args['timesheetId'] ?? 0);
+        $timesheet = $this->timesheetService->findTimesheetByIdAndUserId($timesheetId, $currentUser->getId());
 
-        if ($timesheet) {
-            $errors = $this->timesheetService->deleteTimesheet($timesheet);
-            if (empty($errors)) {
-                $this->flash->addMessage('success', $this->translations['form_success_delete_record']);
-            }
-            else {
-                $this->flash->addMessage('error', $errors);
-            }
-
+        if (!$timesheet) {
+            return $this->helper->redirect($request, $response, 'timesheets');
         }
 
-        // redirect
-        $url = $this->controllerHelper->getUrlFor($request, 'timesheets');
-        return $response->withStatus(302)->withHeader('Location', $url);
+        $errors = $this->timesheetService->deleteTimesheet($timesheet);
+        if ($errors === '') {
+            $this->flash->addMessage('success', $this->translations['form_success_delete_record']);
+        }
+        else {
+            $this->flash->addMessage('error', $errors);
+        }
+
+        return $this->helper->redirect($request, $response, 'timesheets');
     }
 
     public function stopAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser($request);
         if (!$currentUser) {
-            return $this->controllerHelper->redirect($request, $response, 'login');
+            return $this->helper->redirect($request, $response, 'login');
         }
 
-        $timesheet = $this->timesheetService->findTimesheetByIdAndUserId(intval($args['timesheetId']), $currentUser->getId());
+        $timesheetId = (int)($args['timesheetId'] ?? 0);
+        $timesheet = $this->timesheetService->findTimesheetByIdAndUserId($timesheetId, $currentUser->getId());
 
-        if ($timesheet) {
-            $timesheet->setEnd(date("Y-m-d H:i"));
-            $errors = $this->timesheetService->stopTimesheet($timesheet);
-            if (empty($errors)) {
-                $this->flash->addMessage('success', $this->translations['form_success_update']);
-            }
-            else {
-                $this->flash->addMessage('error', $errors);
-            }
+        if (!$timesheet) {
+            return $this->helper->redirect($request, $response, 'timesheets');
         }
 
-        // redirect
-        $url = $this->controllerHelper->getUrlFor($request, 'timesheets');
-        return $response->withStatus(302)->withHeader('Location', $url);
+        $timesheet->setEnd(date("Y-m-d H:i"));
+        $errors = $this->timesheetService->stopTimesheet($timesheet);
+        if ($errors === '') {
+            $this->flash->addMessage('success', $this->translations['form_success_update']);
+        }
+        else {
+            $this->flash->addMessage('error', $errors);
+        }
+
+        return $this->helper->redirect($request, $response, 'timesheets');
     }
 
     public function exportTimesheets(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser($request);
         if (!$currentUser) {
-            return $this->controllerHelper->redirect($request, $response, 'login');
+            return $this->helper->redirect($request, $response, 'login');
         }
 
         $criteria = $this->buildTimesheetCriteriaFromSession($request, $currentUser);
 
         if ($criteria === null) {
-            return $this->controllerHelper->redirect($request, $response, 'timesheets');
+            return $this->helper->redirect($request, $response, 'timesheets');
         }
 
-        // Set
-        $delimiter = ";";
-        $enclosure = '"';
-        $escape_char = "\\";
-        $record_seperator = "\r\n";
+        $delimiter        = ";";
+        $enclosure        = '"';
+        $escapeChar       = "\\";
+        $recordSeparator  = "\r\n";
 
-        // Get timesheets
-        $tags = $this->tagService->findAll();
+        $allTags = $this->tagService->findAll();
         $timesheets = $this->timesheetService->findTimesheetsByCriteria($criteria);
-        for ($i=0; $i < count($timesheets); $i++) {
-            // Tags
-            $timesheets[$i]['tags'] = array();
-            if (!is_null($timesheets[$i]['tagIds'])) {
-                $tagsIds = explode(',', $timesheets[$i]['tagIds']);
-                foreach ($tagsIds as $tagId) {
-                    $timesheets[$i]['tags'][] = array(
-                        'name' => $tags[$tagId]->getName()
-                    );
-                }
-            }
+        foreach ($timesheets as &$ts) {
+            $ts['tags'] = $this->mapTimesheetTags($ts, $allTags);
         }
+        unset($ts);
 
-        $headers = ['Start', 'End', 'Duration', 'Project', 'Project Number', 'Activity', 'Activity Number', 'Description', 'Tags'];
+        // BOM
+        $response->getBody()->write(chr(0xEF) . chr(0xBB) . chr(0xBF));
 
-        // Add BOM
-        $response->getBody()->write($bom =( chr(0xEF) . chr(0xBB) . chr(0xBF) ));
+        // Header
+        $response->getBody()->write(implode($delimiter, $this->buildCsvHeader()) . $recordSeparator);
 
-        // Create header
-        $response->getBody()->write(implode($delimiter, $headers) . $record_seperator);
-
+        // Lines
         foreach ($timesheets as $entry) {
-            $line = array();
-            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['start']) . $enclosure;
-            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, (is_null($entry['end']) ? "" : $entry['end'])) . $enclosure;
-            $line[] = $entry['duration'];
-            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['projectName']) . $enclosure;
-            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['projectNumber']) . $enclosure;
-            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['activityName']) . $enclosure;
-            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['activityNumber']) . $enclosure;
-            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['comment']) . $enclosure;
-
-            $tags = array();
-            if ($entry['tags']) {
-                foreach ($entry['tags'] as $tag) {
-                    $tags[] = $tag['name'];
-                }
-            }
-            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, implode("|", $tags)) . $enclosure;
-
-            $response->getBody()->write(implode($delimiter, $line) . $record_seperator);
+            $line = $this->buildCsvLine($entry, $delimiter, $enclosure, $escapeChar);
+            $response->getBody()->write($line . $recordSeparator);
         }
 
         // Output
@@ -577,92 +476,48 @@ final class TimesheetsController
 
     public function exportTeamsTimesheets(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->controllerHelper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser($request);
         if (!$currentUser) {
-            return $this->controllerHelper->redirect($request, $response, 'login');
+            return $this->helper->redirect($request, $response, 'login');
         }
 
         $criteria = $this->buildTeamsTimesheetCriteriaFromSession($request);
 
         if ($criteria === null) {
-            return $this->controllerHelper->redirect($request, $response, 'timesheets_teams');
+            return $this->helper->redirect($request, $response, 'timesheets_teams');
         }
 
-        // Get Teams
         $teams = $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
-        $teamsIds = array();
-        if (count($teams) > 0) {
-            foreach ($teams as $team) {
-                $teamsIds[] = $team->getId();
-            }
-        }
+        $teamsIds = array_map(static fn($t) => $t->getId(), $teams);
 
-        // Get users in teams
         $users = $this->userService->findAllUsersInTeams($teamsIds, 1);
-        $usersIds = array();
-        $usersList = array();
-        if (count($users) > 0) {
-            foreach ($users as $usr) {
-                $usersIds[] = $usr->getId();
-                $usersList[] = array(
-                    'id' => $usr->getId(),
-                    'name' => $usr->getName(),
-                );
-            }
-        }
+        $usersIds = array_map(static fn($u) => $u->getId(), $users);
+
         $criteria['users'] = empty($criteria['users']) ? $usersIds : $criteria['users'];
 
-        // Set
-        $delimiter = ";";
-        $enclosure = '"';
-        $escape_char = "\\";
-        $record_seperator = "\r\n";
+        $delimiter        = ";";
+        $enclosure        = '"';
+        $escapeChar       = "\\";
+        $recordSeparator  = "\r\n";
 
-        // Get timesheets
         $allTags = $this->tagService->findAll();
         $timesheets = $this->timesheetService->findTimesheetsByCriteria($criteria);
-        for ($i=0; $i < count($timesheets); $i++) {
-            // Tags
-            $timesheets[$i]['tags'] = array();
-            if (!is_null($timesheets[$i]['tagIds'])) {
-                $tagsIds = explode(',', $timesheets[$i]['tagIds']);
-                foreach ($tagsIds as $tagId) {
-                    $timesheets[$i]['tags'][] = array(
-                        'name' => $allTags[$tagId]->getName()
-                    );
-                }
-            }
+
+        foreach ($timesheets as &$ts) {
+            $ts['tags'] = $this->mapTimesheetTags($ts, $allTags);
         }
+        unset($ts);
 
-        $headers = ['Start', 'End', 'Duration', 'Project', 'Project Number', 'Activity', 'Activity Number', 'User', 'Description', 'Tags'];
+        // BOM
+        $response->getBody()->write(chr(0xEF) . chr(0xBB) . chr(0xBF));
 
-        // Add BOM
-        $response->getBody()->write($bom =( chr(0xEF) . chr(0xBB) . chr(0xBF) ));
+        // Header
+        $response->getBody()->write(implode($delimiter, $this->buildCsvHeader()) . $recordSeparator);
 
-        // Create header
-        $response->getBody()->write(implode($delimiter, $headers) . $record_seperator);
-
+        // Lines
         foreach ($timesheets as $entry) {
-            $line = array();
-            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['start']) . $enclosure;
-            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, (is_null($entry['end']) ? "" : $entry['end'])) . $enclosure;
-            $line[] = $entry['duration'];
-            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['projectName']) . $enclosure;
-            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['projectNumber']) . $enclosure;
-            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['activityName']) . $enclosure;
-            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['activityNumber']) . $enclosure;
-            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['userName']) . $enclosure;
-            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, $entry['comment']) . $enclosure;
-
-            $tags = array();
-            if ($entry['tags']) {
-                foreach ($entry['tags'] as $tag) {
-                    $tags[] = $tag['name'];
-                }
-            }
-            $line[] = $enclosure . str_replace($enclosure, $escape_char . $enclosure, implode("|", $tags)) . $enclosure;
-
-            $response->getBody()->write(implode($delimiter, $line) . $record_seperator);
+            $line = $this->buildCsvLine($entry, $delimiter, $enclosure, $escapeChar);
+            $response->getBody()->write($line . $recordSeparator);
         }
 
         // Output
@@ -679,19 +534,63 @@ final class TimesheetsController
     private function addTimesheetLinks(ServerRequestInterface $request, array $timesheet, bool $canRestart): array
     {
         $id = (int) $timesheet['id'];
-        $timesheet['deleteLink']  = $this->controllerHelper->getUrlFor($request, 'timesheets_delete',  ['timesheetId' => $id]);
-        $timesheet['editLink']    = $this->controllerHelper->getUrlFor($request, 'timesheets_edit',    ['timesheetId' => $id]);
-        $timesheet['stopLink']    = $this->controllerHelper->getUrlFor($request, 'timesheets_stop',    ['timesheetId' => $id]);
+        $timesheet['deleteLink']  = $this->helper->getUrlFor($request, 'timesheets_delete',  ['timesheetId' => $id]);
+        $timesheet['editLink']    = $this->helper->getUrlFor($request, 'timesheets_edit',    ['timesheetId' => $id]);
+        $timesheet['stopLink']    = $this->helper->getUrlFor($request, 'timesheets_stop',    ['timesheetId' => $id]);
         $timesheet['restartLink'] = $canRestart
-            ? $this->controllerHelper->getUrlFor($request, 'timesheets_restart', ['timesheetId' => $id])
+            ? $this->helper->getUrlFor($request, 'timesheets_restart', ['timesheetId' => $id])
             : '';
 
         return $timesheet;
     }
 
+    private function buildCsvHeader(): array
+    {
+        return ['Start', 'End', 'Duration', 'Project', 'Project Number', 'Activity', 'Activity Number', 'User', 'Description', 'Tags'];
+    }
+
+    /**
+     * Build one CSV line from a timesheet entry.
+     *
+     * Escapes string values and concatenates tags using '|'.
+     *
+     * @param array $entry      Timesheet data with joined fields
+     * @param string $delimiter CSV delimiter
+     * @param string $enclosure CSV enclosure character
+     * @param string $escape    Escape character
+     * @return string
+     */
+    private function buildCsvLine(array $entry, string $delimiter, string $enclosure, string $escape): string
+    {
+        $escapeValue = fn($value) => $enclosure . str_replace($enclosure, $escape . $enclosure, (string)$value) . $enclosure;
+
+        $tags = [];
+        foreach ($entry['tags'] as $tag) {
+            $tags[] = $tag['name'];
+        }
+
+        return implode($delimiter, [
+            $escapeValue($entry['start']),
+            $escapeValue($entry['end'] ?? ''),
+            $entry['duration'],
+            $escapeValue($entry['projectName']),
+            $escapeValue($entry['projectNumber']),
+            $escapeValue($entry['activityName']),
+            $escapeValue($entry['activityNumber']),
+            $escapeValue($entry['userName']),
+            $escapeValue($entry['comment']),
+            $escapeValue(implode('|', $tags)),
+        ]);
+    }
+
+    /**
+     * Build timesheet criteria from session filters.
+     *
+     * Returns null if session data is invalid.
+     */
     private function buildTimesheetCriteriaFromSession(ServerRequestInterface $request, $currentUser): ?array
     {
-        $session = $this->controllerHelper->getSessionValue($request, 'timesheets', []);
+        $session = $this->helper->getSessionValue($request, 'timesheets', []);
 
         $schema = [
             'start'      => ['type' => 'string', 'required' => true],
@@ -717,7 +616,7 @@ final class TimesheetsController
 
     private function buildTeamsTimesheetCriteriaFromSession(ServerRequestInterface $request): ?array
     {
-        $session = $this->controllerHelper->getSessionValue($request, 'teamsTimesheets', []);
+        $session = $this->helper->getSessionValue($request, 'teamsTimesheets', []);
 
         $schema = [
             'start'      => ['type' => 'string', 'required' => true],
@@ -759,12 +658,65 @@ final class TimesheetsController
             && $days <= (int)($restartCfg['interval'] ?? 0);
     }
 
+    /**
+     * Filter selected IDs against allowed IDs
+     *
+     * @param array<int, mixed> $selected
+     * @param array<int, int> $allowedIds
+     * @return array<int, int>
+     */
+    private function cleanQueryParamIds(array $selected, array $allowedIds): array
+    {
+        $allowed = array_flip(array_map('intval', $allowedIds));
+
+        $clean = [];
+        foreach ($selected as $id) {
+            $id = (int) $id;
+            if (isset($allowed[$id])) {
+                $clean[] = $id;
+            }
+        }
+
+        return $clean;
+    }
+
     private function getTimesheetFilters(ServerRequestInterface $request, string $key): array
     {
-        $filters = $this->controllerHelper->getSessionValue($request, $key, []);
+        $filters = $this->helper->getSessionValue($request, $key, []);
         $filters = is_array($filters) ? $filters : [];
         $queryParams = $this->timesheetService->getQueryParams($request->getQueryParams(), $filters);
         return is_array($queryParams) ? $queryParams : [];
+    }
+
+    /**
+     * Map tagIds from a timesheet into tag name/color structures
+     *
+     * @param array<string, mixed> $timesheet
+     * @param array<int, object> $tags
+     * @return array<int, array{name:string, color:string}>
+     */
+    private function mapTimesheetTags(array $timesheet, array $tags): array
+    {
+        $res = [];
+
+        if (empty($timesheet['tagIds'])) {
+            return $res;
+        }
+
+        foreach (explode(',', $timesheet['tagIds']) as $tagId) {
+            $tagId = (int) $tagId;
+            $tag = $tags[$tagId] ?? null;
+            if ($tag === null) {
+                continue;
+            }
+
+            $res[] = [
+                'name'  => $tag->getName(),
+                'color' => $tag->getColor(),
+            ];
+        }
+
+        return $res;
     }
 
     private function validateTimesheetSession(array $session, array $schema): bool
@@ -805,54 +757,5 @@ final class TimesheetsController
         }
 
         return true;
-    }
-
-    /**
-     * @param array<int, mixed> $selected
-     * @param array<int, int> $allowedIds
-     * @return array<int, int>
-     */
-    private function cleanQueryParamIds(array $selected, array $allowedIds): array
-    {
-        $allowed = array_flip(array_map('intval', $allowedIds));
-
-        $clean = [];
-        foreach ($selected as $id) {
-            $id = (int) $id;
-            if (isset($allowed[$id])) {
-                $clean[] = $id;
-            }
-        }
-
-        return $clean;
-    }
-
-    /**
-     * @param array<string, mixed> $timesheet
-     * @param array<int, object> $tags
-     * @return array<int, array{name:string, color:string}>
-     */
-    private function mapTimesheetTags(array $timesheet, array $tags): array
-    {
-        $res = [];
-
-        if (empty($timesheet['tagIds'])) {
-            return $res;
-        }
-
-        foreach (explode(',', $timesheet['tagIds']) as $tagId) {
-            $tagId = (int) $tagId;
-            $tag = $tags[$tagId] ?? null;
-            if ($tag === null) {
-                continue;
-            }
-
-            $res[] = [
-                'name'  => $tag->getName(),
-                'color' => $tag->getColor(),
-            ];
-        }
-
-        return $res;
     }
 }
