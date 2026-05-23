@@ -15,10 +15,10 @@ $( document ).ready(function() {
         let field = "\
         <div class=\"row mb-3 mx-0\" id=\"customer_edit_form_teams_"+teamId+"\">\
             <div class=\"col-sm-9 offset-sm-3 border border-secondary-subtle\">\
-                <div class=\"form py-2\">\
+                <div class=\"form py-2 d-flex align-items-center ps-0\">\
                     <input type=\"hidden\" name=\"customer_edit_form[selectedTeams][]\" value=\""+teamId+"\" required=\"required\">\
-                    <span class=\"form-label\">"+teamName+"</span>\
-                    <button type=\"button\" class=\"btn-remove-member btn btn-light btn-sm d-inline-flex float-end\" value=\""+teamId+"\">\
+                    <span class=\"form-label mb-0\">"+teamName+"</span>\
+                    <button type=\"button\" class=\"btn-remove-member btn btn-light btn-sm d-inline-flex ms-auto\" value=\""+teamId+"\">\
                         <i class=\"bi bi-trash\"></i>\
                     </button>\
                 </div>\
