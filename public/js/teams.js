@@ -15,11 +15,11 @@ $( document ).ready(function() {
         let field = "\
         <div class=\"row mb-3 mx-0\" id=\"team_edit_form_members_"+memberId+"\">\
             <div class=\"col-sm-9 offset-sm-3 border border-secondary-subtle\">\
-                <div class=\"form-check py-2\">\
+                <div class=\"form-check py-2 d-flex align-items-center ps-0\">\
                     <input type=\"hidden\" id=\"team_edit_form_members_"+memberId+"_user\" name=\"team_edit_form[members]["+memberId+"][user]\" value=\"1\" required=\"required\">\
-                    <input class=\"form-check-input\" type=\"checkbox\" id=\"team_edit_form_members_"+memberId+"_teamlead\" name=\"team_edit_form[members]["+memberId+"][teamlead]\" value=\"1\">\
-                    <label class=\"form-check-label\" for=\"team_edit_form_members_"+memberId+"_teamlead\">"+memberName+"</label>\
-                    <button type=\"button\" class=\"btn-remove-member btn btn-light btn-sm d-inline-flex float-end \" value=\""+memberId+"\">\
+                    <input class=\"form-check-input mt-0 ms-0 me-2\" type=\"checkbox\" id=\"team_edit_form_members_"+memberId+"_teamlead\" name=\"team_edit_form[members]["+memberId+"][teamlead]\" value=\"1\">\
+                    <label class=\"form-check-label mb-0\" for=\"team_edit_form_members_"+memberId+"_teamlead\">"+memberName+"</label>\
+                    <button type=\"button\" class=\"btn-remove-member btn btn-light btn-sm d-inline-flex ms-auto\" value=\""+memberId+"\">\
                         <i class=\"bi bi-trash\"></i>\
                     </button>\
                 </div>\
