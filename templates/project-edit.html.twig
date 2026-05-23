@@ -123,10 +123,10 @@
                     {% for selectedTeam in selectedTeams %}
                         <div class="row mb-3 mx-0" id="project_edit_form_teams_{{ selectedTeam.id }}">
                             <div class="col-sm-9 offset-sm-3 border border-secondary-subtle">
-                                <div class="form py-2">
+                                <div class="form py-2 d-flex align-items-center ps-0">
                                     <input type="hidden" name="project_edit_form[selectedTeams][]" value="{{ selectedTeam.id }}" required="required">
-                                    <span class="form-label">{{ selectedTeam.name }}</span>
-                                    <button type="button" class="btn-remove-member btn btn-light btn-sm d-inline-flex float-end" value="{{ selectedTeam.id }}">
+                                    <span class="form-label mb-0">{{ selectedTeam.name }}</span>
+                                    <button type="button" class="btn-remove-member btn btn-light btn-sm d-inline-flex ms-auto" value="{{ selectedTeam.id }}">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
