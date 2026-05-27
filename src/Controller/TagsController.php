@@ -33,11 +33,6 @@ final class TagsController
 
     public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
-        if (!$currentUser) {
-            return $this->helper->redirect($request, $response, 'login');
-        }
-
         $tags = $this->tagService->findAll();
         $tagsList = $this->mapTagsForList($request, $tags);
 
@@ -53,11 +48,6 @@ final class TagsController
 
     public function createAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
-        if (!$currentUser) {
-            return $this->helper->redirect($request, $response, 'login');
-        }
-
         $data = (array) $request->getParsedBody();
         $errors = $this->tagService->createTag($data);
 
@@ -73,11 +63,6 @@ final class TagsController
 
     public function editForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
-        if (!$currentUser) {
-            return $this->helper->redirect($request, $response, 'login');
-        }
-
         $tagId = (int)($args['tagId'] ?? 0);
         $tag = $this->tagService->findTag($tagId);
 
@@ -97,11 +82,6 @@ final class TagsController
 
     public function editAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
-        if (!$currentUser) {
-            return $this->helper->redirect($request, $response, 'login');
-        }
-
         $tagId = (int)($args['tagId'] ?? 0);
         $tag = $this->tagService->findTag($tagId);
 

@@ -69,7 +69,7 @@ final class ProfileController
     {
         $currentUser = $this->helper->getCurrentUser($request);
         if (!$currentUser) {
-            return $this->helper->redirect($request, $response, 'logout');
+            return $this->helper->redirect($request, $response, 'login');
         }
 
         $data = (array) $request->getParsedBody();

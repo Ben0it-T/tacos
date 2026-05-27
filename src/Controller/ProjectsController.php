@@ -87,11 +87,6 @@ final class ProjectsController
 
     public function createAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
-        if (!$currentUser) {
-            return $this->helper->redirect($request, $response, 'login');
-        }
-
         $data = (array) $request->getParsedBody();
         $errors = $this->projectService->createProject($data);
 

@@ -68,11 +68,6 @@ final class CustomersController
 
     public function createAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
-        if (!$currentUser || !$this->helper->isAdmin($currentUser)) {
-            return $this->helper->redirect($request, $response, 'customers');
-        }
-
         $data = (array) $request->getParsedBody();
         $errors = $this->customerService->createCustomer($data);
 
@@ -117,8 +112,8 @@ final class CustomersController
     public function editForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser($request);
-        if (!$currentUser || !$this->helper->isAdmin($currentUser)) {
-            return $this->helper->redirect($request, $response, 'customers');
+        if (!$currentUser) {
+            return $this->helper->redirect($request, $response, 'login');
         }
 
         $customerId = (int)($args['customerId'] ?? 0);
@@ -149,8 +144,8 @@ final class CustomersController
     public function editAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser($request);
-        if (!$currentUser || !$this->helper->isAdmin($currentUser)) {
-            return $this->helper->redirect($request, $response, 'customers');
+        if (!$currentUser) {
+            return $this->helper->redirect($request, $response, 'login');
         }
 
         $customerId = (int)($args['customerId'] ?? 0);
