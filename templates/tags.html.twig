@@ -19,7 +19,8 @@
     <div class="card mb-3">
         <div class="card-body table-responsive">
 
-            <table class="table table-hover" id="datatable">
+            <table class="table table-hover caption-top" id="datatable">
+                <caption>{% if currentUser.role == 3 %}{{ trans.table_caption_tags_admin }}{% else %}{{ trans.table_caption_tags_teamlead }}{% endif %}</caption>
                 <thead>
                     <tr>
                         <th scope="col">{{ trans.table_row_name }}</th>
