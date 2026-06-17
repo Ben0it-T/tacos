@@ -12,7 +12,6 @@ config/local.*.php
 
 # Composer
 composer.phar
-composer.lock
 vendor/
 
 # App
