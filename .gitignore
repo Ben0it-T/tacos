@@ -1,7 +1,7 @@
 # General
 .DS_Store
 ._*
-_*
+__*.*
 *.sublime-project
 *.sublime-workspace
 
@@ -15,9 +15,5 @@ composer.phar
 vendor/
 
 # App
-var/cache/*
-var/logs/*
-var/sessions/*
-var/templates/*
-var/tmp/*
-!.gitkeep
+var/*/*
+!var/*/.gitkeep
