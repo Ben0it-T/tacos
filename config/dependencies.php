@@ -12,8 +12,10 @@ use App\Middleware\TwigCsrfMiddleware;
 use App\Middleware\SessionMiddleware;
 
 use App\Session\SessionManager;
+use App\Session\SessionStoreInterface;
 use App\Session\Handler\LocalSessionHandlerFactory;
 use App\Session\Handler\DatabaseSessionHandler;
+use App\Session\Storage\PhpSession;
 
 use App\Service\ActivityService;
 use App\Service\AuthService;
@@ -241,6 +243,10 @@ return function (ContainerInterface $container): void {
             $c->get(SessionManager::class),
             $c
         );
+    });
+
+    $container->set(SessionStoreInterface::class, function () {
+        return new PhpSession();
     });
 
     //
