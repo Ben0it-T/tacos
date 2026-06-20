@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace App\Session\Storage;
 
-final class PhpSession implements SessionStorageInterface
+use App\Session\SessionStoreInterface;
+
+final class PhpSession implements SessionStoreInterface
 {
     public function get(string $key, mixed $default = null): mixed
     {
