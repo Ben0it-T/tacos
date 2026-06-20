@@ -33,7 +33,7 @@ final class XhrController
             return $response->withStatus(403);
         }
 
-        $currentUser = $this->helper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser();
         if (!$currentUser) {
             $response->getBody()->write(json_encode([]));
             return $response->withStatus(403)->withHeader('Content-Type', 'application/json');

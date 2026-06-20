@@ -5,6 +5,7 @@ namespace App\Helper;
 
 use App\Entity\User;
 use App\Service\UserService;
+use App\Session\SessionStoreInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Routing\RouteContext;
@@ -14,18 +15,18 @@ final class ControllerHelper
     private const ROLE_ADMIN = 3;
     private const ROLE_TEAMLEAD = 2;
     private const ROLE_USER = 1;
+    private const SESSION_AUTH = 'auth';
 
-    public function __construct(private UserService $userService)
+    public function __construct(private UserService $userService, private SessionStoreInterface $session)
     {
     }
 
     // User
-    public function getCurrentUser(ServerRequestInterface $request): ?User
+    public function getCurrentUser(): ?User
     {
-        $session = $request->getAttribute('session');
-
+        $session = $this->session->get(self::SESSION_AUTH, null);
         $userId = is_array($session)
-            ? (int)($session['auth']['userId'] ?? 0)
+            ? (int)($session['userId'] ?? 0)
             : 0;
 
         if ($userId <= 0) {
@@ -116,29 +117,15 @@ final class ControllerHelper
     }
 
     /**
-     * Get session
-     *
-     * @param ServerRequestInterface $request
-     * @return array<string, mixed>
-     */
-    public function getSession(ServerRequestInterface $request): array
-    {
-        $session = $request->getAttribute('session');
-        return is_array($session) ? $session : [];
-    }
-
-    /**
      * Get session value
      *
-     * @param ServerRequestInterface $request
      * @param string $key
      * @param mixed $default
      * @return mixed
      */
-    public function getSessionValue(ServerRequestInterface $request, string $key, $default = null)
+    public function getSessionValue(string $key, $default = null): mixed
     {
-        $session = $this->getSession($request);
-        return $session[$key] ?? $default;
+        return $this->session->get($key, $default);
     }
 
     /**
@@ -150,11 +137,7 @@ final class ControllerHelper
      */
     public function setSessionValue(string $key, $value): void
     {
-        if (!isset($_SESSION)) {
-            return;
-        }
-
-        $_SESSION[$key] = $value;
+        $this->session->set($key, $value);
     }
 
 }

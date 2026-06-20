@@ -160,7 +160,8 @@ return function (ContainerInterface $container): void {
 
     $container->set(ControllerHelper::class, function (ContainerInterface $c) {
         return new ControllerHelper(
-            $c->get(UserService::class)
+            $c->get(UserService::class),
+            $c->get(SessionStoreInterface::class),
         );
     });
 

@@ -54,7 +54,7 @@ final class TimesheetsController
 
     public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser();
         if (!$currentUser) {
             return $this->helper->redirect($request, $response, 'login');
         }
@@ -128,7 +128,7 @@ final class TimesheetsController
 
     public function indexTeams(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser();
         if (!$currentUser) {
             return $this->helper->redirect($request, $response, 'login');
         }
@@ -209,7 +209,7 @@ final class TimesheetsController
 
     public function createForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser();
         if (!$currentUser) {
             return $this->helper->redirect($request, $response, 'login');
         }
@@ -237,7 +237,7 @@ final class TimesheetsController
 
     public function createAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser();
         if (!$currentUser) {
             return $this->helper->redirect($request, $response, 'login');
         }
@@ -258,7 +258,7 @@ final class TimesheetsController
 
     public function editForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser();
         if (!$currentUser) {
             return $this->helper->redirect($request, $response, 'login');
         }
@@ -298,7 +298,7 @@ final class TimesheetsController
 
     public function editAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser();
         if (!$currentUser) {
             return $this->helper->redirect($request, $response, 'login');
         }
@@ -324,7 +324,7 @@ final class TimesheetsController
 
     public function restartAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser();
         if (!$currentUser) {
             return $this->helper->redirect($request, $response, 'login');
         }
@@ -350,7 +350,7 @@ final class TimesheetsController
 
     public function deleteForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser();
         if (!$currentUser) {
             return $this->helper->redirect($request, $response, 'login');
         }
@@ -378,7 +378,7 @@ final class TimesheetsController
 
     public function deleteAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser();
         if (!$currentUser) {
             return $this->helper->redirect($request, $response, 'login');
         }
@@ -403,7 +403,7 @@ final class TimesheetsController
 
     public function stopAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser();
         if (!$currentUser) {
             return $this->helper->redirect($request, $response, 'login');
         }
@@ -429,7 +429,7 @@ final class TimesheetsController
 
     public function exportTimesheets(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser();
         if (!$currentUser) {
             return $this->helper->redirect($request, $response, 'login');
         }
@@ -476,7 +476,7 @@ final class TimesheetsController
 
     public function exportTeamsTimesheets(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser();
         if (!$currentUser) {
             return $this->helper->redirect($request, $response, 'login');
         }
@@ -590,7 +590,7 @@ final class TimesheetsController
      */
     private function buildTimesheetCriteriaFromSession(ServerRequestInterface $request, $currentUser): ?array
     {
-        $session = $this->helper->getSessionValue($request, 'timesheets', []);
+        $session = $this->helper->getSessionValue('timesheets', []);
 
         $schema = [
             'start'      => ['type' => 'string', 'required' => true],
@@ -616,7 +616,7 @@ final class TimesheetsController
 
     private function buildTeamsTimesheetCriteriaFromSession(ServerRequestInterface $request): ?array
     {
-        $session = $this->helper->getSessionValue($request, 'teamsTimesheets', []);
+        $session = $this->helper->getSessionValue('teamsTimesheets', []);
 
         $schema = [
             'start'      => ['type' => 'string', 'required' => true],
@@ -682,7 +682,7 @@ final class TimesheetsController
 
     private function getTimesheetFilters(ServerRequestInterface $request, string $key): array
     {
-        $filters = $this->helper->getSessionValue($request, $key, []);
+        $filters = $this->helper->getSessionValue($key, []);
         $filters = is_array($filters) ? $filters : [];
         $queryParams = $this->timesheetService->getQueryParams($request->getQueryParams(), $filters);
         return is_array($queryParams) ? $queryParams : [];

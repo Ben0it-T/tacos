@@ -37,7 +37,7 @@ final class ProfileController
 
     public function editForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser();
         if (!$currentUser) {
             return $this->helper->redirect($request, $response, 'login');
         }
@@ -67,7 +67,7 @@ final class ProfileController
 
     public function editAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser();
         if (!$currentUser) {
             return $this->helper->redirect($request, $response, 'login');
         }

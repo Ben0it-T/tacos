@@ -42,7 +42,7 @@ final class TeamsController
 
     public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser();
         if (!$currentUser) {
             return $this->helper->redirect($request, $response, 'login');
         }
@@ -84,7 +84,7 @@ final class TeamsController
 
     public function teamsDetails(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser();
         if (!$currentUser) {
             return $this->helper->redirect($request, $response, 'login');
         }
@@ -114,7 +114,7 @@ final class TeamsController
 
     public function editForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser();
         if (!$currentUser) {
             return $this->helper->redirect($request, $response, 'login');
         }
@@ -153,7 +153,7 @@ final class TeamsController
 
     public function editAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser();
         if (!$currentUser) {
             return $this->helper->redirect($request, $response, 'login');
         }

@@ -28,12 +28,12 @@ final class ReportsController
 
     public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
-        $currentUser = $this->helper->getCurrentUser($request);
+        $currentUser = $this->helper->getCurrentUser();
         if (!$currentUser) {
             return $this->helper->redirect($request, $response, 'login');
         }
 
-        $session = $this->helper->getSessionValue($request, 'reports', []);
+        $session = $this->helper->getSessionValue('reports', []);
 
         // Report List
         $reports = [
