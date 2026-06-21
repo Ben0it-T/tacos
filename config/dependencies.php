@@ -242,8 +242,7 @@ return function (ContainerInterface $container): void {
 
     $container->set(SessionMiddleware::class, function (ContainerInterface $c) {
         return new SessionMiddleware(
-            $c->get(SessionManager::class),
-            $c
+            $c->get(SessionManager::class)
         );
     });
 
