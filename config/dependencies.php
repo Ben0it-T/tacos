@@ -20,6 +20,7 @@ use App\Session\Storage\PhpSession;
 use App\Service\ActivityService;
 use App\Service\AuthService;
 use App\Service\CustomerService;
+use App\Service\FlashMessageService;
 use App\Service\PasswordRequestService;
 use App\Service\ProjectService;
 use App\Service\TagService;
@@ -286,6 +287,12 @@ return function (ContainerInterface $container): void {
             $c->get(ValidationHelper::class),
             $c->get(LoggerInterface::class),
             $c->get('translations')
+        );
+    });
+
+    $container->set(FlashMessageService::class, function (ContainerInterface $c) {
+        return new FlashMessageService(
+            $c->get(SessionStoreInterface::class)
         );
     });
 
