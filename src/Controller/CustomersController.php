@@ -7,19 +7,19 @@ use App\Entity\Customer;
 use App\Entity\User;
 use App\Helper\ControllerHelper;
 use App\Service\CustomerService;
+use App\Service\FlashMessageService;
 use App\Service\ProjectService;
 use App\Service\TeamService;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-use Slim\Flash\Messages;
 use Slim\Views\Twig;
 
 final class CustomersController
 {
     private Twig $twig;
-    private Messages $flash;
+    private FlashMessageService $flash;
     private CustomerService $customerService;
     private ProjectService $projectService;
     private TeamService $teamService;
@@ -27,7 +27,7 @@ final class CustomersController
     private array $options;
     private array $translations;
 
-    public function __construct(Twig $twig, Messages $flash, CustomerService $customerService, ProjectService $projectService, TeamService $teamService, ControllerHelper $helper, array $options, array $translations)
+    public function __construct(Twig $twig, FlashMessageService $flash, CustomerService $customerService, ProjectService $projectService, TeamService $teamService, ControllerHelper $helper, array $options, array $translations)
     {
         $this->twig = $twig;
         $this->flash = $flash;
@@ -61,8 +61,8 @@ final class CustomersController
             'colors'          => $colors,
             'teams'           => $this->helper->mapIdNameList($teams),
             'customers'       => $customers,
-            'flashMsgSuccess' => $this->flash->getFirstMessage('success'),
-            'flashMsgError'   => $this->flash->getFirstMessage('error'),
+            'flashMsgSuccess' => $this->flash->getFirst('success'),
+            'flashMsgError'   => $this->flash->getFirst('error'),
         ]);
     }
 
@@ -72,10 +72,10 @@ final class CustomersController
         $errors = $this->customerService->createCustomer($data);
 
         if ($errors === '') {
-            $this->flash->addMessage('success', $this->translations['form_success_create_customer']);
+            $this->flash->add('success', $this->translations['form_success_create_customer']);
         }
         else {
-            $this->flash->addMessage('error', $errors);
+            $this->flash->add('error', $errors);
         }
 
         return $this->helper->redirect($request, $response, 'customers');
@@ -136,8 +136,8 @@ final class CustomersController
             'teams'            => $this->helper->mapIdNameList($teams),
             'selectedTeams'    => $selectedTeams,
             'selectedTeamsIds' => $selectedTeamsIds,
-            'flashMsgSuccess'  => $this->flash->getFirstMessage('success'),
-            'flashMsgError'    => $this->flash->getFirstMessage('error'),
+            'flashMsgSuccess'  => $this->flash->getFirst('success'),
+            'flashMsgError'    => $this->flash->getFirst('error'),
         ]);
     }
 
@@ -159,11 +159,11 @@ final class CustomersController
 
         $errors = $this->customerService->updateCustomer($customer, $data);
         if ($errors === '') {
-            $this->flash->addMessage('success', $this->translations['form_success_update']);
+            $this->flash->add('success', $this->translations['form_success_update']);
             return $this->helper->redirect($request, $response, 'customers');
         }
 
-        $this->flash->addMessage('error', $errors);
+        $this->flash->add('error', $errors);
         return $this->helper->redirect($request, $response, 'customers_edit', ['customerId' => $customerId]);
     }
 

@@ -5,23 +5,23 @@ namespace App\Controller;
 
 use App\Helper\ControllerHelper;
 use App\Service\AuthService;
+use App\Service\FlashMessageService;
 use App\Security\AuthResult;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-use Slim\Flash\Messages;
 use Slim\Views\Twig;
 
 final class LoginController
 {
     private Twig $twig;
-    private Messages $flash;
+    private FlashMessageService $flash;
     private AuthService $authService;
     private ControllerHelper $helper;
     private array $translations;
 
-    public function __construct(Twig $twig, Messages $flash, AuthService $authService, ControllerHelper $helper, array $translations)
+    public function __construct(Twig $twig, FlashMessageService $flash, AuthService $authService, ControllerHelper $helper, array $translations)
     {
         $this->twig = $twig;
         $this->flash = $flash;
@@ -37,8 +37,8 @@ final class LoginController
         }
 
         return $this->twig->render($response, 'login.html.twig', [
-            'flashMsgError'   => $this->flash->getFirstMessage('login-error'),
-            'message'         => $this->flash->getFirstMessage('change_password'),
+            'flashMsgError'   => $this->flash->getFirst('login-error'),
+            'message'         => $this->flash->getFirst('change_password'),
             'password_forgot_url' => $this->helper->getUrlFor($request, 'forgot_password'),
         ]);
     }
@@ -59,7 +59,7 @@ final class LoginController
 
             case AuthResult::INVALID_CREDENTIALS:
             default:
-                $this->flash->addMessage('login-error', $this->translations['form_error_credentials']);
+                $this->flash->add('login-error', $this->translations['form_error_credentials']);
                 return $this->helper->redirect($request, $response, 'login');
         }
     }

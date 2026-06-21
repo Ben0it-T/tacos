@@ -470,7 +470,7 @@ return function (ContainerInterface $container): void {
 
         return new ActivitiesController(
             $c->get(Twig::class),
-            $c->get('flash'),
+            $c->get(FlashMessageService::class),
             $c->get(ActivityService::class),
             $c->get(ProjectService::class),
             $c->get(TeamService::class),
@@ -487,7 +487,7 @@ return function (ContainerInterface $container): void {
 
         return new CustomersController(
             $c->get(Twig::class),
-            $c->get('flash'),
+            $c->get(FlashMessageService::class),
             $c->get(CustomerService::class),
             $c->get(ProjectService::class),
             $c->get(TeamService::class),
@@ -510,7 +510,7 @@ return function (ContainerInterface $container): void {
     $container->set(LoginController::class, function (ContainerInterface $c) {
         return new LoginController(
             $c->get(Twig::class),
-            $c->get('flash'),
+            $c->get(FlashMessageService::class),
             $c->get(AuthService::class),
             $c->get(ControllerHelper::class),
             $c->get('translations')
@@ -522,7 +522,7 @@ return function (ContainerInterface $container): void {
 
         return new PasswordResetController(
             $c->get(Twig::class),
-            $c->get('flash'),
+            $c->get(FlashMessageService::class),
             $c->get(PasswordRequestService::class),
             $c->get(ControllerHelper::class),
             [
@@ -538,7 +538,7 @@ return function (ContainerInterface $container): void {
 
         return new ProfileController(
             $c->get(Twig::class),
-            $c->get('flash'),
+            $c->get(FlashMessageService::class),
             $c->get(TeamService::class),
             $c->get(UserService::class),
             $c->get(ControllerHelper::class),
@@ -555,7 +555,7 @@ return function (ContainerInterface $container): void {
 
         return new ProjectsController(
             $c->get(Twig::class),
-            $c->get('flash'),
+            $c->get(FlashMessageService::class),
             $c->get(ActivityService::class),
             $c->get(CustomerService::class),
             $c->get(ProjectService::class),
@@ -585,7 +585,7 @@ return function (ContainerInterface $container): void {
 
         return new TagsController(
             $c->get(Twig::class),
-            $c->get('flash'),
+            $c->get(FlashMessageService::class),
             $c->get(TagService::class),
             $c->get(ControllerHelper::class),
             [
@@ -600,7 +600,7 @@ return function (ContainerInterface $container): void {
 
         return new TeamsController(
             $c->get(Twig::class),
-            $c->get('flash'),
+            $c->get(FlashMessageService::class),
             $c->get(CustomerService::class),
             $c->get(ProjectService::class),
             $c->get(TeamService::class),
@@ -618,7 +618,7 @@ return function (ContainerInterface $container): void {
 
         return new UsersController(
             $c->get(Twig::class),
-            $c->get('flash'),
+            $c->get(FlashMessageService::class),
             $c->get(CustomerService::class),
             $c->get(ProjectService::class),
             $c->get(TeamService::class),
@@ -658,7 +658,7 @@ return function (ContainerInterface $container): void {
 
         return new TimesheetsController(
             $c->get(Twig::class),
-            $c->get('flash'),
+            $c->get(FlashMessageService::class),
             $c->get(ActivityService::class),
             $c->get(CustomerService::class),
             $c->get(ProjectService::class),

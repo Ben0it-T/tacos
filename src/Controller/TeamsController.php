@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\Helper\ControllerHelper;
 use App\Service\CustomerService;
+use App\Service\FlashMessageService;
 use App\Service\ProjectService;
 use App\Service\TeamService;
 use App\Service\UserService;
@@ -12,13 +13,12 @@ use App\Service\UserService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-use Slim\Flash\Messages;
 use Slim\Views\Twig;
 
 final class TeamsController
 {
     private Twig $twig;
-    private Messages $flash;
+    private FlashMessageService $flash;
     private CustomerService $customerService;
     private ProjectService $projectService;
     private TeamService $teamService;
@@ -27,7 +27,7 @@ final class TeamsController
     private array $options;
     private array $translations;
 
-    public function __construct(Twig $twig, Messages $flash, CustomerService $customerService, ProjectService $projectService, TeamService $teamService, UserService $userService, ControllerHelper $helper, array $options, array $translations)
+    public function __construct(Twig $twig, FlashMessageService $flash, CustomerService $customerService, ProjectService $projectService, TeamService $teamService, UserService $userService, ControllerHelper $helper, array $options, array $translations)
     {
         $this->twig = $twig;
         $this->flash = $flash;
@@ -62,8 +62,8 @@ final class TeamsController
             'colors'          => $colors,
             'teams'           => $teams,
             'users'           => $this->helper->mapIdNameList($users),
-            'flashMsgSuccess' => $this->flash->getFirstMessage('success'),
-            'flashMsgError'   => $this->flash->getFirstMessage('error'),
+            'flashMsgSuccess' => $this->flash->getFirst('success'),
+            'flashMsgError'   => $this->flash->getFirst('error'),
         ]);
     }
 
@@ -73,10 +73,10 @@ final class TeamsController
         $errors = $this->teamService->createTeam($data);
 
         if ($errors === '') {
-            $this->flash->addMessage('success', $this->translations['form_success_create_team']);
+            $this->flash->add('success', $this->translations['form_success_create_team']);
         }
         else {
-            $this->flash->addMessage('error', $errors);
+            $this->flash->add('error', $errors);
         }
 
         return $this->helper->redirect($request, $response, 'teams');
@@ -145,8 +145,8 @@ final class TeamsController
             'teamMembers'      => $teamMembers,
             'teamMembersIds'   => $teamMembersIds,
             'teamleaders'      => $teamleaders,
-            'flashMsgSuccess'  => $this->flash->getFirstMessage('success'),
-            'flashMsgError'    => $this->flash->getFirstMessage('error'),
+            'flashMsgSuccess'  => $this->flash->getFirst('success'),
+            'flashMsgError'    => $this->flash->getFirst('error'),
 
         ]);
     }
@@ -171,11 +171,11 @@ final class TeamsController
         $data = (array) $request->getParsedBody();
         $errors = $this->teamService->updateTeam($team, $data);
         if ($errors === '') {
-            $this->flash->addMessage('success', $this->translations['form_success_update']);
+            $this->flash->add('success', $this->translations['form_success_update']);
             return $this->helper->redirect($request, $response, 'teams');
         }
 
-        $this->flash->addMessage('error', $errors);
+        $this->flash->add('error', $errors);
         return $this->helper->redirect($request, $response, 'teams_edit', ['teamId' => $teamId]);
     }
 

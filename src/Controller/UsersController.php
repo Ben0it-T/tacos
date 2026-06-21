@@ -7,6 +7,7 @@ use App\Entity\Role;
 use App\Entity\User;
 use App\Helper\ControllerHelper;
 use App\Service\CustomerService;
+use App\Service\FlashMessageService;
 use App\Service\ProjectService;
 use App\Service\TeamService;
 use App\Service\UserService;
@@ -14,13 +15,12 @@ use App\Service\UserService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-use Slim\Flash\Messages;
 use Slim\Views\Twig;
 
 final class UsersController
 {
     private Twig $twig;
-    private Messages $flash;
+    private FlashMessageService $flash;
     private CustomerService $customerService;
     private ProjectService $projectService;
     private TeamService $teamService;
@@ -29,7 +29,7 @@ final class UsersController
     private array $options;
     private array $translations;
 
-    public function __construct(Twig $twig, Messages $flash, CustomerService $customerService, ProjectService $projectService, TeamService $teamService, UserService $userService, ControllerHelper $helper, array $options, array $translations)
+    public function __construct(Twig $twig, FlashMessageService $flash, CustomerService $customerService, ProjectService $projectService, TeamService $teamService, UserService $userService, ControllerHelper $helper, array $options, array $translations)
     {
         $this->twig = $twig;
         $this->flash = $flash;
@@ -53,8 +53,8 @@ final class UsersController
                 'pwdMinLength'   => $this->options['pwdMinLength'],
             ],
             'users'           => $users,
-            'flashMsgSuccess' => $this->flash->getFirstMessage('success'),
-            'flashMsgError'   => $this->flash->getFirstMessage('error'),
+            'flashMsgSuccess' => $this->flash->getFirst('success'),
+            'flashMsgError'   => $this->flash->getFirst('error'),
         ]);
     }
 
@@ -64,10 +64,10 @@ final class UsersController
         $errors = $this->userService->createUser($data);
 
         if ($errors === '') {
-            $this->flash->addMessage('success', $this->translations['form_success_create_user']);
+            $this->flash->add('success', $this->translations['form_success_create_user']);
         }
         else {
-            $this->flash->addMessage('error', $errors);
+            $this->flash->add('error', $errors);
         }
 
         return $this->helper->redirect($request, $response, 'users');
@@ -110,8 +110,8 @@ final class UsersController
                 'pwdMinLength'   => $this->options['pwdMinLength'],
             ],
             'user'            => $this->mapUserForView($user, $role, $teams),
-            'flashMsgSuccess' => $this->flash->getFirstMessage('success'),
-            'flashMsgError'   => $this->flash->getFirstMessage('error'),
+            'flashMsgSuccess' => $this->flash->getFirst('success'),
+            'flashMsgError'   => $this->flash->getFirst('error'),
         ]);
     }
 
@@ -128,11 +128,11 @@ final class UsersController
 
         $errors = $this->userService->updateUser($user, $data);
         if ($errors === '') {
-            $this->flash->addMessage('success', $this->translations['form_success_update']);
+            $this->flash->add('success', $this->translations['form_success_update']);
             return $this->helper->redirect($request, $response, 'users');
         }
 
-        $this->flash->addMessage('error', $errors);
+        $this->flash->add('error', $errors);
         return $this->helper->redirect($request, $response, 'users_edit', ['username' => $username]);
     }
 

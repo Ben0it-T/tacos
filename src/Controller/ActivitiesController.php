@@ -7,19 +7,19 @@ use App\Entity\Activity;
 use App\Entity\User;
 use App\Helper\ControllerHelper;
 use App\Service\ActivityService;
+use App\Service\FlashMessageService;
 use App\Service\ProjectService;
 use App\Service\TeamService;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-use Slim\Flash\Messages;
 use Slim\Views\Twig;
 
 final class ActivitiesController
 {
     private Twig $twig;
-    private Messages $flash;
+    private FlashMessageService $flash;
     private ActivityService $activityService;
     private ProjectService $projectService;
     private TeamService $teamService;
@@ -27,7 +27,7 @@ final class ActivitiesController
     private array $options;
     private array $translations;
 
-    public function __construct(Twig $twig, Messages $flash, ActivityService $activityService, ProjectService $projectService, TeamService $teamService, ControllerHelper $helper, array $options, array $translations)
+    public function __construct(Twig $twig, FlashMessageService $flash, ActivityService $activityService, ProjectService $projectService, TeamService $teamService, ControllerHelper $helper, array $options, array $translations)
     {
         $this->twig = $twig;
         $this->flash = $flash;
@@ -68,8 +68,8 @@ final class ActivitiesController
             'projects'        => $this->helper->mapIdNameList($projects),
             'teams'           => $this->helper->mapIdNameList($teams),
             'activities'      => $activities,
-            'flashMsgSuccess' => $this->flash->getFirstMessage('success'),
-            'flashMsgError'   => $this->flash->getFirstMessage('error'),
+            'flashMsgSuccess' => $this->flash->getFirst('success'),
+            'flashMsgError'   => $this->flash->getFirst('error'),
         ]);
     }
 
@@ -79,10 +79,10 @@ final class ActivitiesController
         $errors = $this->activityService->createActivity($data);
 
         if ($errors === '') {
-            $this->flash->addMessage('success', $this->translations['form_success_create_activity']);
+            $this->flash->add('success', $this->translations['form_success_create_activity']);
         }
         else {
-            $this->flash->addMessage('error', $errors);
+            $this->flash->add('error', $errors);
         }
 
         return $this->helper->redirect($request, $response, 'activities');
@@ -152,8 +152,8 @@ final class ActivitiesController
             'teams'            => $this->helper->mapIdNameList($teams),
             'selectedTeams'    => $selectedTeams,
             'selectedTeamsIds' => $selectedTeamsIds,
-            'flashMsgSuccess'  => $this->flash->getFirstMessage('success'),
-            'flashMsgError'    => $this->flash->getFirstMessage('error'),
+            'flashMsgSuccess'  => $this->flash->getFirst('success'),
+            'flashMsgError'    => $this->flash->getFirst('error'),
         ]);
     }
 
@@ -174,11 +174,11 @@ final class ActivitiesController
         $data = (array) $request->getParsedBody();
         $errors = $this->activityService->updateActivity($activity, $data);
         if ($errors === '') {
-            $this->flash->addMessage('success', $this->translations['form_success_update']);
+            $this->flash->add('success', $this->translations['form_success_update']);
             return $this->helper->redirect($request, $response, 'activities');
         }
 
-        $this->flash->addMessage('error', $errors);
+        $this->flash->add('error', $errors);
         return $this->helper->redirect($request, $response, 'activities_edit', ['activityId' => $activityId]);
     }
 

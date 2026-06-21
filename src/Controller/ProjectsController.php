@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Helper\ControllerHelper;
 use App\Service\ActivityService;
 use App\Service\CustomerService;
+use App\Service\FlashMessageService;
 use App\Service\ProjectService;
 use App\Service\TagService;
 use App\Service\TeamService;
@@ -17,13 +18,12 @@ use App\Service\UserService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-use Slim\Flash\Messages;
 use Slim\Views\Twig;
 
 final class ProjectsController
 {
     private Twig $twig;
-    private Messages $flash;
+    private FlashMessageService $flash;
     private ActivityService $activityService;
     private CustomerService $customerService;
     private ProjectService $projectService;
@@ -35,7 +35,7 @@ final class ProjectsController
     private array $options;
     private array $translations;
 
-    public function __construct(Twig $twig, Messages $flash, ActivityService $activityService, CustomerService $customerService, ProjectService $projectService, TagService $tagService, TeamService $teamService, TimesheetService $timesheetService, UserService $userService, ControllerHelper $helper, array $options, array $translations)
+    public function __construct(Twig $twig, FlashMessageService $flash, ActivityService $activityService, CustomerService $customerService, ProjectService $projectService, TagService $tagService, TeamService $teamService, TimesheetService $timesheetService, UserService $userService, ControllerHelper $helper, array $options, array $translations)
     {
         $this->twig = $twig;
         $this->flash = $flash;
@@ -80,8 +80,8 @@ final class ProjectsController
             'customers'       => $this->helper->mapIdNameList($customers),
             'teams'           => $this->helper->mapIdNameList($teams),
             'projects'        => $projects,
-            'flashMsgSuccess' => $this->flash->getFirstMessage('success'),
-            'flashMsgError'   => $this->flash->getFirstMessage('error'),
+            'flashMsgSuccess' => $this->flash->getFirst('success'),
+            'flashMsgError'   => $this->flash->getFirst('error'),
         ]);
     }
 
@@ -91,10 +91,10 @@ final class ProjectsController
         $errors = $this->projectService->createProject($data);
 
         if ($errors === '') {
-            $this->flash->addMessage('success', $this->translations['form_success_create_project']);
+            $this->flash->add('success', $this->translations['form_success_create_project']);
         }
         else {
-            $this->flash->addMessage('error', $errors);
+            $this->flash->add('error', $errors);
         }
 
         return $this->helper->redirect($request, $response, 'projects');
@@ -192,8 +192,8 @@ final class ProjectsController
             'globalActivities'     => $globalActivities,
             'projectActivities'    => $projectActivities,
             'projectActivitiesIds' => $allowedActivitiesIds,
-            'flashMsgSuccess'      => $this->flash->getFirstMessage('success'),
-            'flashMsgError'        => $this->flash->getFirstMessage('error'),
+            'flashMsgSuccess'      => $this->flash->getFirst('success'),
+            'flashMsgError'        => $this->flash->getFirst('error'),
         ]);
     }
 
@@ -215,11 +215,11 @@ final class ProjectsController
         $errors = $this->projectService->updateProject($project, $data);
 
         if ($errors === '') {
-            $this->flash->addMessage('success', $this->translations['form_success_update']);
+            $this->flash->add('success', $this->translations['form_success_update']);
             return $this->helper->redirect($request, $response, 'projects');
         }
 
-        $this->flash->addMessage('error', $errors);
+        $this->flash->add('error', $errors);
         return $this->helper->redirect($request, $response, 'projects_edit', ['projectId' => $projectId]);
     }
 

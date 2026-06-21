@@ -7,6 +7,7 @@ use App\Helper\ControllerHelper;
 use App\Helper\RoundingHelper;
 use App\Service\ActivityService;
 use App\Service\CustomerService;
+use App\Service\FlashMessageService;
 use App\Service\ProjectService;
 use App\Service\TagService;
 use App\Service\TeamService;
@@ -16,13 +17,12 @@ use App\Service\UserService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-use Slim\Flash\Messages;
 use Slim\Views\Twig;
 
 final class TimesheetsController
 {
     private Twig $twig;
-    private Messages $flash;
+    private FlashMessageService $flash;
     private ActivityService $activityService;
     private CustomerService $customerService;
     private ProjectService $projectService;
@@ -35,7 +35,7 @@ final class TimesheetsController
     private array $options;
     private array $translations;
 
-    public function __construct(Twig $twig, Messages $flash, ActivityService $activityService, CustomerService $customerService, ProjectService $projectService, TagService $tagService, TeamService $teamService, TimesheetService $timesheetService, UserService $userService, RoundingHelper $roundingHelper, ControllerHelper $helper, array $options, array $translations)
+    public function __construct(Twig $twig, FlashMessageService $flash, ActivityService $activityService, CustomerService $customerService, ProjectService $projectService, TagService $tagService, TeamService $teamService, TimesheetService $timesheetService, UserService $userService, RoundingHelper $roundingHelper, ControllerHelper $helper, array $options, array $translations)
     {
         $this->twig = $twig;
         $this->flash = $flash;
@@ -121,8 +121,8 @@ final class TimesheetsController
             'tags'               => $tags,
             'timesheets'         => $timesheets,
             'duration'           => $duration > 0 ? $this->timesheetService->timeToString($duration) : "",
-            'flashMsgSuccess'    => $this->flash->getFirstMessage('success'),
-            'flashMsgError'      => $this->flash->getFirstMessage('error'),
+            'flashMsgSuccess'    => $this->flash->getFirst('success'),
+            'flashMsgError'      => $this->flash->getFirst('error'),
         ]);
     }
 
@@ -202,8 +202,8 @@ final class TimesheetsController
             'tags'               => $tags,
             'timesheets'         => $timesheets,
             'duration'           => $duration > 0 ? $this->timesheetService->timeToString($duration) : "",
-            'flashMsgSuccess'    => $this->flash->getFirstMessage('success'),
-            'flashMsgError'      => $this->flash->getFirstMessage('error'),
+            'flashMsgSuccess'    => $this->flash->getFirst('success'),
+            'flashMsgError'      => $this->flash->getFirst('error'),
         ]);
     }
 
@@ -230,8 +230,8 @@ final class TimesheetsController
             'tags'            => $tags,
             'startDate'       => date_format($start,"Y-m-d H:i"),
             'endDate'         => date("Y-m-d H:i", mktime(23, 59, 59, intval(date("n")), intval(date("j")), intval(date("Y")))),
-            'flashMsgSuccess' => $this->flash->getFirstMessage('success'),
-            'flashMsgError'   => $this->flash->getFirstMessage('error'),
+            'flashMsgSuccess' => $this->flash->getFirst('success'),
+            'flashMsgError'   => $this->flash->getFirst('error'),
         ]);
     }
 
@@ -247,10 +247,10 @@ final class TimesheetsController
         $errors = $this->timesheetService->createTimesheet($data);
 
         if ($errors === '') {
-            $this->flash->addMessage('success', $this->translations['form_success_create_activity']);
+            $this->flash->add('success', $this->translations['form_success_create_activity']);
         }
         else {
-            $this->flash->addMessage('error', $errors);
+            $this->flash->add('error', $errors);
         }
 
         return $this->helper->redirect($request, $response, 'timesheets');
@@ -291,8 +291,8 @@ final class TimesheetsController
             'projects'             => $this->helper->mapIdNameList($projects),
             'activities'           => $this->helper->mapIdNameList($activities),
             'tags'                 => $tags,
-            'flashMsgSuccess'      => $this->flash->getFirstMessage('success'),
-            'flashMsgError'        => $this->flash->getFirstMessage('error'),
+            'flashMsgSuccess'      => $this->flash->getFirst('success'),
+            'flashMsgError'        => $this->flash->getFirst('error'),
         ]);
     }
 
@@ -314,11 +314,11 @@ final class TimesheetsController
 
         $errors = $this->timesheetService->updateTimesheet($timesheet, $data);
         if ($errors === '') {
-            $this->flash->addMessage('success', $this->translations['form_success_update']);
+            $this->flash->add('success', $this->translations['form_success_update']);
             return $this->helper->redirect($request, $response, 'timesheets_edit', ['timesheetId' => $timesheetId]);
         }
 
-        $this->flash->addMessage('error', $errors);
+        $this->flash->add('error', $errors);
         return $this->helper->redirect($request, $response, 'timesheets_edit', ['timesheetId' => $timesheetId]);
     }
 
@@ -339,10 +339,10 @@ final class TimesheetsController
         $errors = $this->timesheetService->restartTimesheet($timesheet);
 
         if ($errors === '') {
-            $this->flash->addMessage('success', $this->translations['form_success_create_activity']);
+            $this->flash->add('success', $this->translations['form_success_create_activity']);
         }
         else {
-            $this->flash->addMessage('error', $errors);
+            $this->flash->add('error', $errors);
         }
 
         return $this->helper->redirect($request, $response, 'timesheets');
@@ -392,10 +392,10 @@ final class TimesheetsController
 
         $errors = $this->timesheetService->deleteTimesheet($timesheet);
         if ($errors === '') {
-            $this->flash->addMessage('success', $this->translations['form_success_delete_record']);
+            $this->flash->add('success', $this->translations['form_success_delete_record']);
         }
         else {
-            $this->flash->addMessage('error', $errors);
+            $this->flash->add('error', $errors);
         }
 
         return $this->helper->redirect($request, $response, 'timesheets');
@@ -418,10 +418,10 @@ final class TimesheetsController
         $timesheet->setEnd(date("Y-m-d H:i"));
         $errors = $this->timesheetService->stopTimesheet($timesheet);
         if ($errors === '') {
-            $this->flash->addMessage('success', $this->translations['form_success_update']);
+            $this->flash->add('success', $this->translations['form_success_update']);
         }
         else {
-            $this->flash->addMessage('error', $errors);
+            $this->flash->add('error', $errors);
         }
 
         return $this->helper->redirect($request, $response, 'timesheets');

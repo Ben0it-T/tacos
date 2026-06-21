@@ -4,24 +4,24 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Helper\ControllerHelper;
+use App\Service\FlashMessageService;
 use App\Service\TagService;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-use Slim\Flash\Messages;
 use Slim\Views\Twig;
 
 final class TagsController
 {
     private Twig $twig;
-    private Messages $flash;
+    private FlashMessageService $flash;
     private TagService $tagService;
     private ControllerHelper $helper;
     private array $options;
     private array $translations;
 
-    public function __construct(Twig $twig, Messages $flash, TagService $tagService, ControllerHelper $helper, array $options, array $translations)
+    public function __construct(Twig $twig, FlashMessageService $flash, TagService $tagService, ControllerHelper $helper, array $options, array $translations)
     {
         $this->twig = $twig;
         $this->flash = $flash;
@@ -41,8 +41,8 @@ final class TagsController
         return $this->twig->render($response, 'tags.html.twig', [
             'tags'            => $tagsList,
             'colors'          => $colors,
-            'flashMsgSuccess' => $this->flash->getFirstMessage('success'),
-            'flashMsgError'   => $this->flash->getFirstMessage('error'),
+            'flashMsgSuccess' => $this->flash->getFirst('success'),
+            'flashMsgError'   => $this->flash->getFirst('error'),
         ]);
     }
 
@@ -52,10 +52,10 @@ final class TagsController
         $errors = $this->tagService->createTag($data);
 
         if ($errors === '') {
-            $this->flash->addMessage('success', $this->translations['form_success_create_tag']);
+            $this->flash->add('success', $this->translations['form_success_create_tag']);
         }
         else {
-            $this->flash->addMessage('error', $errors);
+            $this->flash->add('error', $errors);
         }
 
         return $this->helper->redirect($request, $response, 'tags');
@@ -75,8 +75,8 @@ final class TagsController
         return $this->twig->render($response, 'tag-edit.html.twig', [
             'tag'            => $tag,
             'colors'          => $colors,
-            'flashMsgSuccess' => $this->flash->getFirstMessage('success'),
-            'flashMsgError'   => $this->flash->getFirstMessage('error'),
+            'flashMsgSuccess' => $this->flash->getFirst('success'),
+            'flashMsgError'   => $this->flash->getFirst('error'),
         ]);
     }
 
@@ -93,11 +93,11 @@ final class TagsController
         $errors = $this->tagService->updateTag($tag, $data);
 
         if ($errors === '') {
-            $this->flash->addMessage('success', $this->translations['form_success_update']);
+            $this->flash->add('success', $this->translations['form_success_update']);
             return $this->helper->redirect($request, $response, 'tags');
         }
 
-        $this->flash->addMessage('error', $errors);
+        $this->flash->add('error', $errors);
         return $this->helper->redirect($request, $response, 'tags_edit', ['tagId' => $tagId]);
     }
 

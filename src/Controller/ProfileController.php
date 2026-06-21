@@ -4,19 +4,19 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Helper\ControllerHelper;
+use App\Service\FlashMessageService;
 use App\Service\TeamService;
 use App\Service\UserService;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-use Slim\Flash\Messages;
 use Slim\Views\Twig;
 
 final class ProfileController
 {
     private Twig $twig;
-    private Messages $flash;
+    private FlashMessageService $flash;
     private TeamService $teamService;
     private UserService $userService;
     private ControllerHelper $helper;
@@ -24,7 +24,7 @@ final class ProfileController
     private array $translations;
 
 
-    public function __construct(Twig $twig, Messages $flash, TeamService $teamService, UserService $userService, ControllerHelper $helper, array $options, array $translations)
+    public function __construct(Twig $twig, FlashMessageService $flash, TeamService $teamService, UserService $userService, ControllerHelper $helper, array $options, array $translations)
     {
         $this->twig = $twig;
         $this->flash = $flash;
@@ -60,8 +60,8 @@ final class ProfileController
                 'registrationDate' => $currentUser->getRegistrationDate(),
                 'teams'            => $teams,
             ],
-            'flashMsgSuccess'      => $this->flash->getFirstMessage('success'),
-            'flashMsgError'        => $this->flash->getFirstMessage('error'),
+            'flashMsgSuccess'      => $this->flash->getFirst('success'),
+            'flashMsgError'        => $this->flash->getFirst('error'),
         ]);
     }
 
@@ -76,10 +76,10 @@ final class ProfileController
         $errors = $this->userService->updateUserProfile($currentUser, $data);
 
         if ($errors === '') {
-            $this->flash->addMessage('success', $this->translations['form_success_update']);
+            $this->flash->add('success', $this->translations['form_success_update']);
         }
         else {
-            $this->flash->addMessage('error', $errors);
+            $this->flash->add('error', $errors);
         }
 
         return $this->helper->redirect($request, $response, 'profile');
