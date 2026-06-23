@@ -17,9 +17,9 @@ final class FlashMessageService
      * Add flash message
      *
      * @param string $key
-     * @param string $message
+     * @param mixed $message
      */
-    public function add(string $key, string $message): void
+    public function add(string $key, mixed $message): void
     {
         $messages = $this->session->get(self::KEY, []);
 
@@ -36,7 +36,7 @@ final class FlashMessageService
      * Get Flash message
      *
      * @param  string $key
-     * @return array<string>
+     * @return array<mixed>
      */
     public function get(string $key): array
     {
@@ -59,9 +59,9 @@ final class FlashMessageService
      *
      * @param  string $key
      * @param  ?string $default
-     * @return string|null
+     * @return mixed
      */
-    public function getFirst(string $key, ?string $default = null): ?string
+    public function getFirst(string $key, ?string $default = null): mixed
     {
         $messages = $this->session->get(self::KEY, []);
 
