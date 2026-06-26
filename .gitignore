@@ -14,6 +14,10 @@ config/local.*.php
 composer.phar
 vendor/
 
+# Tools
+phpstan.log
+phpstan.neon
+
 # App
 var/*/*
 !var/*/.gitkeep
