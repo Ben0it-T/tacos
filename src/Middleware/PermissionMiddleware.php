@@ -85,6 +85,7 @@ final class PermissionMiddleware implements MiddlewareInterface
         }
 
         $hasPermissions = false; // has permissions to access
+        $routeNames = [];
         if (in_array($routeName, $publicRoutes)) {
             $routeNames = $publicRoutes;
             $hasPermissions = true;
