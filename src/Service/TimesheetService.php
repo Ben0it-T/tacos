@@ -554,7 +554,7 @@ final class TimesheetService
         $timesheet->setUserId($userId);
         $timesheet->setActivityId($activityId);
         $timesheet->setProjectId($projectId);
-        $timesheet->setStart((!empty($start) ? date_format($start,"Y-m-d H:i") : null));
+        $timesheet->setStart(date_format($start,"Y-m-d H:i"));
         $timesheet->setEnd((!empty($end) ? date_format($end,"Y-m-d H:i") : null));
         $timesheet->setDuration($duration);
         $timesheet->setComment($comment);
@@ -731,7 +731,7 @@ final class TimesheetService
 
         $timesheet->setActivityId($activityId);
         $timesheet->setProjectId($projectId);
-        $timesheet->setStart((!empty($start) ? date_format($start,"Y-m-d H:i") : null));
+        $timesheet->setStart(date_format($start,"Y-m-d H:i"));
         $timesheet->setEnd((!empty($end) ? date_format($end,"Y-m-d H:i") : null));
         $timesheet->setDuration($duration);
         $timesheet->setComment($comment);
