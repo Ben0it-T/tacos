@@ -442,8 +442,8 @@ final class UserRepository
      * @return bool
      */
     public function unsetUsersPasswordRequests(int $lifetime): bool {
+        $threshold = date("Y-m-d H:i:s", time() - intval($lifetime));
         try {
-            $threshold = date("Y-m-d H:i:s", time() - intval($lifetime));
             $stmt = $this->pdo->prepare('UPDATE `tacos_users` SET `tacos_users`.`password_request_date` = NULL, `tacos_users`.`password_request_token` = NULL WHERE `tacos_users`.`password_request_date` < :threshold AND `tacos_users`.`password_request_token` IS NOT NULL');
             $res = $stmt->execute([
                 'threshold' => $threshold
