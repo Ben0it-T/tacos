@@ -6,13 +6,10 @@ use Slim\Factory\AppFactory;
 
 require __DIR__ . '/../vendor/autoload.php';
 
-// Build container
-$containerBuilder = new ContainerBuilder();
-$containerBuilder->addDefinitions([
-    'settings' => fn () => require __DIR__ . '/settings.php',
-]);
-
-$container = $containerBuilder->build();
+// Build DI container
+$container = (new ContainerBuilder())
+    ->addDefinitions(__DIR__ . '/container.php')
+    ->build();
 
 // Register dependencies
 (require __DIR__ . '/dependencies.php')($container);
