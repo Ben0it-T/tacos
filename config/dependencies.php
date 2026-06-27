@@ -67,29 +67,6 @@ use Slim\Views\Twig;
 return function (ContainerInterface $container): void {
 
     //
-    // Helpers
-    //
-
-    $container->set(ControllerHelper::class, function (ContainerInterface $c) {
-        return new ControllerHelper(
-            $c->get(UserService::class),
-            $c->get(SessionStoreInterface::class),
-        );
-    });
-
-    $container->set(RoundingHelper::class, function () {
-        return new RoundingHelper();
-    });
-
-    $container->set(SqlHelper::class, function () {
-        return new SqlHelper();
-    });
-
-    $container->set(ValidationHelper::class, function () {
-        return new ValidationHelper();
-    });
-
-    //
     // Middlewares
     //
 

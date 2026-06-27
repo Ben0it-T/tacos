@@ -1,6 +1,16 @@
 <?php
 declare(strict_types=1);
 
+use App\Helper\ControllerHelper;
+use App\Helper\RoundingHelper;
+use App\Helper\SqlHelper;
+use App\Helper\ValidationHelper;
+
+use App\Session\SessionStoreInterface;
+
+use App\Service\UserService;
+
+
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Logger;
@@ -105,6 +115,31 @@ return [
 
         return $logger;
     },
+
+    //
+    // Helpers
+    //
+
+    ControllerHelper::class => function (ContainerInterface $c) {
+        return new ControllerHelper(
+            $c->get(UserService::class),
+            $c->get(SessionStoreInterface::class),
+        );
+    },
+
+    RoundingHelper::class => function () {
+        return new RoundingHelper();
+    },
+
+    SqlHelper::class => function () {
+        return new SqlHelper();
+    },
+
+    ValidationHelper::class => function () {
+        return new ValidationHelper();
+    },
+
+
 
 
 ];
