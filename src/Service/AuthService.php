@@ -92,7 +92,7 @@ final class AuthService
             '[AuthService] Invalid credentials',
             [
                 'tracking_id' => $trackingId,
-                'attempts'    => $attempts?->getAttempts(),
+                'attempts'    => $attempts->getAttempts(),
             ]
         );
 
