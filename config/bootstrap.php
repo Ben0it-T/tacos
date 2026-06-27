@@ -11,10 +11,8 @@ $container = (new ContainerBuilder())
     ->addDefinitions(__DIR__ . '/container.php')
     ->addDefinitions(__DIR__ . '/repositories.php')
     ->addDefinitions(__DIR__ . '/services.php')
+    ->addDefinitions(__DIR__ . '/controllers.php')
     ->build();
-
-// Register dependencies
-(require __DIR__ . '/dependencies.php')($container);
 
 // Create App
 AppFactory::setContainer($container);
