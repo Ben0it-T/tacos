@@ -9,6 +9,7 @@ require __DIR__ . '/../vendor/autoload.php';
 // Build DI container
 $container = (new ContainerBuilder())
     ->addDefinitions(__DIR__ . '/container.php')
+    ->addDefinitions(__DIR__ . '/repositories.php')
     ->addDefinitions(__DIR__ . '/services.php')
     ->build();
 
