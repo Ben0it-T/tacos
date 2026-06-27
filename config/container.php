@@ -14,7 +14,11 @@ use App\Middleware\SessionMiddleware;
 use App\Repository\TimesheetRepository;
 use App\Repository\UserRepository;
 
+use App\Session\SessionManager;
 use App\Session\SessionStoreInterface;
+use App\Session\Handler\LocalSessionHandlerFactory;
+use App\Session\Handler\DatabaseSessionHandler;
+use App\Session\Storage\PhpSession;
 
 use App\Service\UserService;
 
@@ -173,7 +177,51 @@ return [
         );
     },
 
+    //
+    // Session
+    //
 
+    SessionManager::class => function (ContainerInterface $c) {
+        $settings = $c->get('settings');
 
+        return new SessionManager(
+            $c->get(\SessionHandlerInterface::class),
+            [
+                'name'             => $settings['session']['name'],
+                'use_strict_mode'  => true,
+                'use_cookies'      => 1,
+                'use_only_cookies' => 1,
+                'cookie_lifetime'  => (int) $settings['session']['lifetime'],
+                'cookie_path'      => '/',
+                'cookie_domain'    => $settings['app']['domain'],
+                'cookie_secure'    => $settings['session']['cookie_secure']   ?? true,
+                'cookie_httponly'  => true,
+                'cookie_samesite'  => $settings['session']['cookie_samesite'] ?? 'Strict',
+            ]
+        );
+    },
+
+    \SessionHandlerInterface::class => function (ContainerInterface $c) {
+        $settings = $c->get('settings')['session'];
+
+        return match ($settings['handler']) {
+            'db' => new DatabaseSessionHandler(
+                $c->get(PDO::class),
+                (int) $settings['lifetime']
+            ),
+            'local' => LocalSessionHandlerFactory::create($settings),
+            default => new SessionHandler(), // stockage fichiers PHP natif
+        };
+    },
+
+    SessionMiddleware::class => function (ContainerInterface $c) {
+        return new SessionMiddleware(
+            $c->get(SessionManager::class)
+        );
+    },
+
+    SessionStoreInterface::class => function () {
+        return new PhpSession();
+    },
 
 ];

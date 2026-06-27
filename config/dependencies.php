@@ -67,53 +67,6 @@ use Slim\Views\Twig;
 return function (ContainerInterface $container): void {
 
     //
-    // Session
-    //
-
-    $container->set(SessionManager::class, function (ContainerInterface $c) {
-        $settings = $c->get('settings');
-
-        return new SessionManager(
-            $c->get(\SessionHandlerInterface::class),
-            [
-                'name'             => $settings['session']['name'],
-                'use_strict_mode'  => true,
-                'use_cookies'      => 1,
-                'use_only_cookies' => 1,
-                'cookie_lifetime'  => (int) $settings['session']['lifetime'],
-                'cookie_path'      => '/',
-                'cookie_domain'    => $settings['app']['domain'],
-                'cookie_secure'    => $settings['session']['cookie_secure']   ?? true,
-                'cookie_httponly'  => true,
-                'cookie_samesite'  => $settings['session']['cookie_samesite'] ?? 'Strict',
-            ]
-        );
-    });
-
-    $container->set(\SessionHandlerInterface::class, function (ContainerInterface $c) {
-        $settings = $c->get('settings')['session'];
-
-        return match ($settings['handler']) {
-            'db' => new DatabaseSessionHandler(
-                $c->get(PDO::class),
-                (int) $settings['lifetime']
-            ),
-            'local' => LocalSessionHandlerFactory::create($settings),
-            default => new SessionHandler(), // stockage fichiers PHP natif
-        };
-    });
-
-    $container->set(SessionMiddleware::class, function (ContainerInterface $c) {
-        return new SessionMiddleware(
-            $c->get(SessionManager::class)
-        );
-    });
-
-    $container->set(SessionStoreInterface::class, function () {
-        return new PhpSession();
-    });
-
-    //
     // Services
     //
 
