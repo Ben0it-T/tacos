@@ -6,7 +6,6 @@ namespace App\Controller;
 use App\Helper\ControllerHelper;
 use App\Service\ActivityService;
 use App\Service\ProjectService;
-use App\Service\UserService;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -15,14 +14,12 @@ final class XhrController
 {
     private ActivityService $activityService;
     private ProjectService $projectService;
-    private UserService $userService;
     private ControllerHelper $helper;
 
-    public function __construct(ActivityService $activityService, ProjectService $projectService, UserService $userService, ControllerHelper $helper)
+    public function __construct(ActivityService $activityService, ProjectService $projectService, ControllerHelper $helper)
     {
         $this->activityService = $activityService;
         $this->projectService = $projectService;
-        $this->userService = $userService;
         $this->helper = $helper;
     }
 

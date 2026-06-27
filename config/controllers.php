@@ -252,7 +252,6 @@ return [
         return new XhrController(
             $c->get(ActivityService::class),
             $c->get(ProjectService::class),
-            $c->get(UserService::class),
             $c->get(ControllerHelper::class)
         );
     },
