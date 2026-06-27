@@ -24,7 +24,7 @@ final class DatabaseSessionHandler implements SessionHandlerInterface
         return true;
     }
 
-    public function read($id): string {
+    public function read($id): string|false {
         $id = preg_replace('/[^a-zA-Z0-9,\-]/', '', $id);
         $stmt = $this->pdo->prepare('SELECT `data` FROM `tacos_sessions` WHERE `tacos_sessions`.`id` = :id LIMIT 1');
         $stmt->execute([

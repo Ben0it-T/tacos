@@ -4,3 +4,6 @@ parameters:
         - config
         - src
     tmpDir: var/tmp/phpstan
+    ignoreErrors:
+        - identifier: return.unusedType
+          path: src/Session/Handler/DatabaseSessionHandler.php
