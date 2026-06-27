@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\Customer;
-use App\Helper\SqlHelper;
 use Psr\Log\LoggerInterface;
 
 use PDO;
@@ -12,12 +11,10 @@ use PDO;
 final class CustomerRepository
 {
     private PDO $pdo;
-    private SqlHelper $sqlHelper;
     private LoggerInterface $logger;
 
-    public function __construct(PDO $pdo, SqlHelper $sqlHelper, LoggerInterface $logger) {
+    public function __construct(PDO $pdo, LoggerInterface $logger) {
         $this->pdo = $pdo;
-        $this->sqlHelper = $sqlHelper;
         $this->logger = $logger;
     }
 

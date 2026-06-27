@@ -27,7 +27,6 @@ return [
     CustomerRepository::class => function (ContainerInterface $c) {
         return new CustomerRepository(
             $c->get(PDO::class),
-            $c->get(SqlHelper::class),
             $c->get(LoggerInterface::class)
         );
     },
