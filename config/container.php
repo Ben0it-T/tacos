@@ -22,7 +22,6 @@ use App\Session\Storage\PhpSession;
 
 use App\Service\UserService;
 
-
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Logger;
@@ -30,12 +29,14 @@ use Monolog\Logger;
 use PHPMailer\PHPMailer\PHPMailer;
 
 use Psr\Container\ContainerInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Log\LoggerInterface;
 
 use Slim\Csrf\Guard;
 use Slim\Views\Twig;
 
 return [
+
     // Application settings
     'settings' => fn() => require __DIR__ . '/settings.php',
 
@@ -126,6 +127,13 @@ return [
         $logger->pushHandler($handler);
 
         return $logger;
+    },
+
+    Guard::class => function (ContainerInterface $c): Guard {
+        return new Guard(
+            $c->get(ResponseFactoryInterface::class),
+            '_csrf'
+        );
     },
 
     //

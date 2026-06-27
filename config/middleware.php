@@ -15,12 +15,6 @@ use Slim\Views\Twig;
 return function (App $app): void {
 
     $container = $app->getContainer();
-    $responseFactory = $app->getResponseFactory();
-
-    // CSRF
-    $container->set(Guard::class, function () use ($responseFactory) {
-        return new Guard($responseFactory, '_csrf');
-    });
 
     // Register Middlewares
     $app->add(TwigCsrfMiddleware::class);
