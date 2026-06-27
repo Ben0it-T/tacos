@@ -648,13 +648,18 @@ final class TimesheetsController
             return false;
         }
 
+        try {
+            $start = new \DateTimeImmutable($startStr);
+        } catch (\Exception) {
+            return false;
+        }
+
         $now = new \DateTimeImmutable();
         $start = new \DateTimeImmutable($startStr);
 
         $days = $start->diff($now)->days;
 
         return $restartCfg['active']
-            && $days !== false
             && $days <= (int)($restartCfg['interval'] ?? 0);
     }
 
