@@ -128,7 +128,6 @@ return [
             $c->get(ActivityService::class),
             $c->get(CustomerService::class),
             $c->get(ProjectService::class),
-            $c->get(TagService::class),
             $c->get(TeamService::class),
             $c->get(TimesheetService::class),
             $c->get(UserService::class),

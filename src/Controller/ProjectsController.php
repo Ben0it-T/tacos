@@ -10,7 +10,6 @@ use App\Service\ActivityService;
 use App\Service\CustomerService;
 use App\Service\FlashMessageService;
 use App\Service\ProjectService;
-use App\Service\TagService;
 use App\Service\TeamService;
 use App\Service\TimesheetService;
 use App\Service\UserService;
@@ -27,7 +26,6 @@ final class ProjectsController
     private ActivityService $activityService;
     private CustomerService $customerService;
     private ProjectService $projectService;
-    private TagService $tagService;
     private TeamService $teamService;
     private TimesheetService $timesheetService;
     private UserService $userService;
@@ -35,14 +33,13 @@ final class ProjectsController
     private array $options;
     private array $translations;
 
-    public function __construct(Twig $twig, FlashMessageService $flash, ActivityService $activityService, CustomerService $customerService, ProjectService $projectService, TagService $tagService, TeamService $teamService, TimesheetService $timesheetService, UserService $userService, ControllerHelper $helper, array $options, array $translations)
+    public function __construct(Twig $twig, FlashMessageService $flash, ActivityService $activityService, CustomerService $customerService, ProjectService $projectService, TeamService $teamService, TimesheetService $timesheetService, UserService $userService, ControllerHelper $helper, array $options, array $translations)
     {
         $this->twig = $twig;
         $this->flash = $flash;
         $this->activityService = $activityService;
         $this->customerService = $customerService;
         $this->projectService = $projectService;
-        $this->tagService = $tagService;
         $this->teamService = $teamService;
         $this->timesheetService = $timesheetService;
         $this->userService = $userService;
