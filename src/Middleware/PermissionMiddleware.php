@@ -32,7 +32,6 @@ final class PermissionMiddleware implements MiddlewareInterface
         $routeParser = $routeContext->getRouteParser();
         $route = $routeContext->getRoute();
         $routeName = $route->getName();
-        $groups = $route->getGroups();
         $methods = $route->getMethods();
         $arguments = $route->getArguments();
 
