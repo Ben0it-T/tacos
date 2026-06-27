@@ -688,9 +688,14 @@ final class TimesheetsController
     private function getTimesheetFilters(ServerRequestInterface $request, string $key): array
     {
         $filters = $this->helper->getSessionValue($key, []);
-        $filters = is_array($filters) ? $filters : [];
-        $queryParams = $this->timesheetService->getQueryParams($request->getQueryParams(), $filters);
-        return is_array($queryParams) ? $queryParams : [];
+        if (!is_array($filters)) {
+            $filters = [];
+        }
+
+        return $this->timesheetService->getQueryParams(
+            $request->getQueryParams(),
+            $filters
+        );
     }
 
     /**
