@@ -61,7 +61,7 @@ final class UserService
     /**
      * Find all Users in Teams
      *
-     * @param array list of teamsIds
+     * @param array $teamsIds
      * @param ?int $enabled
      * @return array of User entities
      */

@@ -438,7 +438,7 @@ final class ActivityRepository
      * Insert Activity
      *
      * @param Activity $activity
-     * @return lastInsertId or false
+     * @return string|false Last insert ID on success, false on failure
      */
     public function insert(Activity $activity): string|false {
         try {
@@ -672,8 +672,8 @@ final class ActivityRepository
     /**
      * Creates Activity object
      *
-     * @param array $row
-     * @return Entity\Activity
+     * @param array<string, mixed> $row
+     * @return Activity
      */
     protected function buildEntity(array $row): Activity {
         $activity = new Activity();

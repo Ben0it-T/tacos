@@ -36,7 +36,7 @@ final class CustomerService
     /**
      * Find Customer by id and by User id
      *
-     * @param int $id
+     * @param int $customerId
      * @param int $userId
      * @return Customer or false
      */
@@ -48,7 +48,7 @@ final class CustomerService
      * Find Customer by id and by Teamleader id
      * Note : accepts customers without a team
      *
-     * @param int $id
+     * @param int $customerId
      * @param int $teamleaderId
      * @return Customer or false
      */
@@ -60,7 +60,7 @@ final class CustomerService
      * Find Customer by id by id user id is teamleader
      * Note : requires teamlead on at least one team
      *
-     * @param int $id
+     * @param int $customerId
      * @param int $teamleaderId
      * @return Customer or false
      */

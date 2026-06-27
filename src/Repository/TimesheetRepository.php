@@ -465,7 +465,7 @@ final class TimesheetRepository
      * Insert Timesheet
      *
      * @param Timesheet $timesheet
-     * @return lastInsertId or false
+     * @return string|false Last insert ID on success, false on failure
      */
     public function insert(Timesheet $timesheet): string|false {
         try {
@@ -752,8 +752,8 @@ final class TimesheetRepository
     /**
      * Creates Timesheet object
      *
-     * @param array $row
-     * @return Entity\Timesheet
+     * @param array<string, mixed> $row
+     * @return Timesheet
      */
     protected function buildEntity(array $row): Timesheet {
         $timesheet = new Timesheet();

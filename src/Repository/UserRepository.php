@@ -161,7 +161,7 @@ final class UserRepository
     /**
      * Find all Users in Teams
      *
-     * @param array list of teamsIds
+     * @param array $teamsIds
      * @param ?int $enabled
      * @return array of User entities
      */
@@ -482,7 +482,7 @@ final class UserRepository
      * Insert User
      *
      * @param User $user
-     * @return lastInsertId or false
+     * @return string|false Last insert ID on success, false on failure
      */
     public function insert(User $user): string|false {
         try {
@@ -619,7 +619,7 @@ final class UserRepository
     /**
      * Update User password hash
      *
-     * @param User
+     * @param User $user
      * @return bool
      */
     public function updatePasswordHash(User $user): bool {
@@ -662,7 +662,7 @@ final class UserRepository
     /**
      * Update User last login
      *
-     * @param User
+     * @param User $user
      * @return bool
      */
     public function updateUserLastLogin(User $user): bool {
@@ -707,8 +707,8 @@ final class UserRepository
     /**
      * Creates User object
      *
-     * @param array $row
-     * @return Entity\User
+     * @param array<string, mixed> $row
+     * @return User
      */
     private function buildEntity(array $row): User {
         $user = new User();

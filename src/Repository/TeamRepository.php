@@ -333,7 +333,7 @@ final class TeamRepository
      * Insert Team
      *
      * @param Team $team
-     * @return lastInsertId or false
+     * @return string|false Last insert ID on success, false on failure
      */
     public function insert(Team $team): string|false {
         try {
@@ -549,8 +549,8 @@ final class TeamRepository
     /**
      * Creates Team object
      *
-     * @param array $row
-     * @return Entity\Team
+     * @param array<string, mixed> $row
+     * @return Team
      */
     private function buildEntity(array $row): Team {
         $team = new Team();

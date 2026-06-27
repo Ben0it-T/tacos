@@ -57,8 +57,8 @@ final class RoleRepository
     /**
      * Creates Role object
      *
-     * @param array $row
-     * @return Entity\Role
+     * @param array<string, mixed> $row
+     * @return Role
      */
     protected function buildEntity(array $row): Role {
         $role = new Role();

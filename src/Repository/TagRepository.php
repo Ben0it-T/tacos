@@ -150,7 +150,7 @@ final class TagRepository
      * Insert Tag
      *
      * @param Tag $tag
-     * @return lastInsertId or false
+     * @return string|false Last insert ID on success, false on failure
      */
     public function insert(Tag $tag): string|false {
         try {
@@ -236,8 +236,8 @@ final class TagRepository
     /**
      * Creates Tag object
      *
-     * @param array $row
-     * @return Entity\Tag
+     * @param array<string, mixed> $row
+     * @return Tag
      */
     protected function buildEntity(array $row): Tag {
         $tag = new Tag();

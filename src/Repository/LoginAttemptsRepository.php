@@ -177,8 +177,8 @@ final class LoginAttemptsRepository
     /**
      * Creates LoginAttempts object
      *
-     * @param array $row
-     * @return Entity\LoginAttempts
+     * @param array<string, mixed> $row
+     * @return LoginAttempts
      */
     private function buildEntity(array $row): LoginAttempts {
         $entity = new LoginAttempts();

@@ -46,7 +46,7 @@ final class CustomerRepository
     /**
      * Find Customer by id and by User id
      *
-     * @param int $id
+     * @param int $customerId
      * @param int $userId
      * @return Customer or false
      */
@@ -77,7 +77,7 @@ final class CustomerRepository
      * Find Customer by id and by Teamleader id
      * Note : accepts customers without a team
      *
-     * @param int $id
+     * @param int $customerId
      * @param int $teamleaderId
      * @return Customer or false
      */
@@ -108,7 +108,7 @@ final class CustomerRepository
      * Find Customer by id by id user id is teamleader
      * Note : requires teamlead on at least one team
      *
-     * @param int $id
+     * @param int $customerId
      * @param int $teamleaderId
      * @return Customer or false
      */
@@ -381,7 +381,7 @@ final class CustomerRepository
      * Insert Customer
      *
      * @param Customer $customer
-     * @return lastInsertId or false
+     * @return string|false Last insert ID on success, false on failure
      */
     public function insert(Customer $customer): string|false {
         try {
@@ -615,8 +615,8 @@ final class CustomerRepository
     /**
      * Creates Customer object
      *
-     * @param array $row
-     * @return Entity\Customer
+     * @param array<string, mixed> $row
+     * @return Customer
      */
     protected function buildEntity(array $row): Customer {
         $customer = new Customer();

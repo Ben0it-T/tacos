@@ -180,7 +180,7 @@ final class TimesheetService
     /**
      * Find Timesheets (with User, Projet, Activity and Tags) by criteria (dates, users, projects, activities, tags)
      *
-     * @param array $queryParams
+     * @param array $criteria
      * @return array of Timesheet with User, Projet, Activity and Tags
      */
     public function findTimesheetsByCriteria(array $criteria): array {

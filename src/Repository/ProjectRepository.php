@@ -499,7 +499,7 @@ final class ProjectRepository
      * Insert Project
      *
      * @param Project $project
-     * @return lastInsertId or false
+     * @return string|false Last insert ID on success, false on failure
      */
     public function insert(Project $project): string|false {
         try {
@@ -881,8 +881,8 @@ final class ProjectRepository
     /**
      * Creates Project object
      *
-     * @param array $row
-     * @return Entity\Project
+     * @param array<string, mixed> $row
+     * @return Project
      */
     protected function buildEntity(array $row): Project {
         $project = new Project();
