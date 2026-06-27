@@ -67,31 +67,6 @@ use Slim\Views\Twig;
 return function (ContainerInterface $container): void {
 
     //
-    // Middlewares
-    //
-
-    $container->set(CSPMiddleware::class, function (ContainerInterface $c) {
-        return new CSPMiddleware(
-            $c->get(Twig::class)
-        );
-    });
-
-    $container->set(PermissionMiddleware::class, function (ContainerInterface $c) {
-        return new PermissionMiddleware(
-            $c->get(TimesheetRepository::class),
-            $c->get(UserRepository::class),
-            $c->get(Twig::class)
-        );
-    });
-
-    $container->set(TwigCsrfMiddleware::class, function (ContainerInterface $c) {
-        return new TwigCsrfMiddleware(
-            $c->get(Guard::class), // 'csrf'
-            $c->get(Twig::class)
-        );
-    });
-
-    //
     // Session
     //
 

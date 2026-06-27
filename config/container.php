@@ -6,6 +6,14 @@ use App\Helper\RoundingHelper;
 use App\Helper\SqlHelper;
 use App\Helper\ValidationHelper;
 
+use App\Middleware\CSPMiddleware;
+use App\Middleware\PermissionMiddleware;
+use App\Middleware\TwigCsrfMiddleware;
+use App\Middleware\SessionMiddleware;
+
+use App\Repository\TimesheetRepository;
+use App\Repository\UserRepository;
+
 use App\Session\SessionStoreInterface;
 
 use App\Service\UserService;
@@ -137,6 +145,32 @@ return [
 
     ValidationHelper::class => function () {
         return new ValidationHelper();
+    },
+
+
+    //
+    // Middlewares
+    //
+
+    CSPMiddleware::class => function (ContainerInterface $c) {
+        return new CSPMiddleware(
+            $c->get(Twig::class)
+        );
+    },
+
+    PermissionMiddleware::class => function (ContainerInterface $c) {
+        return new PermissionMiddleware(
+            $c->get(TimesheetRepository::class),
+            $c->get(UserRepository::class),
+            $c->get(Twig::class)
+        );
+    },
+
+    TwigCsrfMiddleware::class => function (ContainerInterface $c) {
+        return new TwigCsrfMiddleware(
+            $c->get(Guard::class), // 'csrf'
+            $c->get(Twig::class)
+        );
     },
 
 
