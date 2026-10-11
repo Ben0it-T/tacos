@@ -56,7 +56,10 @@
                     <label for="project_edit_form_customer" class="col-form-label col-sm-3">{{ trans.form_label_customer }}</label>
                     <div class="col-sm-9">
                         <select class="form-select" id="project_edit_form_customer" name="project_edit_form_customer" required="required" tabindex="3">
-                            <option selected value=""></option>
+                            <option value=""></option>
+                            {% if currentCustomer %}
+                                <option value="{{ currentCustomer.id }}" selected>{{ currentCustomer.name }} ({{ trans.form_label_hidden }})</option>
+                            {% endif %}
                             {% for customer in customers %}
                                 <option value="{{ customer.id }}" {% if project.customerId == customer.id %}selected{% endif %}>{{ customer.name }}</option>
                             {% endfor %}

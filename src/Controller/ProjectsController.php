@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\Customer;
 use App\Entity\Project;
+use App\Entity\Team;
 use App\Entity\User;
 use App\Helper\ControllerHelper;
 use App\Service\ActivityService;
@@ -55,13 +57,9 @@ final class ProjectsController
             return $this->helper->redirect($request, $response, 'login');
         }
 
-        $customers = $this->helper->isAdmin($currentUser)
-            ? $this->customerService->findAll(1)
-            : $this->customerService->findAllByTeamleaderId($currentUser->getId(), 1);
+        $customers = $this->getAllowedCustomers($currentUser);
 
-        $teams = $this->helper->isAdmin($currentUser)
-            ? $this->teamService->findAllTeams()
-            : $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
+        $teams = $this->getAllowedTeams($currentUser);
 
         $colors = $this->helper->parseColorChoices((string)($this->options['colorChoices'] ?? ''));
 
@@ -84,8 +82,16 @@ final class ProjectsController
 
     public function createAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
+        $currentUser = $this->helper->getCurrentUser();
+        if (!$currentUser) {
+            return $this->helper->redirect($request, $response, 'login');
+        }
+
+        $allowedCustomerIds = $this->helper->extractIds($this->getAllowedCustomers($currentUser));
+        $allowedTeamIds = $this->helper->extractIds($this->getAllowedTeams($currentUser));
+
         $data = (array) $request->getParsedBody();
-        $errors = $this->projectService->createProject($data);
+        $errors = $this->projectService->createProject($data, $allowedCustomerIds, $allowedTeamIds);
 
         if ($errors === '') {
             $this->flash->add('success', $this->translations['form_success_create_project']);
@@ -161,13 +167,15 @@ final class ProjectsController
             return $this->helper->redirect($request, $response, 'projects');
         }
 
-        $customers = $this->helper->isAdmin($currentUser)
-            ? $this->customerService->findAll(1)
-            : $this->customerService->findAllByTeamleaderId($currentUser->getId(), 1);
+        $customers = $this->getAllowedCustomers($currentUser);
 
-        $teams = $this->helper->isAdmin($currentUser)
-            ? $this->teamService->findAllTeams()
-            : $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
+        // Keep current customer selectable even if hidden or out of scope
+        $currentCustomer = null;
+        if (!isset($customers[$project->getCustomerId()])) {
+            $currentCustomer = $this->customerService->findCustomer($project->getCustomerId());
+        }
+
+        $teams = $this->getAllowedTeams($currentUser);
 
         $selectedTeams = $this->teamService->findAllTeamsByProjectId($project->getId());
         $selectedTeamsIds = array_map(static fn($t) => $t->getId(), $selectedTeams);
@@ -182,6 +190,7 @@ final class ProjectsController
         return $this->twig->render($response, 'project-edit.html.twig', [
             'project'              => $project,
             'colors'               => $colors,
+            'currentCustomer'      => $currentCustomer,
             'customers'            => $this->helper->mapIdNameList($customers),
             'teams'                => $this->helper->mapIdNameList($teams),
             'selectedTeams'        => $selectedTeams,
@@ -209,7 +218,11 @@ final class ProjectsController
         }
 
         $data = (array) $request->getParsedBody();
-        $errors = $this->projectService->updateProject($project, $data);
+
+        $allowedCustomerIds = $this->helper->extractIds($this->getAllowedCustomers($currentUser));
+        $allowedTeamIds = $this->helper->extractIds($this->getAllowedTeams($currentUser));
+
+        $errors = $this->projectService->updateProject($project, $data, $allowedCustomerIds, $allowedTeamIds);
 
         if ($errors === '') {
             $this->flash->add('success', $this->translations['form_success_update']);
@@ -251,4 +264,35 @@ final class ProjectsController
             ? $this->projectService->findOneByIdAndTeamleaderIdStrict($projectId, $user->getId())
             : $this->projectService->findOneByIdAndTeamleaderId($projectId, $user->getId());
     }
+
+    /**
+     * Get customers the user is allowed to use
+     * - admin: all visible customers
+     * - teamlead: visible customers within their scope
+     *
+     * @param User $user
+     * @return array<int, Customer> Customer entities indexed by id
+     */
+    private function getAllowedCustomers(User $user): array
+    {
+        return $this->helper->isAdmin($user)
+            ? $this->customerService->findAll(1)
+            : $this->customerService->findAllByTeamleaderId($user->getId(), 1);
+    }
+
+    /**
+     * Get teams the user is allowed to use
+     * - admin: all teams
+     * - teamlead: teams they lead
+     *
+     * @param User $user
+     * @return array<int, Team> Team entities indexed by id
+     */
+    private function getAllowedTeams(User $user): array
+    {
+        return $this->helper->isAdmin($user)
+            ? $this->teamService->findAllTeams()
+            : $this->teamService->findAllTeamsByTeamleaderId($user->getId());
+    }
+
 }

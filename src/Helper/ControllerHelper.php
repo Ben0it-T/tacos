@@ -86,6 +86,17 @@ final class ControllerHelper
     }
 
     /**
+     * Extract ids from entities (having getId())
+     *
+     * @param array<object> $entities
+     * @return array<int, int>
+     */
+    public function extractIds(array $entities): array
+    {
+        return array_map(static fn($e) => (int) $e->getId(), $entities);
+    }
+
+    /**
      * Parse "colorChoices" format: "Red|#ff0000,Green|#00ff00,..."
      *
      * @param string $colorChoices

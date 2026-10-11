@@ -164,9 +164,11 @@ final class ProjectService
      * Create new Project
      *
      * @param array $data
+     * @param array<int, int> $allowedCustomerIds Customer ids the user is allowed to use
+     * @param array<int, int> $allowedTeamIds Team ids the user is allowed to use
      * @return string $errorMsg
      */
-    public function createProject(array $data): string {
+    public function createProject(array $data, array $allowedCustomerIds, array $allowedTeamIds): string {
         $errorMsg = "";
         $dateFormat = $this->translations['dateFormats_date'];
         $name = $this->validationHelper->sanitizeString($data['project_edit_form_name']);
@@ -178,7 +180,8 @@ final class ProjectService
         $start = !empty($start) ? date_create_from_format($dateFormat, $start) : null;
         $end = $this->validationHelper->sanitizeString($data['project_edit_form_end']);
         $end = !empty($end) ? date_create_from_format($dateFormat, $end) : null;
-        $selectedTeams = $data['project_edit_form']['selectedTeams'] ?? [];
+        $selectedTeams = (array) ($data['project_edit_form']['selectedTeams'] ?? []);
+        $selectedTeams = array_values(array_unique(array_map('intval', $selectedTeams)));
         $visible = isset($data['project_edit_form_visible']) ? 1 : 0;
         $globalActivities = isset($data['project_edit_form_globalactivities']) ? 1 : 0;
 
@@ -195,6 +198,16 @@ final class ProjectService
         // Validate customer
         if ($customerId === 0) {
             $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_customer'], $this->translations['form_error_format']) . "\n";
+        }
+
+        // Validate customer scope
+        if ($customerId !== 0 && !in_array($customerId, $allowedCustomerIds, true)) {
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_customer'], $this->translations['form_error_not_allowed']) . "\n";
+        }
+
+        // Validate teams scope
+        if (array_diff($selectedTeams, $allowedTeamIds) !== []) {
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_selected_teams'], $this->translations['form_error_not_allowed']) . "\n";
         }
 
         // Validate number
@@ -263,9 +276,11 @@ final class ProjectService
      *
      * @param Project $project
      * @param array $data
+     * @param array<int, int> $allowedCustomerIds Customer ids the user is allowed to use
+     * @param array<int, int> $allowedTeamIds Team ids the user is allowed to use
      * @return string $errorMsg
      */
-    public function updateProject(Project $project, array $data): string {
+    public function updateProject(Project $project, array $data, array $allowedCustomerIds, array $allowedTeamIds): string {
         $errorMsg = "";
         $dateFormat = $this->translations['dateFormats_date'];
         $name = $this->validationHelper->sanitizeString($data['project_edit_form_name']);
@@ -277,10 +292,13 @@ final class ProjectService
         $start = !empty($start) ? date_create_from_format($dateFormat, $start) : null;
         $end = $this->validationHelper->sanitizeString($data['project_edit_form_end']);
         $end = !empty($end) ? date_create_from_format($dateFormat, $end) : null;
-        $selectedTeams = $data['project_edit_form']['selectedTeams'] ?? [];
+        $selectedTeams = (array) ($data['project_edit_form']['selectedTeams'] ?? []);
+        $selectedTeams = array_values(array_unique(array_map('intval', $selectedTeams)));
         $selectedActivities = $data['project_edit_form']['selectedActivities'] ?? [];
         $visible = isset($data['project_edit_form_visible']) ? 1 : 0;
         $globalActivities = isset($data['project_edit_form_globalactivities']) ? 1 : 0;
+
+        $currentTeamIds = $this->projectRepository->findAllTeamIdsByProjectId($project->getId());
 
         // Validate name
         if (!$this->validationHelper->validateName($name)) {
@@ -296,6 +314,21 @@ final class ProjectService
         if ($customerId === 0) {
             $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_customer'], $this->translations['form_error_format']) . "\n";
         }
+
+        // Validate customer scope (current customer is always accepted)
+        if ($customerId !== 0 && $customerId !== (int) $project->getCustomerId() && !in_array($customerId, $allowedCustomerIds, true)) {
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_customer'], $this->translations['form_error_not_allowed']) . "\n";
+        }
+
+        // Validate teams scope
+        if (array_diff($selectedTeams, $allowedTeamIds, $currentTeamIds) !== []) {
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_selected_teams'], $this->translations['form_error_not_allowed']) . "\n";
+        }
+
+        $selectedTeams = array_values(array_unique(array_merge(
+            $selectedTeams,
+            array_diff($currentTeamIds, $allowedTeamIds)
+        )));
 
         // Validate number
         if (!$this->validationHelper->validateNumber($number, true)) {

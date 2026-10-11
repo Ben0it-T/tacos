@@ -356,6 +356,25 @@ final class ProjectRepository
 
 
     /**
+     * Find All Team ids by project id
+     *
+     * @param int $projectId
+     * @return array<int, int> Team ids
+     */
+    public function findAllTeamIdsByProjectId(int $projectId): array {
+        $sql  = 'SELECT pt.`team_id` ';
+        $sql .= 'FROM `tacos_projects_teams` pt ';
+        $sql .= 'WHERE pt.`project_id` = :projectId';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'projectId' => $projectId,
+        ]);
+
+        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    /**
      * Find All Projects with Teams count and Customer
      *
      * @return array of Projects with Teams count and Customer
