@@ -29,7 +29,7 @@ final class ActivityService
      * Find Activity by id
      *
      * @param int $id
-     * @return Activity entity or false
+     * @return Activity|false Activity entity or false
      */
     public function findActivity(int $id): Activity|false {
         return $this->activityRepository->find($id);
@@ -40,7 +40,7 @@ final class ActivityService
      *
      * @param int $activityId
      * @param int $userId
-     * @return Activity entity or false
+     * @return Activity|false Activity entity or false
      */
     public function findOneByIdAndUserId(int $activityId, int $userId): Activity|false {
         return $this->activityRepository->findOneByIdAndUserId($activityId, $userId);
@@ -52,7 +52,7 @@ final class ActivityService
      *
      * @param int $activityId
      * @param int $teamleaderId
-     * @return Activity entity or false
+     * @return Activity|false Activity entity or false
      */
     public function findOneByIdAndTeamleaderId(int $activityId, int $teamleaderId): Activity|false {
         return $this->activityRepository->findOneByIdAndTeamleaderId($activityId, $teamleaderId);
@@ -64,7 +64,7 @@ final class ActivityService
      *
      * @param int $activityId
      * @param int $teamleaderId
-     * @return Activity entity or false
+     * @return Activity|false Activity entity or false
      */
     public function findOneByIdAndTeamleaderIdStrict(int $activityId, int $teamleaderId): Activity|false {
         return $this->activityRepository->findOneByIdAndTeamleaderIdStrict($activityId, $teamleaderId);
@@ -139,10 +139,10 @@ final class ActivityService
     }
 
     /**
-     * Find All Activities by Project Id and by User Id
+     * Find All Activities by User Id and by Project Id
      *
-     * @param int  $projectId
      * @param int  $userId
+     * @param int  $projectId
      * @param ?int $visible
      * @return array of Activity entities
      */
@@ -164,6 +164,7 @@ final class ActivityService
     /**
      * Find All Activities with Teams count and Project by Teamleader id
      *
+     * @param int $teamleaderId
      * @return array of Activities with Teams count and Project
      */
     public function findAllActivitiesWithTeamsCountAndProjectByTeamleaderId(int $teamleaderId): array {

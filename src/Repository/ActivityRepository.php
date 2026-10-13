@@ -22,7 +22,7 @@ final class ActivityRepository
      * Find Activity by id
      *
      * @param int $id
-     * @return Activity entity or false
+     * @return Activity|false Activity entity or false
      */
     public function find(int $id): Activity|false {
         $sql = 'SELECT a.* FROM `tacos_activities` a WHERE a.`id` = :id LIMIT 1';
@@ -45,7 +45,7 @@ final class ActivityRepository
      *
      * @param int $activityId
      * @param int $userId
-     * @return Activity entity or false
+     * @return Activity|false Activity entity or false
      */
     public function findOneByIdAndUserId(int $activityId, int $userId): Activity|false {
         $sql  = 'SELECT a.* ';
@@ -77,7 +77,7 @@ final class ActivityRepository
      *
      * @param int $activityId
      * @param int $teamleaderId
-     * @return Activity entity or false
+     * @return Activity|false Activity entity or false
      */
     public function findOneByIdAndTeamleaderId(int $activityId, int $teamleaderId): Activity|false {
         $sql  = 'SELECT a.* ';
@@ -109,7 +109,7 @@ final class ActivityRepository
      *
      * @param int $activityId
      * @param int $teamleaderId
-     * @return Activity entity or false
+     * @return Activity|false Activity entity or false
      */
     public function findOneByIdAndTeamleaderIdStrict(int $activityId, int $teamleaderId): Activity|false {
         $sql  = 'SELECT a.* ';
@@ -345,8 +345,8 @@ final class ActivityRepository
     /**
      * Find All Activities by User Id and by Project Id
      *
-     * @param int  $projectId
      * @param int  $userId
+     * @param int  $projectId
      * @param ?int $visible
      * @return array of Activity entities
      */
@@ -428,6 +428,7 @@ final class ActivityRepository
     /**
      * Find All Activities with Teams count and Project by Teamleader id
      *
+     * @param int $teamleaderId
      * @return array of Activities with Teams count and Project
      */
     public function findAllActivitiesWithTeamsCountAndProjectByTeamleaderId(int $teamleaderId): array {

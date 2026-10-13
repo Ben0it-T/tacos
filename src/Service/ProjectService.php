@@ -30,7 +30,7 @@ final class ProjectService
      * Find One Project by id
      *
      * @param int $id
-     * @return Project entity or false
+     * @return Project|false Project entity or false
      */
     public function findProject(int $id): Project|false {
         return $this->projectRepository->find($id);
@@ -42,7 +42,7 @@ final class ProjectService
      *
      * @param int $projectId
      * @param int $teamleaderId
-     * @return Project entity or false
+     * @return Project|false Project entity or false
      */
     public function findOneByIdAndTeamleaderId(int $projectId, int $teamleaderId): Project|false {
         return $this->projectRepository->findOneByIdAndTeamleaderId($projectId, $teamleaderId);
@@ -54,7 +54,7 @@ final class ProjectService
      *
      * @param int $projectId
      * @param int $teamleaderId
-     * @return Project entity or false
+     * @return Project|false Project entity or false
      */
     public function findOneByIdAndTeamleaderIdStrict(int $projectId, int $teamleaderId): Project|false {
         return $this->projectRepository->findOneByIdAndTeamleaderIdStrict($projectId, $teamleaderId);
@@ -109,8 +109,8 @@ final class ProjectService
     /**
      * Find All Projects by teamleader Id
      *
-     * @param int $teamleaderId
-     * @param int $visible
+     * @param int  $teamleaderId
+     * @param ?int $visible
      * @return array of Project entities
      */
     public function findAllByTeamleaderId(int $teamleaderId, ?int $visible = null): array {

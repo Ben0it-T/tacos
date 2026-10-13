@@ -22,7 +22,7 @@ final class ProjectRepository
      * Find One Project by id
      *
      * @param int $id
-     * @return Project entity or false
+     * @return Project|false Project entity or false
      */
     public function find(int $id): Project|false {
         $sql = 'SELECT p.* FROM `tacos_projects` p WHERE p.`id` = :id LIMIT 1';
@@ -52,7 +52,7 @@ final class ProjectRepository
      *
      * @param int $projectId
      * @param int $teamleaderId
-     * @return Project entity or false
+     * @return Project|false Project entity or false
      */
     public function findOneByIdAndTeamleaderId(int $projectId, int $teamleaderId): Project|false {
         $sql  = 'SELECT DISTINCT p.* ';
@@ -96,7 +96,7 @@ final class ProjectRepository
      *
      * @param int $projectId
      * @param int $teamleaderId
-     * @return Project entity or false
+     * @return Project|false Project entity or false
      */
     public function findOneByIdAndTeamleaderIdStrict(int $projectId, int $teamleaderId): Project|false {
         $sql  = 'SELECT DISTINCT p.* ';
@@ -311,7 +311,7 @@ final class ProjectRepository
      *  - customer with team    + project without team => visible if user is member of a customer team
      *  - customer with team    + project with team    => visible if user is member of at least one customer team AND at least one project team
      *
-     * @param int $teamleaderId
+     * @param int  $teamleaderId
      * @param ?int $visible
      * @return array of Project entities
      */
