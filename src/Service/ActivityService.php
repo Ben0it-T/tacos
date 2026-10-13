@@ -218,7 +218,7 @@ final class ActivityService
 
         // Validate number
         if (!$this->validationHelper->validateNumber($number, true)) {
-            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_project_number'], $this->translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_activity_number'], $this->translations['form_error_format']) . "\n";
         }
 
         if ($errorMsg !== '') {
@@ -297,7 +297,7 @@ final class ActivityService
 
         // Validate number
         if (!$this->validationHelper->validateNumber($number, true)) {
-            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_project_number'], $this->translations['form_error_format']) . "\n";
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_activity_number'], $this->translations['form_error_format']) . "\n";
         }
 
         // Validate teams scope
