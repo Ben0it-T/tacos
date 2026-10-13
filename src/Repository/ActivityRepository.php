@@ -385,7 +385,24 @@ final class ActivityRepository
 
 
 
+    /**
+     * Find All Team ids by activity id
+     *
+     * @param int $activityId
+     * @return array<int, int> Team ids
+     */
+    public function findAllTeamIdsByActivityId(int $activityId): array {
+        $sql  = 'SELECT at.`team_id` ';
+        $sql .= 'FROM `tacos_activities_teams` at ';
+        $sql .= 'WHERE at.`activity_id` = :activityId';
 
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'activityId' => $activityId,
+        ]);
+
+        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+    }
 
     /**
      * Find All Activities with Teams count and Project

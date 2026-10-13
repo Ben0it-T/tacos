@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\Activity;
+use App\Entity\Project;
+use App\Entity\Team;
 use App\Entity\User;
 use App\Helper\ControllerHelper;
 use App\Service\ActivityService;
@@ -46,13 +48,9 @@ final class ActivitiesController
             return $this->helper->redirect($request, $response, 'login');
         }
 
-        $projects = $this->helper->isAdmin($currentUser)
-            ? $this->projectService->findAll(1)
-            : $this->projectService->findAllByTeamleaderId($currentUser->getId(), 1);
+        $projects = $this->getAllowedProjects($currentUser);
 
-        $teams = $this->helper->isAdmin($currentUser)
-            ? $this->teamService->findAllTeams()
-            : $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
+        $teams = $this->getAllowedTeams($currentUser);
 
         $colors = $this->helper->parseColorChoices((string)($this->options['colorChoices'] ?? ''));
 
@@ -75,8 +73,16 @@ final class ActivitiesController
 
     public function createAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
+        $currentUser = $this->helper->getCurrentUser();
+        if (!$currentUser) {
+            return $this->helper->redirect($request, $response, 'login');
+        }
+
+        $allowedProjectIds = $this->helper->extractIds($this->getAllowedProjects($currentUser));
+        $allowedTeamIds = $this->helper->extractIds($this->getAllowedTeams($currentUser));
+
         $data = (array) $request->getParsedBody();
-        $errors = $this->activityService->createActivity($data);
+        $errors = $this->activityService->createActivity($data, $allowedProjectIds, $allowedTeamIds);
 
         if ($errors === '') {
             $this->flash->add('success', $this->translations['form_success_create_activity']);
@@ -132,9 +138,7 @@ final class ActivitiesController
             return $this->helper->redirect($request, $response, 'activities');
         }
 
-        $teams = $this->helper->isAdmin($currentUser)
-            ? $this->teamService->findAllTeams()
-            : $this->teamService->findAllTeamsByTeamleaderId($currentUser->getId());
+        $teams = $this->getAllowedTeams($currentUser);
 
         $colors = $this->helper->parseColorChoices((string)($this->options['colorChoices'] ?? ''));
 
@@ -172,7 +176,10 @@ final class ActivitiesController
         }
 
         $data = (array) $request->getParsedBody();
-        $errors = $this->activityService->updateActivity($activity, $data);
+
+        $allowedTeamIds = $this->helper->extractIds($this->getAllowedTeams($currentUser));
+
+        $errors = $this->activityService->updateActivity($activity, $data, $allowedTeamIds);
         if ($errors === '') {
             $this->flash->add('success', $this->translations['form_success_update']);
             return $this->helper->redirect($request, $response, 'activities');
@@ -212,5 +219,35 @@ final class ActivitiesController
         return $strict
             ? $this->activityService->findOneByIdAndTeamleaderIdStrict($activityId, $user->getId())
             : $this->activityService->findOneByIdAndTeamleaderId($activityId, $user->getId());
+    }
+
+    /**
+     * Get projects the user is allowed to use
+     * - admin: all visible projects
+     * - teamlead: visible projects within their scope
+     *
+     * @param User $user
+     * @return array<int, Project> Project entities indexed by id
+     */
+    private function getAllowedProjects(User $user): array
+    {
+        return $this->helper->isAdmin($user)
+            ? $this->projectService->findAll(1)
+            : $this->projectService->findAllByTeamleaderId($user->getId(), 1);
+    }
+
+    /**
+     * Get teams the user is allowed to use
+     * - admin: all teams
+     * - teamlead: teams they lead
+     *
+     * @param User $user
+     * @return array<int, Team> Team entities indexed by id
+     */
+    private function getAllowedTeams(User $user): array
+    {
+        return $this->helper->isAdmin($user)
+            ? $this->teamService->findAllTeams()
+            : $this->teamService->findAllTeamsByTeamleaderId($user->getId());
     }
 }

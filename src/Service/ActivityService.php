@@ -176,16 +176,19 @@ final class ActivityService
      * Create new Activity
      *
      * @param array $data
+     * @param array<int, int> $allowedProjectIds Project ids the user is allowed to use
+     * @param array<int, int> $allowedTeamIds Team ids the user is allowed to use
      * @return string $errorMsg
      */
-    public function createActivity(array $data): string {
+    public function createActivity(array $data, array $allowedProjectIds, array $allowedTeamIds): string {
         $errorMsg = "";
         $name = $this->validationHelper->sanitizeString($data['activity_edit_form_name']);
         $color = $this->validationHelper->sanitizeColor($data['activity_edit_form_color'] ?? '#ffffff');
         $projectId = intval($data['activity_edit_form_project']);
         $number = $this->validationHelper->sanitizeString($data['activity_edit_form_number']);
         $comment = $this->validationHelper->sanitizeString($data['activity_edit_form_description']);
-        $selectedTeams = $data['activity_edit_form']['selectedTeams'] ?? [];
+        $selectedTeams = (array) ($data['activity_edit_form']['selectedTeams'] ?? []);
+        $selectedTeams = array_values(array_unique(array_map('intval', $selectedTeams)));
         $visible = isset($data['activity_edit_form_visible']) ? 1 : 0;
 
         // Validate name
@@ -201,6 +204,16 @@ final class ActivityService
         // Validate project
         if ($projectId === 0) {
             $projectId = null;
+        }
+
+        // Validate project scope
+        if ($projectId !== null && !in_array($projectId, $allowedProjectIds, true)) {
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_project'], $this->translations['form_error_not_allowed']) . "\n";
+        }
+
+        // Validate teams scope
+        if (array_diff($selectedTeams, $allowedTeamIds) !== []) {
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_selected_teams'], $this->translations['form_error_not_allowed']) . "\n";
         }
 
         // Validate number
@@ -257,16 +270,20 @@ final class ActivityService
      *
      * @param Activity $activity
      * @param array $data
+     * @param array<int, int> $allowedTeamIds Team ids the user is allowed to use
      * @return string $errorMsg
      */
-    public function updateActivity(Activity $activity, array $data): string {
+    public function updateActivity(Activity $activity, array $data, array $allowedTeamIds): string {
         $errorMsg = "";
         $name = $this->validationHelper->sanitizeString($data['activity_edit_form_name']);
         $color = $this->validationHelper->sanitizeColor($data['activity_edit_form_color'] ?? '#ffffff');
         $number = $this->validationHelper->sanitizeString($data['activity_edit_form_number']);
         $comment = $this->validationHelper->sanitizeString($data['activity_edit_form_description']);
-        $selectedTeams = $data['activity_edit_form']['selectedTeams'] ?? [];
+        $selectedTeams = (array) ($data['activity_edit_form']['selectedTeams'] ?? []);
+        $selectedTeams = array_values(array_unique(array_map('intval', $selectedTeams)));
         $visible = isset($data['activity_edit_form_visible']) ? 1 : 0;
+
+        $currentTeamIds = $this->activityRepository->findAllTeamIdsByActivityId($activity->getId());
 
         // Validate name
         if (!$this->validationHelper->validateName($name)) {
@@ -282,6 +299,16 @@ final class ActivityService
         if (!$this->validationHelper->validateNumber($number, true)) {
             $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_project_number'], $this->translations['form_error_format']) . "\n";
         }
+
+        // Validate teams scope
+        if (array_diff($selectedTeams, $allowedTeamIds, $currentTeamIds) !== []) {
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_selected_teams'], $this->translations['form_error_not_allowed']) . "\n";
+        }
+
+        $selectedTeams = array_values(array_unique(array_merge(
+            $selectedTeams,
+            array_diff($currentTeamIds, $allowedTeamIds)
+        )));
 
         if ($errorMsg !== '') {
             return $errorMsg;
