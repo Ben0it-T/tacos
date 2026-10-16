@@ -90,7 +90,10 @@
                     <label for="timesheet_edit_form_project" class="col-form-label col-sm-2">{{ trans.form_label_project }}</label>
                     <div class="col-sm-10">
                         <select class="form-select" id="timesheet_edit_form_project" name="timesheet_edit_form_project" required="required" tabindex="6">
-                            <option value="" selected></option>
+                            <option value=""></option>
+                            {% if currentProject %}
+                                <option value="{{ currentProject.id }}" selected>{{ currentProject.name }} ({{ trans.form_label_unavailable }})</option>
+                            {% endif %}
                             {% for project in projects %}
                                 <option value="{{ project.id }}" {% if timesheet.projectId == project.id %}selected{% endif %}>{{ project.name }}</option>
                             {% endfor %}
@@ -102,9 +105,14 @@
                     <label for="timesheet_edit_form_activity" class="col-form-label col-sm-2">{{ trans.form_label_activity }}</label>
                     <div class="col-sm-10">
                         <select class="form-select" id="timesheet_edit_form_activity" name="timesheet_edit_form_activity" required="required" tabindex="7">
-                            <option selected value=""></option>
+                            <option value=""></option>
+                            {% if currentActivity %}
+                                <option value="{{ currentActivity.id }}" selected>{{ currentActivity.name }} ({{ trans.form_label_unavailable }})</option>
+                            {% endif %}
                             {% for activity in activities %}
-                                <option value="{{ activity.id }}" {% if timesheet.activityId == activity.id %}selected{% endif %} {% if activity.id not in projectActivitiesIds %}hidden disabled{% endif %}>{{ activity.name }}</option>
+                                {% if not currentActivity or activity.id != currentActivity.id %}
+                                    <option value="{{ activity.id }}" {% if timesheet.activityId == activity.id %}selected{% endif %} {% if activity.id not in projectActivitiesIds %}hidden disabled{% endif %}>{{ activity.name }}</option>
+                                {% endif %}
                             {% endfor %}
                         </select>
                     </div>

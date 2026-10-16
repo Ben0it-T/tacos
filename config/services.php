@@ -132,6 +132,7 @@ return [
 
         return new TimesheetService(
             $c->get(ActivityRepository::class),
+            $c->get(ProjectRepository::class),
             $c->get(TagRepository::class),
             $c->get(TimesheetRepository::class),
             $c->get(RoundingHelper::class),

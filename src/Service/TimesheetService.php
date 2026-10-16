@@ -7,6 +7,7 @@ use App\Entity\Timesheet;
 use App\Helper\RoundingHelper;
 use App\Helper\ValidationHelper;
 use App\Repository\ActivityRepository;
+use App\Repository\ProjectRepository;
 use App\Repository\TagRepository;
 use App\Repository\TimesheetRepository;
 
@@ -15,6 +16,7 @@ use Psr\Log\LoggerInterface;
 final class TimesheetService
 {
     private ActivityRepository $activityRepository;
+    private ProjectRepository $projectRepository;
     private TagRepository $tagRepository;
     private TimesheetRepository $timesheetRepository;
     private RoundingHelper $roundingHelper;
@@ -23,8 +25,9 @@ final class TimesheetService
     private array $options;
     private array $translations;
 
-    public function __construct(ActivityRepository $activityRepository, TagRepository $tagRepository, TimesheetRepository $timesheetRepository, RoundingHelper $roundingHelper, ValidationHelper $validationHelper, LoggerInterface $logger, array $options, array $translations) {
+    public function __construct(ActivityRepository $activityRepository, ProjectRepository $projectRepository, TagRepository $tagRepository, TimesheetRepository $timesheetRepository, RoundingHelper $roundingHelper, ValidationHelper $validationHelper, LoggerInterface $logger, array $options, array $translations) {
         $this->activityRepository = $activityRepository;
+        $this->projectRepository = $projectRepository;
         $this->tagRepository = $tagRepository;
         $this->timesheetRepository = $timesheetRepository;
         $this->roundingHelper = $roundingHelper;
@@ -441,6 +444,47 @@ final class TimesheetService
         return array();
     }
 
+    /**
+     * Validate project and activity against user scope
+     * - project: visible projects the user can access
+     * - activity: visible activities allowed on this project for the user
+     *
+     * @param int $userId
+     * @param int $projectId
+     * @param int $activityId
+     * @return string $errorMsg
+     */
+    private function validateProjectActivityScope(int $userId, int $projectId, int $activityId): string {
+        $allowedProjects = $this->projectRepository->findAllByUserId($userId, 1);
+        if (!isset($allowedProjects[$projectId])) {
+            return str_replace("%fieldName%", $this->translations['form_label_project'], $this->translations['form_error_not_allowed']) . "\n";
+        }
+
+        $allowedActivities = $this->activityRepository->findAllByUserIdAndProjectId($userId, $projectId, 1);
+        if (!isset($allowedActivities[$activityId])) {
+            return str_replace("%fieldName%", $this->translations['form_label_activity'], $this->translations['form_error_not_allowed']) . "\n";
+        }
+
+        return '';
+    }
+
+    /**
+     * Validate tags
+     * Tags already linked to the timesheet are accepted even if hidden
+     *
+     * @param array<int, int> $selectedTags
+     * @param array<int, int> $currentTagIds Tag ids already linked to the timesheet
+     * @return string $errorMsg
+     */
+    private function validateTagsScope(array $selectedTags, array $currentTagIds = []): string {
+        $allowedTagIds = array_keys($this->tagRepository->findAll(1));
+
+        if (array_diff($selectedTags, $allowedTagIds, $currentTagIds) !== []) {
+            return str_replace("%fieldName%", $this->translations['form_label_tags'], $this->translations['form_error_not_allowed']) . "\n";
+        }
+
+        return '';
+    }
 
     /**
      * Create new Timesheet
@@ -502,7 +546,8 @@ final class TimesheetService
 
         $duration = (!empty($start) && !empty($end)) ? (date_format($end,"U") - date_format($start,"U"))/60 : null;
         $comment = $this->validationHelper->sanitizeString($data['timesheet_edit_form_description']);
-        $selectedTags = $data['timesheet_edit_form']['selectedTags'] ?? [];
+        $selectedTags = (array) ($data['timesheet_edit_form']['selectedTags'] ?? []);
+        $selectedTags = array_values(array_unique(array_map('intval', $selectedTags)));
 
         // Validate userId
         if ($userId === 0) {
@@ -541,6 +586,14 @@ final class TimesheetService
                 $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_activity'], $this->translations['form_error_format']) . "\n";
             }
         }
+
+        // Validate scope (project/activity only if well-formed, to avoid duplicate messages)
+        if ($errorMsg === '') {
+            $errorMsg .= $this->validateProjectActivityScope($userId, $projectId, $activityId);
+        }
+
+        // Validate tags
+        $errorMsg .= $this->validateTagsScope($selectedTags);
 
         if ($errorMsg !== '') {
             return $errorMsg;
@@ -687,7 +740,9 @@ final class TimesheetService
 
         $duration = (!empty($start) && !empty($end)) ? (date_format($end,"U") - date_format($start,"U"))/60 : null;
         $comment = $this->validationHelper->sanitizeString($data['timesheet_edit_form_description']);
-        $selectedTags = $data['timesheet_edit_form']['selectedTags'] ?? [];
+        $selectedTags = (array) ($data['timesheet_edit_form']['selectedTags'] ?? []);
+        $selectedTags = array_values(array_unique(array_map('intval', $selectedTags)));
+        $currentTags = $this->tagRepository->findAllTagIdsByTimesheetId($timesheet->getId());
 
         // Validate Dates
         if (!$this->validationHelper->validateDate($start)) {
@@ -720,6 +775,14 @@ final class TimesheetService
                 $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_activity'], $this->translations['form_error_format']) . "\n";
             }
         }
+
+        // Validate scope (project/activity only if changed and well-formed)
+        if ($errorMsg === '' && ($projectId !== $timesheet->getProjectId() || $activityId !== $timesheet->getActivityId())) {
+            $errorMsg .= $this->validateProjectActivityScope($timesheet->getUserId(), $projectId, $activityId);
+        }
+
+        // Validate tags
+        $errorMsg .= $this->validateTagsScope($selectedTags, $currentTags);
 
         if ($errorMsg !== '') {
             return $errorMsg;
@@ -771,6 +834,12 @@ final class TimesheetService
      * @return string $errorMsg
      */
     public function restartTimesheet(Timesheet $timesheet): string {
+        // Validate scope: restart creates a new timesheet, same rules as creation
+        $scopeError = $this->validateProjectActivityScope($timesheet->getUserId(), $timesheet->getProjectId(), $timesheet->getActivityId());
+        if ($scopeError !== '') {
+            return $this->translations['form_error_restart_not_allowed'];
+        }
+
         $rounding = $this->options['rounding'];
         $start = new \DateTime("now");
         if ($rounding['active']) $start = $this->roundingHelper->roundDateTime($start, $rounding['start']['minutes'], $rounding['start']['mode']);
@@ -834,7 +903,11 @@ final class TimesheetService
             ]
         );
 
-        $tagIds = $this->tagRepository->findAllTagIdsByTimesheetId($timesheet->getId());
+        // Copy only tags that are still visible
+        $tagIds = array_values(array_intersect(
+            $this->tagRepository->findAllTagIdsByTimesheetId($timesheet->getId()),
+            array_keys($this->tagRepository->findAll(1))
+        ));
         if (count($tagIds) > 0) {
             if (!$this->timesheetRepository->insertTags(intval($lastInsertId), $tagIds)) {
                 return $this->translations['error_occurred'];

@@ -278,11 +278,21 @@ final class TimesheetsController
         $selectedTags = $this->tagService->findAllByTimesheetId($timesheet->getId());
         $selectedTagsIds = array_map(static fn($t) => $t->getId(), $selectedTags);
 
-        $projectActivities = $this->activityService->findAllByProjectId($timesheet->getProjectId());
-        $projectActivitiesIds = array_map(static fn($pa) => $pa->getId(), $projectActivities);
+        $projectActivities = $this->activityService->findAllByUserIdAndProjectId($currentUser->getId(), $timesheet->getProjectId(), 1);
+        $projectActivitiesIds = $this->helper->extractIds($projectActivities);
+
+        // Keep current project/activity selectable even if no longer available
+        $currentProject = !isset($projects[$timesheet->getProjectId()])
+            ? $this->projectService->findProject($timesheet->getProjectId())
+            : false;
+        $currentActivity = !isset($projectActivities[$timesheet->getActivityId()])
+            ? $this->activityService->findActivity($timesheet->getActivityId())
+            : false;
 
         return $this->twig->render($response, 'timesheet-edit.html.twig', [
             'timesheet'            => $timesheet,
+            'currentProject'       => $currentProject,
+            'currentActivity'      => $currentActivity,
             'selectedTags'         => $selectedTags,
             'projectActivitiesIds' => $projectActivitiesIds,
             'selectedTagsIds'      => $selectedTagsIds,
@@ -333,6 +343,13 @@ final class TimesheetsController
         $timesheet = $this->timesheetService->findTimesheetByIdAndUserId($timesheetId, $currentUser->getId());
 
         if (!$timesheet) {
+            return $this->helper->redirect($request, $response, 'timesheets');
+        }
+
+        // Check whether this timesheet can be restarted
+        $canRestart = $timesheet->getEnd() !== null && $this->canRestartTimesheet(['start' => $timesheet->getStart()], $this->options['restart']);
+        if (!$canRestart) {
+            $this->flash->add('error', $this->translations['form_error_restart_not_allowed']);
             return $this->helper->redirect($request, $response, 'timesheets');
         }
 
@@ -655,8 +672,6 @@ final class TimesheetsController
         }
 
         $now = new \DateTimeImmutable();
-        $start = new \DateTimeImmutable($startStr);
-
         $days = $start->diff($now)->days;
 
         return $restartCfg['active']
