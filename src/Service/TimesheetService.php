@@ -283,13 +283,13 @@ final class TimesheetService
      * Get report data
      *
      * @param int $userId
-     * @param $date1
-     * @param $date2
+     * @param string $date1 Y-m-d
+     * @param string $date2 Y-m-d
      * @param int $report
      * @param int $format
      * @return array
      */
-    public function getReportData(int $userId, $date1, $date2, int $report, int $format = 1): array {
+    public function getReportData(int $userId, string $date1, string $date2, int $report, int $format = 1): array {
         $res = $this->timesheetRepository->getReportData($userId, $date1, $date2, $report);
 
         // Format

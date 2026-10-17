@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\User;
 use App\Helper\ControllerHelper;
 use App\Helper\RoundingHelper;
 use App\Service\ActivityService;
@@ -604,8 +605,12 @@ final class TimesheetsController
      * Build timesheet criteria from session filters.
      *
      * Returns null if session data is invalid.
+     *
+     * @param ServerRequestInterface $request
+     * @param User $currentUser
+     * @return array|null
      */
-    private function buildTimesheetCriteriaFromSession(ServerRequestInterface $request, $currentUser): ?array
+    private function buildTimesheetCriteriaFromSession(ServerRequestInterface $request, User $currentUser): ?array
     {
         $session = $this->helper->getSessionValue('timesheets', []);
 
