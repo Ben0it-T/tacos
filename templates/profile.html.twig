@@ -102,10 +102,16 @@
                         <input type="password" class="form-control" id="user_profile_form_password2" name="user_profile_form_password2" autocomplete="new-password" placeholder="{{ trans.form_label_password_confirm }}" minlength="{{ form.pwdMinLength }}" maxlength="128" tabindex="5">
                     </div>
                 </div>
+                <div class="row mb-3">
+                    <label for="user_profile_form_password_current" class="col-form-label col-sm-3">{{ trans.form_label_password_current }}</label>
+                    <div class="col-sm-9">
+                        <input type="password" class="form-control" id="user_profile_form_password_current" name="user_profile_form_password_current" autocomplete="current-password" placeholder="{{ trans.form_label_password_current }}" maxlength="128" tabindex="6">
+                    </div>
+                </div>
             </div>
             <div class="card-footer">
                 <div class="mb-3 float-end">
-                    <button type="submit" class="btn btn-primary" tabindex="6">
+                    <button type="submit" class="btn btn-primary" tabindex="7">
                         <i class="bi bi-floppy"></i>
                         <span class="px-1">{{ trans.btn_save }}</span>
                     </button>

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Entity\User;
 use App\Repository\LoginAttemptsRepository;
 use App\Repository\UserRepository;
 use App\Security\AuthResult;
@@ -87,6 +88,17 @@ final class AuthService
             }
         }
 
+        return $this->registerFailure($trackingId);
+    }
+
+    /**
+     * Register a failed attempt and block if the limit is reached
+     *
+     * @param int $trackingId
+     * @return AuthResult
+     */
+    private function registerFailure(int $trackingId): AuthResult
+    {
         $this->loginAttemptsRepository->insert($trackingId);
         $attempts = $this->loginAttemptsRepository->findByTrackingId($trackingId);
 
@@ -112,6 +124,29 @@ final class AuthService
         }
 
         return AuthResult::INVALID_CREDENTIALS;
+    }
+
+    /**
+     * Verify the password of an authenticated user (shares the login attempts counter)
+     *
+     * @param User $user
+     * @param string $password
+     * @return AuthResult
+     */
+    public function verifyPassword(User $user, string $password): AuthResult
+    {
+        $trackingId = $user->getId();
+
+        if ($this->isBlocked($trackingId)) {
+            return AuthResult::BLOCKED;
+        }
+
+        if ($password !== '' && password_verify($password, $user->getPassword())) {
+            $this->loginAttemptsRepository->remove($trackingId);
+            return AuthResult::SUCCESS;
+        }
+
+        return $this->registerFailure($trackingId);
     }
 
     /**

@@ -8,20 +8,24 @@ use App\Entity\User;
 use App\Helper\ValidationHelper;
 use App\Repository\RoleRepository;
 use App\Repository\UserRepository;
+use App\Security\AuthResult;
+use App\Service\AuthService;
 use Psr\Log\LoggerInterface;
 
 final class UserService
 {
     private RoleRepository $roleRepository;
     private UserRepository $userRepository;
+    private AuthService $authService;
     private ValidationHelper $validationHelper;
     private LoggerInterface $logger;
     private array $options;
     private array $translations;
 
-    public function __construct(RoleRepository $roleRepository, UserRepository $userRepository, ValidationHelper $validationHelper, LoggerInterface $logger, array $options, array $translations) {
+    public function __construct(RoleRepository $roleRepository, UserRepository $userRepository, AuthService $authService, ValidationHelper $validationHelper, LoggerInterface $logger, array $options, array $translations) {
         $this->roleRepository = $roleRepository;
         $this->userRepository = $userRepository;
+        $this->authService = $authService;
         $this->validationHelper = $validationHelper;
         $this->logger = $logger;
         $this->options = $options;
@@ -220,6 +224,7 @@ final class UserService
         $email = $this->validationHelper->sanitizeEmail($data['user_profile_form_email']);
         $password1 = $data['user_profile_form_password1'] ?? '';
         $password2 = $data['user_profile_form_password2'] ?? '';
+        $currentPassword = is_string($data['user_profile_form_password_current'] ?? null) ? $data['user_profile_form_password_current'] : '';
 
         // Validate name
         if (!$this->validationHelper->validateName($name)) {
@@ -255,6 +260,20 @@ final class UserService
 
         if ($errorMsg !== '') {
             return $errorMsg;
+        }
+
+        // Email or password change: current password required.
+        if ($email !== $user->getEmail() || $password1 !== '') {
+            if ($currentPassword === '') {
+                return $this->translations['form_error_password_current_required'];
+            }
+            $result = $this->authService->verifyPassword($user, $currentPassword);
+            if ($result === AuthResult::BLOCKED) {
+                return $this->translations['form_error_too_many_attempts'];
+            }
+            if ($result !== AuthResult::SUCCESS) {
+                return $this->translations['form_error_password_current'];
+            }
         }
 
         $user->setName($name);
@@ -310,7 +329,6 @@ final class UserService
         $status = (int) $data['user_edit_form_status'];
         $password1 = $data['user_edit_form_password1'] ?? '';
         $password2 = $data['user_edit_form_password2'] ?? '';
-
 
         // Validate name
         if (!$this->validationHelper->validateName($name)) {

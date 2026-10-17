@@ -161,6 +161,7 @@ return [
         return new UserService(
             $c->get(RoleRepository::class),
             $c->get(UserRepository::class),
+            $c->get(AuthService::class),
             $c->get(ValidationHelper::class),
             $c->get(LoggerInterface::class),
             [
