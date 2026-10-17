@@ -49,14 +49,14 @@ final class AuthService
             return AuthResult::BLOCKED;
         }
 
-        if ($user) {
+        $options = array(
+            'memory_cost' => PASSWORD_ARGON2_DEFAULT_MEMORY_COST,
+            'time_cost'   => PASSWORD_ARGON2_DEFAULT_TIME_COST,
+            'threads'     => PASSWORD_ARGON2_DEFAULT_THREADS
+        );
 
+        if ($user) {
             if (password_verify($password, $user->getPassword())) {
-                $options = array(
-                    'memory_cost' => PASSWORD_ARGON2_DEFAULT_MEMORY_COST,
-                    'time_cost'   => PASSWORD_ARGON2_DEFAULT_TIME_COST,
-                    'threads'     => PASSWORD_ARGON2_DEFAULT_THREADS
-                );
                 if (password_needs_rehash($user->getPassword(), PASSWORD_ARGON2ID, $options)) {
                     $user->setPassword(password_hash($password, PASSWORD_ARGON2ID, $options));
                     $this->userRepository->updatePasswordHash($user);
@@ -86,6 +86,12 @@ final class AuthService
 
                 return AuthResult::SUCCESS;
             }
+        }
+        else {
+            // Unknown user: spend the same Argon2id cost as a real verification,
+            // so that the response time does not reveal whether the account exists.
+            // Hashing costs the same as verifying; the result is discarded.
+            password_hash(bin2hex(random_bytes(32)), PASSWORD_ARGON2ID, $options);
         }
 
         return $this->registerFailure($trackingId);
