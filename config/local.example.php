@@ -52,7 +52,7 @@ return function (array $settings): array {
     $settings['session']['path'] = dirname(__DIR__) . '/var/sessions';
     $settings['session']['lifetime'] = 60 * 60 * 12;
     $settings['session']['cookie_secure'] = true;    // Set to false if using HTTP in local dev
-    $settings['session']['cookie_samesite'] = 'Lax';
+    $settings['session']['cookie_samesite'] = 'Strict';
 
     // Auth settings
     $settings['auth']['loginMinLength'] = 7;
