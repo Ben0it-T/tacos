@@ -10,6 +10,7 @@ return function (array $settings): array {
     ini_set('display_startup_errors', '1'); // Should be set to 0 in production
 
     // App settings
+    $settings['app']['baseUrl']  = 'https://yourdomain.com'; // absolute origin (no path, no trailing slash)
     $settings['app']['basepath'] = '/yourbasepath';
     $settings['app']['domain']   = '.yourdomain.com';  // leading dot for compatibility or use subdomain
 

@@ -10,6 +10,7 @@ use App\Security\ResetPasswordResult;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Log\LoggerInterface;
 
 use Slim\Routing\RouteContext;
 use Slim\Views\Twig;
@@ -20,15 +21,17 @@ final class PasswordResetController
     private FlashMessageService $flash;
     private PasswordRequestService $passwordRequestService;
     private ControllerHelper $helper;
+    private LoggerInterface $logger;
     private array $options;
     private array $translations;
 
-    public function __construct(Twig $twig, FlashMessageService $flash, PasswordRequestService $passwordRequestService, ControllerHelper $helper, array $options, array $translations)
+    public function __construct(Twig $twig, FlashMessageService $flash, PasswordRequestService $passwordRequestService, ControllerHelper $helper, LoggerInterface $logger, array $options, array $translations)
     {
         $this->twig = $twig;
         $this->flash = $flash;
         $this->passwordRequestService = $passwordRequestService;
         $this->helper = $helper;
+        $this->logger = $logger;
         $this->options = $options;
         $this->translations = $translations;
     }
@@ -48,8 +51,21 @@ final class PasswordResetController
 
         $username = $data['_username'] ?? '';
         if ($username !== '') {
-            $resetLinkBase = $this->helper->fullUrlFor($request, 'change_password', array('key' => ''));
-            $this->passwordRequestService->newPasswordRequest($username, $resetLinkBase);
+            try {
+                $resetLinkBase = $this->helper->fullUrlFor($request, 'change_password', array('key' => ''));
+            } catch (\RuntimeException $e) {
+                $this->logger->error(
+                    '[PasswordResetController] Password reset link not sent',
+                    [
+                        'error' => $e->getMessage()
+                    ]
+                );
+                $resetLinkBase = null;
+            }
+
+            if ($resetLinkBase !== null) {
+                $this->passwordRequestService->newPasswordRequest($username, $resetLinkBase);
+            }
         }
 
         $message = str_replace("%timelimit%", $retryLifetimeStr, $this->translations['form_message_password_request']);

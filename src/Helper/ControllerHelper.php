@@ -17,7 +17,7 @@ final class ControllerHelper
     private const ROLE_USER = 1;
     private const SESSION_AUTH = 'auth';
 
-    public function __construct(private UserService $userService, private SessionStoreInterface $session)
+    public function __construct(private UserService $userService, private SessionStoreInterface $session, private string $baseUrl = '')
     {
     }
 
@@ -58,9 +58,42 @@ final class ControllerHelper
         return RouteContext::fromRequest($request)->getRouteParser()->urlFor($routeName, $data);
     }
 
+    /**
+     * Build an absolute URL from the configured base URL (never from the request Host header)
+     *
+     * @param ServerRequestInterface $request
+     * @param string $routeName
+     * @param array $data
+     * @return string
+     * @throws \RuntimeException if app.baseUrl is missing or invalid
+     */
     public function fullUrlFor(ServerRequestInterface $request, string $routeName, array $data = []): string
     {
-        return RouteContext::fromRequest($request)->getRouteParser()->fullUrlFor($request->getUri(), $routeName, $data);
+        return $this->getBaseUrl() . $this->getUrlFor($request, $routeName, $data);
+    }
+
+    /**
+     * Validate and normalize app.baseUrl to "scheme://host[:port]"
+     *
+     * @return string
+     * @throws \RuntimeException if app.baseUrl is missing or invalid
+     */
+    private function getBaseUrl(): string
+    {
+        $parts = parse_url($this->baseUrl);
+
+        $isValid = $this->baseUrl !== ''
+            && is_array($parts)
+            && in_array(strtolower($parts['scheme'] ?? ''), ['http', 'https'], true)
+            && ($parts['host'] ?? '') !== ''
+            && !isset($parts['user']) && !isset($parts['pass']) && !isset($parts['query']) && !isset($parts['fragment'])
+            && in_array($parts['path'] ?? '', ['', '/'], true);
+
+        if (!$isValid) {
+            throw new \RuntimeException(sprintf("app.baseUrl is missing or invalid: '%s' (expected scheme://host[:port])", $this->baseUrl));
+        }
+
+        return strtolower($parts['scheme']) . '://' . $parts['host'] . (isset($parts['port']) ? ':' . $parts['port'] : '');
     }
 
     public function redirect(ServerRequestInterface $request, ResponseInterface $response, string $routeName, array $data = []): ResponseInterface

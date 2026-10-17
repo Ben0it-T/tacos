@@ -13,6 +13,7 @@ date_default_timezone_set('Europe/Paris');
 
 // App settings
 $settings['app'] = [
+    'baseUrl'  => '',
     'basepath' => '',
     'domain'   => '',
 ];

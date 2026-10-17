@@ -144,6 +144,7 @@ return [
         return new ControllerHelper(
             $c->get(UserService::class),
             $c->get(SessionStoreInterface::class),
+            (string) ($c->get('settings')['app']['baseUrl'] ?? ''),
         );
     },
 

@@ -30,6 +30,7 @@ use App\Service\TimesheetService;
 use App\Service\UserService;
 
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 use Slim\Views\Twig;
 
@@ -94,6 +95,7 @@ return [
             $c->get(FlashMessageService::class),
             $c->get(PasswordRequestService::class),
             $c->get(ControllerHelper::class),
+            $c->get(LoggerInterface::class),
             [
                 'pwdMinLength'            => max(1, (int)($settings['pwdMinLength'] ?? 16)),
                 'pwdRequestRetryLifetime' => max(1, (int)($settings['pwdRequestRetryLifetime'] ?? 3600)),
