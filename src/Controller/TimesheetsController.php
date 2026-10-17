@@ -460,7 +460,6 @@ final class TimesheetsController
 
         $delimiter        = ";";
         $enclosure        = '"';
-        $escapeChar       = "\\";
         $recordSeparator  = "\r\n";
 
         $allTags = $this->tagService->findAll();
@@ -478,7 +477,7 @@ final class TimesheetsController
 
         // Lines
         foreach ($timesheets as $entry) {
-            $line = $this->buildCsvLine($entry, $delimiter, $enclosure, $escapeChar);
+            $line = $this->buildCsvLine($entry, $delimiter, $enclosure);
             $response->getBody()->write($line . $recordSeparator);
         }
 
@@ -515,7 +514,6 @@ final class TimesheetsController
 
         $delimiter        = ";";
         $enclosure        = '"';
-        $escapeChar       = "\\";
         $recordSeparator  = "\r\n";
 
         $allTags = $this->tagService->findAll();
@@ -534,7 +532,7 @@ final class TimesheetsController
 
         // Lines
         foreach ($timesheets as $entry) {
-            $line = $this->buildCsvLine($entry, $delimiter, $enclosure, $escapeChar);
+            $line = $this->buildCsvLine($entry, $delimiter, $enclosure);
             $response->getBody()->write($line . $recordSeparator);
         }
 
@@ -570,17 +568,27 @@ final class TimesheetsController
     /**
      * Build one CSV line from a timesheet entry.
      *
-     * Escapes string values and concatenates tags using '|'.
+     * Escapes string values (RFC 4180), neutralizes spreadsheet formulas
+     * and concatenates tags using '|'.
      *
      * @param array $entry      Timesheet data with joined fields
      * @param string $delimiter CSV delimiter
      * @param string $enclosure CSV enclosure character
-     * @param string $escape    Escape character
      * @return string
      */
-    private function buildCsvLine(array $entry, string $delimiter, string $enclosure, string $escape): string
+    private function buildCsvLine(array $entry, string $delimiter, string $enclosure): string
     {
-        $escapeValue = fn($value) => $enclosure . str_replace($enclosure, $escape . $enclosure, (string)$value) . $enclosure;
+        $escapeValue = function (mixed $value) use ($enclosure): string {
+            $value = (string) $value;
+
+            // Prevent formula injection: a leading quote forces text in spreadsheet software
+            if ($value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+                $value = "'" . $value;
+            }
+
+            // RFC 4180: the enclosure character is escaped by doubling it
+            return $enclosure . str_replace($enclosure, $enclosure . $enclosure, $value) . $enclosure;
+        };
 
         $tags = [];
         foreach ($entry['tags'] as $tag) {
