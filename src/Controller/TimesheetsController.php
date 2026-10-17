@@ -452,7 +452,7 @@ final class TimesheetsController
             return $this->helper->redirect($request, $response, 'login');
         }
 
-        $criteria = $this->buildTimesheetCriteriaFromSession($request, $currentUser);
+        $criteria = $this->buildTimesheetCriteriaFromSession($currentUser);
 
         if ($criteria === null) {
             return $this->helper->redirect($request, $response, 'timesheets');
@@ -499,7 +499,7 @@ final class TimesheetsController
             return $this->helper->redirect($request, $response, 'login');
         }
 
-        $criteria = $this->buildTeamsTimesheetCriteriaFromSession($request);
+        $criteria = $this->buildTeamsTimesheetCriteriaFromSession();
 
         if ($criteria === null) {
             return $this->helper->redirect($request, $response, 'timesheets_teams');
@@ -606,11 +606,10 @@ final class TimesheetsController
      *
      * Returns null if session data is invalid.
      *
-     * @param ServerRequestInterface $request
      * @param User $currentUser
      * @return array|null
      */
-    private function buildTimesheetCriteriaFromSession(ServerRequestInterface $request, User $currentUser): ?array
+    private function buildTimesheetCriteriaFromSession(User $currentUser): ?array
     {
         $session = $this->helper->getSessionValue('timesheets', []);
 
@@ -636,7 +635,7 @@ final class TimesheetsController
         ];
     }
 
-    private function buildTeamsTimesheetCriteriaFromSession(ServerRequestInterface $request): ?array
+    private function buildTeamsTimesheetCriteriaFromSession(): ?array
     {
         $session = $this->helper->getSessionValue('teamsTimesheets', []);
 
