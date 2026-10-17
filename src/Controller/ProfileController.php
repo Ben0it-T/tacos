@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Helper\ControllerHelper;
+use App\Security\SessionFingerprint;
+use App\Service\AuthService;
 use App\Service\FlashMessageService;
 use App\Service\TeamService;
 use App\Service\UserService;
@@ -17,6 +19,7 @@ final class ProfileController
 {
     private Twig $twig;
     private FlashMessageService $flash;
+    private AuthService $authService;
     private TeamService $teamService;
     private UserService $userService;
     private ControllerHelper $helper;
@@ -24,10 +27,11 @@ final class ProfileController
     private array $translations;
 
 
-    public function __construct(Twig $twig, FlashMessageService $flash, TeamService $teamService, UserService $userService, ControllerHelper $helper, array $options, array $translations)
+    public function __construct(Twig $twig, FlashMessageService $flash, AuthService $authService, TeamService $teamService, UserService $userService, ControllerHelper $helper, array $options, array $translations)
     {
         $this->twig = $twig;
         $this->flash = $flash;
+        $this->authService = $authService;
         $this->teamService = $teamService;
         $this->userService = $userService;
         $this->helper = $helper;
@@ -73,7 +77,15 @@ final class ProfileController
         }
 
         $data = (array) $request->getParsedBody();
+        $fingerprintBefore = SessionFingerprint::forUser($currentUser);
         $errors = $this->userService->updateUserProfile($currentUser, $data);
+
+        // Password changed: log out and ask to log in again (other sessions are already invalidated)
+        if ($errors === '' && SessionFingerprint::forUser($currentUser) !== $fingerprintBefore) {
+            $this->authService->logout();
+            $this->flash->add('change_password', $this->translations['form_message_password_changed']);
+            return $this->helper->redirect($request, $response, 'login');
+        }
 
         if ($errors === '') {
             $this->flash->add('success', $this->translations['form_success_update']);

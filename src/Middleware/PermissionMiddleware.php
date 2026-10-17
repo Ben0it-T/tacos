@@ -5,6 +5,7 @@ namespace App\Middleware;
 
 use App\Repository\TimesheetRepository;
 use App\Repository\UserRepository;
+use App\Security\SessionFingerprint;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -78,7 +79,8 @@ final class PermissionMiddleware implements MiddlewareInterface
             if ($session['auth']['isLoggedIn'] === true && $session['auth']['app'] === "tacos") {
                 $user = $this->userRepository->find($session['auth']['userId']);
                 if ($user) {
-                    $isLoggedIn = ($user->getLastLogin() == $session['auth']['loginAt'] ? true : false);
+                    $isLoggedIn = $user->getLastLogin() == $session['auth']['loginAt']
+                        && hash_equals(SessionFingerprint::forUser($user), (string) ($session['auth']['pwdFingerprint'] ?? ''));
                 }
             }
         }

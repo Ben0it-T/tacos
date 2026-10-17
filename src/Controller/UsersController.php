@@ -6,6 +6,8 @@ namespace App\Controller;
 use App\Entity\Role;
 use App\Entity\User;
 use App\Helper\ControllerHelper;
+use App\Security\SessionFingerprint;
+use App\Service\AuthService;
 use App\Service\CustomerService;
 use App\Service\FlashMessageService;
 use App\Service\ProjectService;
@@ -21,6 +23,7 @@ final class UsersController
 {
     private Twig $twig;
     private FlashMessageService $flash;
+    private AuthService $authService;
     private CustomerService $customerService;
     private ProjectService $projectService;
     private TeamService $teamService;
@@ -29,10 +32,11 @@ final class UsersController
     private array $options;
     private array $translations;
 
-    public function __construct(Twig $twig, FlashMessageService $flash, CustomerService $customerService, ProjectService $projectService, TeamService $teamService, UserService $userService, ControllerHelper $helper, array $options, array $translations)
+    public function __construct(Twig $twig, FlashMessageService $flash, AuthService $authService, CustomerService $customerService, ProjectService $projectService, TeamService $teamService, UserService $userService, ControllerHelper $helper, array $options, array $translations)
     {
         $this->twig = $twig;
         $this->flash = $flash;
+        $this->authService = $authService;
         $this->customerService = $customerService;
         $this->projectService = $projectService;
         $this->teamService = $teamService;
@@ -126,7 +130,19 @@ final class UsersController
 
         $data = (array) $request->getParsedBody();
 
+        $currentUser = $this->helper->getCurrentUser();
+        $isOwnAccount = $currentUser !== null && $currentUser->getId() === $user->getId();
+        $fingerprintBefore = SessionFingerprint::forUser($user);
+
         $errors = $this->userService->updateUser($user, $data);
+
+        // Own password changed: log out and ask to log in again
+        if ($errors === '' && $isOwnAccount && SessionFingerprint::forUser($user) !== $fingerprintBefore) {
+            $this->authService->logout();
+            $this->flash->add('change_password', $this->translations['form_message_password_changed']);
+            return $this->helper->redirect($request, $response, 'login');
+        }
+
         if ($errors === '') {
             $this->flash->add('success', $this->translations['form_success_update']);
             return $this->helper->redirect($request, $response, 'users');

@@ -110,6 +110,7 @@ return [
         return new ProfileController(
             $c->get(Twig::class),
             $c->get(FlashMessageService::class),
+            $c->get(AuthService::class),
             $c->get(TeamService::class),
             $c->get(UserService::class),
             $c->get(ControllerHelper::class),
@@ -237,6 +238,7 @@ return [
         return new UsersController(
             $c->get(Twig::class),
             $c->get(FlashMessageService::class),
+            $c->get(AuthService::class),
             $c->get(CustomerService::class),
             $c->get(ProjectService::class),
             $c->get(TeamService::class),

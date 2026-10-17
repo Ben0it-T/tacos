@@ -286,6 +286,9 @@ final class UserService
                     'name' => $user->getName(),
                 ]
             );
+
+            // Invalidate pending password reset links
+            $this->userRepository->unsetUserPasswordRequest($user);
         }
 
         return '';
@@ -380,6 +383,9 @@ final class UserService
                     'name' => $user->getName(),
                 ]
             );
+
+            // Invalidate pending password reset links
+            $this->userRepository->unsetUserPasswordRequest($user);
         }
 
         return '';

@@ -6,6 +6,7 @@ namespace App\Service;
 use App\Repository\LoginAttemptsRepository;
 use App\Repository\UserRepository;
 use App\Security\AuthResult;
+use App\Security\SessionFingerprint;
 use Psr\Log\LoggerInterface;
 
 use DateTimeImmutable;
@@ -68,10 +69,11 @@ final class AuthService
 
                 session_regenerate_id(true);
                 $_SESSION['auth'] = [
-                    'isLoggedIn'  => true,
-                    'app'         => 'tacos',
-                    'userId'      => $user->getId(),
-                    'loginAt'     => $lastLogin->format('Y-m-d H:i:s'),
+                    'isLoggedIn'     => true,
+                    'app'            => 'tacos',
+                    'userId'         => $user->getId(),
+                    'loginAt'        => $lastLogin->format('Y-m-d H:i:s'),
+                    'pwdFingerprint' => SessionFingerprint::forUser($user),
                 ];
 
                 $this->logger->info(
