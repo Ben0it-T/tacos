@@ -11,7 +11,7 @@ return function (App $app) {
 
     $app->get( '/too-many-attempts', \App\Controller\LoginController::class . ':tooManyAttempts')->setName('too_many_attempts');
 
-    $app->get('/logout', \App\Controller\LoginController::class . ':logoutAction')->setName('logout');
+    $app->post('/logout', \App\Controller\LoginController::class . ':logoutAction')->setName('logout');
 
     $app->get( '/forgot-password', \App\Controller\PasswordResetController::class . ':requestForm')->setName('forgot_password');
     $app->post('/forgot-password', \App\Controller\PasswordResetController::class . ':requestAction')->setName('forgot_password_attempt');

@@ -18,10 +18,12 @@
             </a>
         {% endif %}
 
-
-        <a class="navbar-brand d-flex" href="{{ navLinks.logout }}" title="{{ trans.btn_logout }}">
-            <i class="bi bi-power" style="font-size: 1.5rem;"></i>
-        </a>
+        <form method="post" action="{{ navLinks.logout }}" class="d-flex" data-single-submit>
+            {% include 'csrf-fields.html.twig' %}
+            <button type="submit" class="navbar-brand d-flex bg-transparent border-0 px-0" title="{{ trans.btn_logout }}" aria-label="{{ trans.btn_logout }}">
+                <i class="bi bi-power" style="font-size: 1.5rem;"></i>
+            </button>
+        </form>
 
         <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
             <div class="offcanvas-header">

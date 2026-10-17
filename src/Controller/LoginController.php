@@ -32,8 +32,10 @@ final class LoginController
 
     public function loginForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
+        // Open session (valid or stale): close it, then show the login form
         if ($this->authService->isAuthenticated()) {
-            return $this->helper->redirect($request, $response, 'logout');
+            $this->authService->logout();
+            return $this->helper->redirect($request, $response, 'login');
         }
 
         return $this->twig->render($response, 'login.html.twig', [

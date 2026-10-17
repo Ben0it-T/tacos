@@ -68,3 +68,13 @@ $( document ).ready(function() {
     });
 
 });
+
+// Single submit
+$(document).on("submit", "form[data-single-submit]", function () {
+    $(this).find("button[type=submit]").prop("disabled", true);
+});
+
+// Back/forward cache: re-enable the buttons when the page is restored
+$(window).on("pageshow", function () {
+    $("form[data-single-submit] button[type=submit]").prop("disabled", false);
+});
