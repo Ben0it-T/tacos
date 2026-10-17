@@ -247,7 +247,7 @@ final class TimesheetsController
         $errors = $this->timesheetService->createTimesheet($data);
 
         if ($errors === '') {
-            $this->flash->add('success', $this->translations['form_success_create_activity']);
+            $this->flash->add('success', $this->translations['form_success_create_timesheet']);
         }
         else {
             $this->flash->add('error', $errors);
@@ -356,7 +356,7 @@ final class TimesheetsController
         $errors = $this->timesheetService->restartTimesheet($timesheet);
 
         if ($errors === '') {
-            $this->flash->add('success', $this->translations['form_success_create_activity']);
+            $this->flash->add('success', $this->translations['form_success_restart_timesheet']);
         }
         else {
             $this->flash->add('error', $errors);

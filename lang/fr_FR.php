@@ -121,8 +121,10 @@ return array(
     'form_success_create_project' => "Projet créé.",
     'form_success_create_tag' => "Étiquette créée.",
     'form_success_create_team' => "Equipe créée.",
+    'form_success_create_timesheet' => "Feuille de temps créée.",
     'form_success_create_user' => "Utilisateur créé.",
     'form_success_delete_record' => "Enregistrement supprimé.",
+    'form_success_restart_timesheet' => "Feuille de temps relancée.",
     'form_success_update' => "Modifications enregistrées.",
 
     'email_footer' => "Ceci est un message généré automatiquement. Merci de ne pas répondre; l’adresse ne sera pas lue.",

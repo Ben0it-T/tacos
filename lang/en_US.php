@@ -120,9 +120,11 @@ return array(
     'form_success_create_customer' => "Customer created.",
     'form_success_create_project' => "Project created.",
     'form_success_create_tag' => "Tag created.",
+    'form_success_create_timesheet' => "Timesheet created.",
     'form_success_create_team' => "Team created.",
     'form_success_create_user' => "User created.",
     'form_success_delete_record' => "Record deleted.",
+    'form_success_restart_timesheet' => "Timesheet restarted.",
     'form_success_update' => "Saved changes.",
 
     'email_footer' => "This is an auto generated e-mail. Please do not reply, the address will not be read.",
