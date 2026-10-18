@@ -14,8 +14,15 @@ final class TagService
     private TagRepository $tagRepository;
     private ValidationHelper $validationHelper;
     private LoggerInterface $logger;
+    /** @var array<string, string|int> */
     private array $translations;
 
+    /**
+     * @param TagRepository $tagRepository
+     * @param ValidationHelper $validationHelper
+     * @param LoggerInterface $logger
+     * @param array<string, string|int> $translations
+     */
     public function __construct(TagRepository $tagRepository, ValidationHelper $validationHelper, LoggerInterface $logger, array $translations) {
         $this->tagRepository = $tagRepository;
         $this->validationHelper = $validationHelper;
@@ -27,7 +34,7 @@ final class TagService
      * Find Tag by id
      *
      * @param int $id
-     * @return Tag entity or false
+     * @return Tag|false Tag entity or false
      */
     public function findTag(int $id): Tag|false {
         return $this->tagRepository->find($id);
@@ -37,7 +44,7 @@ final class TagService
      * Find All Tag
      *
      * @param ?int $visible
-     * @return array of Tag entities
+     * @return array<int, Tag> Tag entities indexed by id
      */
     public function findAll(?int $visible = null): array {
         return $this->tagRepository->findAll($visible);
@@ -46,7 +53,7 @@ final class TagService
     /**
      * Find All Visible Tag
      *
-     * @return array of Tag
+     * @return array<int, Tag> Visible tag entities indexed by id
      */
     public function findAllVisible(): array {
         return $this->tagRepository->findAll(1);
@@ -58,7 +65,7 @@ final class TagService
      *
      * @param int  $timesheetId
      * @param ?int $visible
-     * @return array of Tag entities
+     * @return array<int, Tag> Tag entities indexed by id
      */
     public function findAllByTimesheetId(int $timesheetId, ?int $visible = null): array {
         return $this->tagRepository->findAllByTimesheetId($timesheetId, $visible);
@@ -67,7 +74,7 @@ final class TagService
     /**
      * Create new Tag
      *
-     * @param array $data
+     * @param array<string, mixed> $data Parsed form data
      * @return string $errorMsg
      */
     public function createTag(array $data): string {
@@ -118,7 +125,7 @@ final class TagService
      * Update Tag
      *
      * @param Tag $tag
-     * @param array $data
+     * @param array<string, mixed> $data Parsed form data
      * @return string $errorMsg
      */
     public function updateTag(Tag $tag, array $data): string {

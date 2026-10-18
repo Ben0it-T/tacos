@@ -13,8 +13,15 @@ final class TeamService
     private TeamRepository $teamRepository;
     private ValidationHelper $validationHelper;
     private LoggerInterface $logger;
+    /** @var array<string, string|int> */
     private array $translations;
 
+    /**
+     * @param TeamRepository $teamRepository
+     * @param ValidationHelper $validationHelper
+     * @param LoggerInterface $logger
+     * @param array<string, string|int> $translations
+     */
     public function __construct(TeamRepository $teamRepository, ValidationHelper $validationHelper, LoggerInterface $logger, array $translations) {
         $this->teamRepository = $teamRepository;
         $this->validationHelper = $validationHelper;
@@ -26,7 +33,7 @@ final class TeamService
      * Find Team
      *
      * @param int $id
-     * @return Team or false
+     * @return Team|false Team entity or false
      */
     public function findTeam(int $id): Team|false {
         return $this->teamRepository->find($id);
@@ -37,7 +44,7 @@ final class TeamService
      *
      * @param int $teamId
      * @param int $teamleaderId
-     * @return Team or false
+     * @return Team|false Team entity or false
      */
     public function findTeamByIdAndTeamleader(int $teamId, int $teamleaderId): Team|false {
         return $this->teamRepository->findOneByIdAndTeamleaderId($teamId, $teamleaderId);
@@ -46,7 +53,7 @@ final class TeamService
     /**
      * Find Teams
      *
-     * @return array of Teams
+     * @return array<int, Team> Team entities indexed by id
      */
     public function findAllTeams(): array {
         return $this->teamRepository->findAll();
@@ -56,7 +63,7 @@ final class TeamService
      * Find all Teams by activity
      *
      * @param int $activityId
-     * @return array of Teams
+     * @return array<int, Team> Team entities indexed by id
      */
     public function findAllTeamsByActivityId(int $activityId): array {
         return $this->teamRepository->findAllByActivityId($activityId);
@@ -66,7 +73,7 @@ final class TeamService
      * Find all Teams by customer
      *
      * @param int $customerId
-     * @return array of Teams
+     * @return array<int, Team> Team entities indexed by id
      */
     public function findAllTeamsByCustomerId(int $customerId): array {
         return $this->teamRepository->findAllByCustomerId($customerId);
@@ -76,7 +83,7 @@ final class TeamService
      * Find all Teams by project
      *
      * @param int $projectId
-     * @return array of Teams
+     * @return array<int, Team> Team entities indexed by id
      */
     public function findAllTeamsByProjectId(int $projectId): array {
         return $this->teamRepository->findAllByProjectId($projectId);
@@ -86,7 +93,7 @@ final class TeamService
      * Find all Teams by user
      *
      * @param int $userId
-     * @return array of Teams
+     * @return array<int, Team> Team entities indexed by id
      */
     public function findAllTeamsByUserId(int $userId): array {
         return $this->teamRepository->findAllByUserId($userId);
@@ -96,7 +103,7 @@ final class TeamService
      * Find Teamleader's Teams
      *
      * @param int $teamleaderId
-     * @return array of Teams
+     * @return array<int, Team> Team entities indexed by id
      */
     public function findAllTeamsByTeamleaderId(int $teamleaderId): array {
         return $this->teamRepository->findAllByTeamleaderId($teamleaderId);
@@ -108,7 +115,7 @@ final class TeamService
      * Find all Teams with teamlead by user id
      *
      * @param int $userId
-     * @return array of Team entities
+     * @return array<int, array<string, mixed>> Team rows of the user (id, name, color, teamlead)
      */
     public function findAllTeamsWithTeamleadByUserId(int $userId): array {
         return $this->teamRepository->findAllTeamsWithTeamleadByUserId($userId);
@@ -117,7 +124,7 @@ final class TeamService
     /**
      * Find all Teams with Users count and Teamleaders
      *
-     * @return array of Teams with Users count and Teamleaders
+     * @return array<int, array<string, mixed>> Team rows (id, name, color, members, teamleaders)
      */
     public function findAllTeamsWithUserCountAndTeamleads(): array {
         return $this->teamRepository->findAllTeamsWithUserCountAndTeamleads();
@@ -126,7 +133,7 @@ final class TeamService
     /**
      * Find all Teams with Users count and Teamleaders by Teamleader id
      *
-     * @return array of Teams with Users count and Teamleaders
+     * @return array<int, array<string, mixed>> Team rows (id, name, color, members, teamleaders)
      */
     public function findAllTeamsWithUserCountAndTeamleadsByTeamleaderId(int $teamleaderId): array {
         return $this->teamRepository->findAllTeamsWithUserCountAndTeamleadsByTeamleaderId($teamleaderId);
@@ -137,7 +144,7 @@ final class TeamService
     /**
      * Create new Team
      *
-     * @param array $data
+     * @param array<string, mixed> $data Parsed form data
      * @return string $errorMsg
      */
     public function createTeam(array $data): string {
@@ -207,7 +214,7 @@ final class TeamService
      * Update Team
      *
      * @param Team $team
-     * @param array $data
+     * @param array<string, mixed> $data Parsed form data
      * @return string $errorMsg
      */
     public function updateTeam(Team $team, array $data): string {

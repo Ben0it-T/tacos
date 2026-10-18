@@ -16,8 +16,15 @@ final class ActivityService
     private ActivityRepository $activityRepository;
     private ValidationHelper $validationHelper;
     private LoggerInterface $logger;
+    /** @var array<string, string|int> */
     private array $translations;
 
+    /**
+     * @param ActivityRepository $activityRepository
+     * @param ValidationHelper $validationHelper
+     * @param LoggerInterface $logger
+     * @param array<string, string|int> $translations
+     */
     public function __construct(ActivityRepository $activityRepository, ValidationHelper $validationHelper, LoggerInterface $logger, array $translations) {
         $this->activityRepository = $activityRepository;
         $this->validationHelper = $validationHelper;
@@ -76,7 +83,7 @@ final class ActivityService
      * Find All Activities
      *
      * @param ?int $visible
-     * @return array of Activity entities
+     * @return array<int, Activity> Activity entities indexed by id
      */
     public function findAll(?int $visible = null): array {
         return $this->activityRepository->findAll($visible);
@@ -89,7 +96,7 @@ final class ActivityService
      *
      * @param int  $projectId
      * @param ?int $visible
-     * @return array of Activity entities
+     * @return array<int, Activity> Activity entities indexed by id
      */
     public function findAllByProjectId(int $projectId, ?int $visible = null): array {
         return $this->activityRepository->findAllByProjectId($projectId, $visible);
@@ -100,7 +107,7 @@ final class ActivityService
      *
      * @param int  $projectId
      * @param ?int $visible
-     * @return array of Activity entities
+     * @return array<int, Activity> Activity entities indexed by id
      */
     public function findAllProjectActivitiesByProjectId(int $projectId, ?int $visible = null): array {
         return $this->activityRepository->findAllProjectActivitiesByProjectId($projectId, $visible);
@@ -110,7 +117,7 @@ final class ActivityService
      * Find All 'Global Activities'
      *
      * @param ?int $visible
-     * @return array of Activity entities
+     * @return array<int, Activity> Activity entities indexed by id
      */
     public function findAllGlobalActivities(?int $visible = null): array {
         return $this->activityRepository->findAllGlobalActivities($visible);
@@ -121,7 +128,7 @@ final class ActivityService
      *
      * @param int  $userId
      * @param ?int $visible
-     * @return array of Activity entities
+     * @return array<int, Activity> Activity entities indexed by id
      */
     public function findAllByUserId(int $userId, ?int $visible = null): array {
         return $this->activityRepository->findAllByUserId($userId, $visible);
@@ -132,7 +139,7 @@ final class ActivityService
      *
      * @param int  $teamleaderId
      * @param ?int $visible
-     * @return array of Activity entities
+     * @return array<int, Activity> Activity entities indexed by id
      */
     public function findAllByTeamleaderId(int $teamleaderId, ?int $visible = null): array {
         return $this->activityRepository->findAllByTeamleaderId($teamleaderId, $visible);
@@ -144,7 +151,7 @@ final class ActivityService
      * @param int  $userId
      * @param int  $projectId
      * @param ?int $visible
-     * @return array of Activity entities
+     * @return array<int, Activity> Activity entities indexed by id
      */
     public function findAllByUserIdAndProjectId(int $userId, int $projectId, ?int $visible = null): array {
         return $this->activityRepository->findAllByUserIdAndProjectId($userId, $projectId, $visible);
@@ -155,7 +162,7 @@ final class ActivityService
     /**
      * Find All Activities with Teams count and Project
      *
-     * @return array of Activities with Teams count and Project
+     * @return array<int, array<string, mixed>> Activity rows (id, name, color, number, comment, visible, projectName, projectColor, teamsCount)
      */
     public function findAllActivitiesWithTeamsCountAndProject(): array {
         return $this->activityRepository->findAllActivitiesWithTeamsCountAndProject();
@@ -165,7 +172,7 @@ final class ActivityService
      * Find All Activities with Teams count and Project by Teamleader id
      *
      * @param int $teamleaderId
-     * @return array of Activities with Teams count and Project
+     * @return array<int, array<string, mixed>> Activity rows (id, name, color, number, comment, visible, projectName, projectColor, teamsCount)
      */
     public function findAllActivitiesWithTeamsCountAndProjectByTeamleaderId(int $teamleaderId): array {
         return $this->activityRepository->findAllActivitiesWithTeamsCountAndProjectByTeamleaderId($teamleaderId);
@@ -176,7 +183,7 @@ final class ActivityService
     /**
      * Create new Activity
      *
-     * @param array $data
+     * @param array<string, mixed> $data Parsed form data
      * @param array<int, int> $allowedProjectIds Project ids the user is allowed to use
      * @param array<int, int> $allowedTeamIds Team ids the user is allowed to use
      * @return string $errorMsg
@@ -270,7 +277,7 @@ final class ActivityService
      * Update Activity
      *
      * @param Activity $activity
-     * @param array $data
+     * @param array<string, mixed> $data Parsed form data
      * @param array<int, int> $allowedTeamIds Team ids the user is allowed to use
      * @return string $errorMsg
      */

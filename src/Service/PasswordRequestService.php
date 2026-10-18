@@ -14,9 +14,18 @@ final class PasswordRequestService
     private UserRepository $userRepository;
     private PHPMailer $mailer;
     private LoggerInterface $logger;
+    /** @var array<string, int|string> */
     private array $options;
+    /** @var array<string, string|int> */
     private array $translations;
 
+    /**
+     * @param UserRepository $userRepository
+     * @param PHPMailer $mailer
+     * @param LoggerInterface $logger
+     * @param array<string, int|string> $options pwdRequestRetryLifetime, pwdRequestTokenLifetime (seconds), pwdRequestSalt, pwdMinLength
+     * @param array<string, string|int> $translations
+     */
     public function __construct(UserRepository $userRepository, PHPMailer $mailer, LoggerInterface $logger, array $options, array $translations) {
         $this->userRepository = $userRepository;
         $this->mailer = $mailer;

@@ -17,8 +17,15 @@ final class AuthService
     private LoginAttemptsRepository $loginAttemptsRepository;
     private UserRepository $userRepository;
     private LoggerInterface $logger;
+    /** @var array{maxAttempts: int, blockDelay: int} */
     private array $options;
 
+    /**
+     * @param LoginAttemptsRepository $loginAttemptsRepository
+     * @param UserRepository $userRepository
+     * @param LoggerInterface $logger
+     * @param array<string, mixed> $options Login attempts settings (maxAttempts, blockDelay in seconds)
+     */
     public function __construct(LoginAttemptsRepository $loginAttemptsRepository, UserRepository $userRepository, LoggerInterface $logger, array $options) {
         $this->loginAttemptsRepository = $loginAttemptsRepository;
         $this->userRepository = $userRepository;

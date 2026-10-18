@@ -14,8 +14,15 @@ final class CustomerService
     private CustomerRepository $customerRepository;
     private ValidationHelper $validationHelper;
     private LoggerInterface $logger;
+    /** @var array<string, string|int> */
     private array $translations;
 
+    /**
+     * @param CustomerRepository $customerRepository
+     * @param ValidationHelper $validationHelper
+     * @param LoggerInterface $logger
+     * @param array<string, string|int> $translations
+     */
     public function __construct(CustomerRepository $customerRepository, ValidationHelper $validationHelper, LoggerInterface $logger, array $translations) {
         $this->customerRepository = $customerRepository;
         $this->validationHelper = $validationHelper;
@@ -27,7 +34,7 @@ final class CustomerService
      * Find Customer by id
      *
      * @param int $id
-     * @return Customer or false
+     * @return Customer|false Customer entity or false
      */
     public function findCustomer(int $id): Customer|false {
         return $this->customerRepository->find($id);
@@ -38,7 +45,7 @@ final class CustomerService
      *
      * @param int $customerId
      * @param int $userId
-     * @return Customer or false
+     * @return Customer|false Customer entity or false
      */
     public function findOneByIdAndUserId(int $customerId, int $userId): Customer|false {
         return $this->customerRepository->findOneByIdAndUserId($customerId, $userId);
@@ -50,7 +57,7 @@ final class CustomerService
      *
      * @param int $customerId
      * @param int $teamleaderId
-     * @return Customer or false
+     * @return Customer|false Customer entity or false
      */
     public function findOneByIdAndTeamleaderId(int $customerId, int $teamleaderId): Customer|false {
         return $this->customerRepository->findOneByIdAndTeamleaderId($customerId, $teamleaderId);
@@ -62,7 +69,7 @@ final class CustomerService
      *
      * @param int $customerId
      * @param int $teamleaderId
-     * @return Customer or false
+     * @return Customer|false Customer entity or false
      */
     public function findOneByIdAndTeamleaderIdStrict(int $customerId, int $teamleaderId): Customer|false {
         return $this->customerRepository->findOneByIdAndTeamleaderIdStrict($customerId, $teamleaderId);
@@ -74,7 +81,7 @@ final class CustomerService
      * Find All Customers
      *
      * @param ?int $visible
-     * @return array of Customer entities
+     * @return array<int, Customer> Customer entities indexed by id
      */
     public function findAll(?int $visible = null): array {
         return $this->customerRepository->findAll($visible);
@@ -85,7 +92,7 @@ final class CustomerService
      *
      * @param int $userId
      * @param ?int $visible
-     * @return array of Customer entities
+     * @return array<int, Customer> Customer entities indexed by id
      */
     public function findAllByUserId(int $userId, ?int $visible = null): array {
         return $this->customerRepository->findAllByUserId($userId, $visible);
@@ -96,7 +103,7 @@ final class CustomerService
      *
      * @param int $teamleaderId
      * @param ?int $visible
-     * @return array of Customer entities
+     * @return array<int, Customer> Customer entities indexed by id
      */
     public function findAllByTeamleaderId(int $teamleaderId, ?int $visible = null): array {
         return $this->customerRepository->findAllByTeamleaderId($teamleaderId, $visible);
@@ -107,7 +114,7 @@ final class CustomerService
      *
      * @param int $teamId
      * @param ?int $visible
-     * @return array of Customer entities
+     * @return array<int, Customer> Customer entities indexed by id
      */
     public function findAllByTeamId(int $teamId, ?int $visible = null): array {
         return $this->customerRepository->findAllByTeamId($teamId, $visible);
@@ -118,7 +125,7 @@ final class CustomerService
     /**
      * Find Customers with Teams count and Projects count
      *
-     * @return array of Customers with Teams count and Projects count
+     * @return array<int, array<string, mixed>> Customer rows (id, name, color, number, visible, teamsCount, projectsCount)
      */
     public function findAllCustomersWithTeamsCountAndProjectsCount(): array {
         return $this->customerRepository->findAllCustomersWithTeamsCountAndProjectsCount();
@@ -128,7 +135,7 @@ final class CustomerService
      * Find Customers with Teams count and Projects count by User id
      *
      * @param int $userId
-     * @return array of Customers with Teams count and Projects count
+     * @return array<int, array<string, mixed>> Customer rows (id, name, color, number, visible, teamsCount, projectsCount)
      */
     public function findAllCustomersWithTeamsCountAndProjectsCountByUserId(int $userId): array {
         return $this->customerRepository->findAllCustomersWithTeamsCountAndProjectsCountByUserId($userId);
@@ -138,7 +145,7 @@ final class CustomerService
      * Find Customers with Teams count and Projects count by Teamleader id
      *
      * @param int $teamleaderId
-     * @return array of Customers with Teams count and Projects count
+     * @return array<int, array<string, mixed>> Customer rows (id, name, color, number, visible, teamsCount, projectsCount)
      */
     public function findAllCustomersWithTeamsCountAndProjectsCountByTeamleaderId(int $teamleaderId): array {
         return $this->customerRepository->findAllCustomersWithTeamsCountAndProjectsCountByTeamleaderId($teamleaderId);
@@ -149,7 +156,7 @@ final class CustomerService
     /**
      * Create new Customer
      *
-     * @param array $data
+     * @param array<string, mixed> $data Parsed form data
      * @return string $errorMsg
      */
     public function createCustomer(array $data): string {
@@ -225,7 +232,7 @@ final class CustomerService
      * Update Customer
      *
      * @param Customer $customer
-     * @param array $data
+     * @param array<string, mixed> $data Parsed form data
      * @return string $errorMsg
      */
     public function updateCustomer(Customer $customer, array $data): string {

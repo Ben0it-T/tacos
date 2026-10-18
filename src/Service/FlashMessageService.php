@@ -79,11 +79,21 @@ final class FlashMessageService
         return $value;
     }
 
+    /**
+     * Get all Flash messages, grouped by key (messages are not removed)
+     *
+     * @return array<string, array<int, mixed>>
+     */
     public function all(): array
     {
         return $this->session->get(self::KEY, []);
     }
 
+    /**
+     * Remove all Flash messages
+     *
+     * @return void
+     */
     public function clear(): void
     {
         $this->session->remove(self::KEY);

@@ -16,8 +16,16 @@ final class ProjectService
     private ProjectRepository $projectRepository;
     private ValidationHelper $validationHelper;
     private LoggerInterface $logger;
+    /** @var array<string, string|int> */
     private array $translations;
 
+    /**
+     * @param ActivityRepository $activityRepository
+     * @param ProjectRepository $projectRepository
+     * @param ValidationHelper $validationHelper
+     * @param LoggerInterface $logger
+     * @param array<string, string|int> $translations
+     */
     public function __construct(ActivityRepository $activityRepository, ProjectRepository $projectRepository, ValidationHelper $validationHelper, LoggerInterface $logger, array $translations) {
         $this->activityRepository = $activityRepository;
         $this->projectRepository = $projectRepository;
@@ -66,7 +74,7 @@ final class ProjectService
      * Find All Projects
      *
      * @param ?int $visible
-     * @return array of Project entities
+     * @return array<int, Project> Project entities indexed by id
      */
     public function findAll(?int $visible = null): array {
         return $this->projectRepository->findAll($visible);
@@ -77,7 +85,7 @@ final class ProjectService
      *
      * @param int  $customerId
      * @param ?int $visible
-     * @return array of Project entities
+     * @return array<int, Project> Project entities indexed by id
      */
     public function findAllByCustomerId(int $customerId, ?int $visible = null): array {
         return $this->projectRepository->findAllByCustomerId($customerId, $visible);
@@ -88,7 +96,7 @@ final class ProjectService
      *
      * @param int  $userId
      * @param ?int $visible
-     * @return array of Project entities
+     * @return array<int, Project> Project entities indexed by id
      */
     public function findAllByUserId(int $userId, ?int $visible = null): array {
         return $this->projectRepository->findAllByUserId($userId, $visible);
@@ -100,7 +108,7 @@ final class ProjectService
      * @param int  $userId
      * @param int  $customerId
      * @param ?int $visible
-     * @return array of Project entities
+     * @return array<int, Project> Project entities indexed by id
      */
     public function findAllByUserIdAndCustomerId(int $userId, int $customerId, ?int $visible = null): array {
         return $this->projectRepository->findAllByUserIdAndCustomerId($userId, $customerId, $visible);
@@ -111,7 +119,7 @@ final class ProjectService
      *
      * @param int  $teamleaderId
      * @param ?int $visible
-     * @return array of Project entities
+     * @return array<int, Project> Project entities indexed by id
      */
     public function findAllByTeamleaderId(int $teamleaderId, ?int $visible = null): array {
         return $this->projectRepository->findAllByTeamleaderId($teamleaderId, $visible);
@@ -122,7 +130,7 @@ final class ProjectService
     /**
      * Find All Projects with Teams count and Customer
      *
-     * @return array of Projects with Teams count and Customer
+     * @return array<int, array<string, mixed>> Project rows (id, name, color, number, comment, visible, customerName, customerColor, teamsCount)
      */
     public function findAllProjectsWithTeamsCountAndCustomer(): array {
         return $this->projectRepository->findAllProjectsWithTeamsCountAndCustomer();
@@ -132,7 +140,7 @@ final class ProjectService
      * Find Projects with Teams count and Customer by Teamleader id
      *
      * @param int $teamleaderId
-     * @return array of Projects with Teams count and Customer
+     * @return array<int, array<string, mixed>> Project rows (id, name, color, number, comment, visible, customerName, customerColor, teamsCount)
      */
     public function findAllProjectsWithTeamsCountAndCustomerByTeamleaderId(int $teamleaderId): array {
         return $this->projectRepository->findAllProjectsWithTeamsCountAndCustomerByTeamleaderId($teamleaderId);
@@ -142,7 +150,7 @@ final class ProjectService
      * Find All Projects with Customer by User id
      *
      * @param int $userId
-     * @return array of Projects with Customer
+     * @return array<int, array<string, mixed>> Project rows (id, name, color, number, comment, visible, customerName, customerColor)
      */
     public function findAllProjectsWithCustomerByUserId(int $userId): array {
         return $this->projectRepository->findAllProjectsWithCustomerByUserId($userId);
@@ -152,7 +160,7 @@ final class ProjectService
      * Find All Projects with Customer by Team id
      *
      * @param int $teamId
-     * @return array of Projects with Customer
+     * @return array<int, array<string, mixed>> Project rows (id, name, color, number, comment, visible, customerName, customerColor)
      */
     public function findAllProjectsWithCustomerByTeamId(int $teamId): array {
         return $this->projectRepository->findAllProjectsWithCustomerByTeamId($teamId);
@@ -163,7 +171,7 @@ final class ProjectService
     /**
      * Create new Project
      *
-     * @param array $data
+     * @param array<string, mixed> $data Parsed form data
      * @param array<int, int> $allowedCustomerIds Customer ids the user is allowed to use
      * @param array<int, int> $allowedTeamIds Team ids the user is allowed to use
      * @return string $errorMsg
@@ -275,7 +283,7 @@ final class ProjectService
      * Update Project
      *
      * @param Project $project
-     * @param array $data
+     * @param array<string, mixed> $data Parsed form data
      * @param array<int, int> $allowedCustomerIds Customer ids the user is allowed to use
      * @param array<int, int> $allowedTeamIds Team ids the user is allowed to use
      * @return string $errorMsg

@@ -19,9 +19,20 @@ final class UserService
     private AuthService $authService;
     private ValidationHelper $validationHelper;
     private LoggerInterface $logger;
+    /** @var array<string, int> */
     private array $options;
+    /** @var array<string, string|int> */
     private array $translations;
 
+    /**
+     * @param RoleRepository $roleRepository
+     * @param UserRepository $userRepository
+     * @param AuthService $authService
+     * @param ValidationHelper $validationHelper
+     * @param LoggerInterface $logger
+     * @param array<string, int> $options loginMinLength, pwdMinLength
+     * @param array<string, string|int> $translations
+     */
     public function __construct(RoleRepository $roleRepository, UserRepository $userRepository, AuthService $authService, ValidationHelper $validationHelper, LoggerInterface $logger, array $options, array $translations) {
         $this->roleRepository = $roleRepository;
         $this->userRepository = $userRepository;
@@ -36,7 +47,7 @@ final class UserService
      * Find User by id
      *
      * @param int $id
-     * @return User or false
+     * @return User|false User entity or false
      */
     public function findUser(int $id): User|false {
         return $this->userRepository->find($id);
@@ -46,7 +57,7 @@ final class UserService
      * Find User by username
      *
      * @param string $username
-     * @return User or false
+     * @return User|false User entity or false
      */
     public function findUserByUsername(string $username): User|false {
         return $this->userRepository->findOneByUsername($username);
@@ -56,7 +67,7 @@ final class UserService
      * Find all Users
      *
      * @param ?int $enabled
-     * @return array of User entities
+     * @return array<int, User> User entities indexed by id
      */
     public function findAllUsers(?int $enabled = null): array {
         return $this->userRepository->findAll($enabled);
@@ -65,9 +76,9 @@ final class UserService
     /**
      * Find all Users in Teams
      *
-     * @param array $teamsIds
+     * @param array<int, int> $teamsIds Team ids
      * @param ?int $enabled
-     * @return array of User entities
+     * @return array<int, User> User entities indexed by id
      */
     public function findAllUsersInTeams(array $teamsIds, ?int $enabled = null): array {
         return $this->userRepository->findAllUsersInTeams($teamsIds, $enabled);
@@ -78,9 +89,9 @@ final class UserService
     /**
      * Find all Users by Team Id
      *
-     * @param $teamId
-     * @param $enabled
-     * @return array of Users
+     * @param int $teamId
+     * @param ?int $enabled
+     * @return array<int, array<string, mixed>> Member rows (id, name, enabled, teamlead)
      */
     public function findAllUsersByTeamId(int $teamId, ?int $enabled = null): array {
         return $this->userRepository->findAllUsersByTeamId($teamId, $enabled);
@@ -89,9 +100,9 @@ final class UserService
     /**
      * Find all Teamleaders by Team Id
      *
-     * @param $teamId
-     * @param $enabled
-     * @return array of Teamleaders
+     * @param int $teamId
+     * @param ?int $enabled
+     * @return array<int, array<string, mixed>> Teamleader rows (id, name, enabled)
      */
     public function findAllTeamleadersByTeamId(int $teamId, ?int $enabled = null): array {
         return $this->userRepository->findAllTeamleadersByTeamId($teamId, $enabled);
@@ -100,7 +111,7 @@ final class UserService
     /**
      * Find all Users with Teams count
      *
-     * @return array of Users with Role and Teams count
+     * @return array<int, array<string, mixed>> User rows (id, username, name, enable, lastLogin, role, teams)
      */
     public function findAllUsersWithTeamCount(): array {
         return $this->userRepository->findAllUsersWithTeamCount();
@@ -110,7 +121,7 @@ final class UserService
      * Find Role
      *
      * @param int $id
-     * @return Role or false
+     * @return Role|false Role entity or false
      */
     public function findRole(int $id): Role|false {
         return $this->roleRepository->find($id);
@@ -119,7 +130,7 @@ final class UserService
     /**
      * Find Roles
      *
-     * @return array of all Roles
+     * @return array<int, Role> Role entities indexed by id
      */
     public function findAllRoles(): array {
         return $this->roleRepository->findAll();
@@ -146,7 +157,7 @@ final class UserService
     /**
      * Create new User
      *
-     * @param array $data
+     * @param array<string, mixed> $data Parsed form data
      * @return string $errorMsg
      */
     public function createUser(array $data): string {
@@ -215,6 +226,7 @@ final class UserService
      * Update user profile
      *
      * @param User $user
+     * @param array<string, mixed> $data Parsed form data
      * @return string $errorMsg
      */
     public function updateUserProfile(User $user, array $data): string {
@@ -317,7 +329,7 @@ final class UserService
      * Update user
      *
      * @param User $user
-     * @param array $data
+     * @param array<string, mixed> $data Parsed form data
      * @return string $errorMsg
      */
     public function updateUser(User $user, array $data): string {

@@ -22,9 +22,22 @@ final class TimesheetService
     private RoundingHelper $roundingHelper;
     private ValidationHelper $validationHelper;
     private LoggerInterface $logger;
+    /** @var array<string, mixed> */
     private array $options;
+    /** @var array<string, string|int> */
     private array $translations;
 
+    /**
+     * @param ActivityRepository $activityRepository
+     * @param ProjectRepository $projectRepository
+     * @param TagRepository $tagRepository
+     * @param TimesheetRepository $timesheetRepository
+     * @param RoundingHelper $roundingHelper
+     * @param ValidationHelper $validationHelper
+     * @param LoggerInterface $logger
+     * @param array<string, mixed> $options
+     * @param array<string, string|int> $translations
+     */
     public function __construct(ActivityRepository $activityRepository, ProjectRepository $projectRepository, TagRepository $tagRepository, TimesheetRepository $timesheetRepository, RoundingHelper $roundingHelper, ValidationHelper $validationHelper, LoggerInterface $logger, array $options, array $translations) {
         $this->activityRepository = $activityRepository;
         $this->projectRepository = $projectRepository;
@@ -40,9 +53,9 @@ final class TimesheetService
     /**
      * Get QueryParams (criteria)
      *
-     * @param array $queryParams
-     * @param array $savedParams
-     * @return array of params
+     * @param array<string, mixed> $queryParams Request query params (date, users, projects, activities, tags)
+     * @param array<string, mixed> $savedParams Filters saved in session
+     * @return array<string, mixed> Criteria: start, end (Y-m-d) and users, projects, activities, tags (ids)
      */
     public function getQueryParams(array $queryParams, array $savedParams): array {
 
@@ -143,7 +156,7 @@ final class TimesheetService
      * Find Timesheet by id
      *
      * @param int $id
-     * @return Timesheet entity or false
+     * @return Timesheet|false Timesheet entity or false
      */
     public function findTimesheet(int $id): Timesheet|false {
         return $this->timesheetRepository->find($id);
@@ -154,7 +167,7 @@ final class TimesheetService
      *
      * @param int $id
      * @param int $userId
-     * @return Timesheet or false
+     * @return Timesheet|false Timesheet entity or false
      */
     public function findTimesheetByIdAndUserId(int $id, int $userId): Timesheet|false {
         return $this->timesheetRepository->findOneByIdAndUserId($id, $userId);
@@ -164,7 +177,7 @@ final class TimesheetService
      * Find the last active Timesheet by user ID
      *
      * @param int $userId
-     * @return Timesheet or false
+     * @return Timesheet|false Timesheet entity or false
      */
     public function findOneActiveRecordByUserId(int $userId): Timesheet|false {
         return $this->timesheetRepository->findOneActiveRecordByUserId($userId);
@@ -174,7 +187,7 @@ final class TimesheetService
      * Find all active Timesheets by user Id
      *
      * @param int $userId
-     * @return array of Timesheets
+     * @return array<int, Timesheet> Running timesheet entities indexed by id
      */
     public function findAllActiveRecordsByUserId(int $userId): array {
         return $this->timesheetRepository->findAllActiveRecordsByUserId($userId);
@@ -183,8 +196,8 @@ final class TimesheetService
     /**
      * Find Timesheets (with User, Projet, Activity and Tags) by criteria (dates, users, projects, activities, tags)
      *
-     * @param array $criteria
-     * @return array of Timesheet with User, Projet, Activity and Tags
+     * @param array<string, mixed> $criteria Criteria (see getQueryParams())
+     * @return array<int, array<string, mixed>> Timesheet rows (see TimesheetRepository::findTimesheetsWithUserAndProjectAndActivityAndTagsByCriteria())
      */
     public function findTimesheetsByCriteria(array $criteria): array {
         if (!isset($criteria['users']) || empty($criteria['users'])) {
@@ -234,8 +247,8 @@ final class TimesheetService
     /**
      * Get buildProjectTimesheetsSummary
      *
-     * @param array $criteria
-     * @return array{0: array, 1: int}
+     * @param array<string, mixed> $criteria Criteria (see getQueryParams()); exactly one project is expected
+     * @return array{0: array<int, array<string, mixed>>, 1: int} [timesheet rows with formatted duration and tags, total duration in minutes]
      */
     public function buildProjectTimesheetsSummary(array $criteria): array {
         if (!isset($criteria['users']) || empty($criteria['users'])) {
@@ -285,9 +298,9 @@ final class TimesheetService
      * @param int $userId
      * @param string $date1 Y-m-d
      * @param string $date2 Y-m-d
-     * @param int $report
-     * @param int $format
-     * @return array
+     * @param int $report Grouping (see TimesheetRepository::getReportData())
+     * @param int $format 1 time, 2 minutes, 3 percent, 4 number
+     * @return array<string, mixed> [pivot => [tHead, tBody, tFoot], chart => ...], or [] when there is no data
      */
     public function getReportData(int $userId, string $date1, string $date2, int $report, int $format = 1): array {
         $res = $this->timesheetRepository->getReportData($userId, $date1, $date2, $report);
@@ -489,7 +502,7 @@ final class TimesheetService
     /**
      * Create new Timesheet
      *
-     * @param array $data
+     * @param array<string, mixed> $data Parsed form data
      * @return string $errorMsg
      */
     public function createTimesheet(array $data): string {
@@ -684,7 +697,7 @@ final class TimesheetService
      * Update Timesheet
      *
      * @param Timesheet $timesheet
-     * @param array $data
+     * @param array<string, mixed> $data Parsed form data
      * @return string $errorMsg
      */
     public function updateTimesheet(Timesheet $timesheet, array $data): string {
