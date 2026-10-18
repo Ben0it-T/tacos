@@ -74,7 +74,7 @@ final class ValidationHelper
      * @param bool $empty
      * @return bool
      */
-    public function validateColor(string $string, $empty = false): bool {
+    public function validateColor(string $string, bool $empty = false): bool {
         if (empty($string)) {
             return ($empty ? true : false);
         }
@@ -124,7 +124,7 @@ final class ValidationHelper
      * @param bool $empty
      * @return bool
      */
-    public function validateEmail(string $string, $empty = false): bool {
+    public function validateEmail(string $string, bool $empty = false): bool {
         if (empty($string)) {
             return ($empty ? true : false);
         }
@@ -147,9 +147,10 @@ final class ValidationHelper
      *
      * @param string $string
      * @param int $maxLength
+     * @param bool $empty
      * @return bool
      */
-    public function validateMaxLength(string $string, int $maxLength, $empty = false): bool {
+    public function validateMaxLength(string $string, int $maxLength, bool $empty = false): bool {
         if (empty($string)) {
             return ($empty ? true : false);
         }
@@ -162,9 +163,10 @@ final class ValidationHelper
      *
      * @param string $string
      * @param int $minLength
+     * @param bool $empty
      * @return bool
      */
-    public function validateMinLength(string $string, int $minLength, $empty = false): bool {
+    public function validateMinLength(string $string, int $minLength, bool $empty = false): bool {
         if (empty($string)) {
             return ($empty ? true : false);
         }
@@ -176,9 +178,10 @@ final class ValidationHelper
      * Validate name
      *
      * @param string $string
+     * @param bool $empty
      * @return bool
      */
-    public function validateName(string $string, $empty = false): bool {
+    public function validateName(string $string, bool $empty = false): bool {
         if (empty($string)) {
             return ($empty ? true : false);
         }
@@ -198,9 +201,10 @@ final class ValidationHelper
      * Validate number
      *
      * @param string $string
+     * @param bool $empty
      * @return bool
      */
-    public function validateNumber(string $string, $empty = false): bool {
+    public function validateNumber(string $string, bool $empty = false): bool {
         if (empty($string)) {
             return ($empty ? true : false);
         }
@@ -223,7 +227,7 @@ final class ValidationHelper
      * @param bool $empty
      * @return bool
      */
-    public function validateUsername(string $string, int $minLength = 6, $empty = false): bool {
+    public function validateUsername(string $string, int $minLength = 6, bool $empty = false): bool {
         if (empty($string)) {
             return ($empty ? true : false);
         }
