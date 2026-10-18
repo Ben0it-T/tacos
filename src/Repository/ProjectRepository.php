@@ -203,7 +203,7 @@ final class ProjectRepository
      *  - customer with team    + project with team    => visible if user is member of at least one customer team AND at least one project team
      *
      * @param int  $userId
-     * @param ?int $visible
+     * @param ?int $visible 1: visible projects of visible customers, 0: hidden projects, null: all
      * @return array<int, Project> Project entities indexed by id
      */
     public function findAllByUserId(int $userId, ?int $visible = null): array {
@@ -222,6 +222,10 @@ final class ProjectRepository
 
         if (!is_null($visible)) {
             $sql .= 'AND p.`visible` = :visible ';
+        }
+        // Visible projects also require a visible customer
+        if ($visible === 1) {
+            $sql .= 'AND c.`visible` = 1 ';
         }
         $sql .= 'ORDER BY p.`name` ASC';
 
@@ -257,7 +261,7 @@ final class ProjectRepository
      *
      * @param int  $userId
      * @param int  $customerId
-     * @param ?int $visible
+     * @param ?int $visible 1: visible projects of visible customers, 0: hidden projects, null: all
      * @return array<int, Project> Project entities indexed by id
      */
     public function findAllByUserIdAndCustomerId(int $userId, int $customerId, ?int $visible = null): array {
@@ -277,6 +281,10 @@ final class ProjectRepository
 
         if (!is_null($visible)) {
             $sql .= 'AND p.`visible` = :visible ';
+        }
+        // Visible projects also require a visible customer
+        if ($visible === 1) {
+            $sql .= 'AND c.`visible` = 1 ';
         }
         $sql .= 'ORDER BY p.`name` ASC';
 
