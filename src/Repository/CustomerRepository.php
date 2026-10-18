@@ -472,7 +472,7 @@ final class CustomerRepository
      * Insert Teams
      *
      * @param int $customerId
-     * @param array<int, int|string> $data Team ids (cast to int)
+     * @param array<int, int> $data Team ids
      * @return bool
      */
     public function insertTeams(int $customerId, array $data): bool {
@@ -553,7 +553,7 @@ final class CustomerRepository
      * Update Teams
      *
      * @param int $customerId
-     * @param array<int, int|string> $data Team ids (cast to int)
+     * @param array<int, int> $data Team ids
      * @return bool
      */
     public function updateTeams(int $customerId, array $data): bool {

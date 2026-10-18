@@ -157,15 +157,17 @@ final class CustomerService
      * Create new Customer
      *
      * @param array<string, mixed> $data Parsed form data
+     * @param array<int, int> $allowedTeamIds Team ids the user is allowed to use
      * @return string $errorMsg
      */
-    public function createCustomer(array $data): string {
+    public function createCustomer(array $data, array $allowedTeamIds): string {
         $errorMsg = "";
         $name = $this->validationHelper->sanitizeName($data['customer_edit_form_name']);
         $color = $this->validationHelper->sanitizeColor($data['customer_edit_form_color'] ?? '#ffffff');
         $number = $this->validationHelper->sanitizeString($data['customer_edit_form_number']);
         $comment = $this->validationHelper->sanitizeString($data['customer_edit_form_description']);
-        $selectedTeams = $data['customer_edit_form']['selectedTeams'] ?? [];
+        $selectedTeams = (array) ($data['customer_edit_form']['selectedTeams'] ?? []);
+        $selectedTeams = array_values(array_unique(array_map('intval', $selectedTeams)));
         $visible = isset($data['customer_edit_form_visible']) ? 1 : 0;
 
         // Validate name
@@ -181,6 +183,11 @@ final class CustomerService
         // Validate number
         if (!$this->validationHelper->validateNumber($number, true)) {
             $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_project_number'], $this->translations['form_error_format']) . "\n";
+        }
+
+        // Validate teams scope
+        if (array_diff($selectedTeams, $allowedTeamIds) !== []) {
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_selected_teams'], $this->translations['form_error_not_allowed']) . "\n";
         }
 
         if ($errorMsg !== '') {
@@ -233,15 +240,17 @@ final class CustomerService
      *
      * @param Customer $customer
      * @param array<string, mixed> $data Parsed form data
+     * @param array<int, int> $allowedTeamIds Team ids the user is allowed to use
      * @return string $errorMsg
      */
-    public function updateCustomer(Customer $customer, array $data): string {
+    public function updateCustomer(Customer $customer, array $data, array $allowedTeamIds): string {
         $errorMsg = "";
         $name = $this->validationHelper->sanitizeName($data['customer_edit_form_name']);
         $color = $this->validationHelper->sanitizeColor($data['customer_edit_form_color'] ?? '#ffffff');
         $number = $this->validationHelper->sanitizeString($data['customer_edit_form_number']);
         $comment = $this->validationHelper->sanitizeString($data['customer_edit_form_description']);
-        $selectedTeams = $data['customer_edit_form']['selectedTeams'] ?? [];
+        $selectedTeams = (array) ($data['customer_edit_form']['selectedTeams'] ?? []);
+        $selectedTeams = array_values(array_unique(array_map('intval', $selectedTeams)));
         $visible = isset($data['customer_edit_form_visible']) ? 1 : 0;
 
         // Validate name
@@ -257,6 +266,11 @@ final class CustomerService
         // Validate number
         if (!$this->validationHelper->validateNumber($number, true)) {
             $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_project_number'], $this->translations['form_error_format']) . "\n";
+        }
+
+        // Validate teams scope
+        if (array_diff($selectedTeams, $allowedTeamIds) !== []) {
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_selected_teams'], $this->translations['form_error_not_allowed']) . "\n";
         }
 
         if ($errorMsg !== '') {

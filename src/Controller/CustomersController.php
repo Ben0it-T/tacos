@@ -97,7 +97,8 @@ final class CustomersController
     public function createAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $data = (array) $request->getParsedBody();
-        $errors = $this->customerService->createCustomer($data);
+        $allowedTeamIds = $this->helper->extractIds($this->teamService->findAllTeams());
+        $errors = $this->customerService->createCustomer($data, $allowedTeamIds);
 
         if ($errors === '') {
             $this->flash->add('success', $this->translations['form_success_create_customer']);
@@ -209,7 +210,8 @@ final class CustomersController
 
         $data = (array) $request->getParsedBody();
 
-        $errors = $this->customerService->updateCustomer($customer, $data);
+        $allowedTeamIds = $this->helper->extractIds($this->teamService->findAllTeams());
+        $errors = $this->customerService->updateCustomer($customer, $data, $allowedTeamIds);
         if ($errors === '') {
             $this->flash->add('success', $this->translations['form_success_update']);
             return $this->helper->redirect($request, $response, 'customers');
