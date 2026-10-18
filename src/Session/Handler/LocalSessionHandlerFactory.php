@@ -7,7 +7,12 @@ use SessionHandler;
 
 final class LocalSessionHandlerFactory
 {
-
+    /**
+     * Create the native (file) session handler and configure its storage
+     *
+     * @param array<string, mixed> $settings Session settings (path: storage directory, lifetime: gc max lifetime in seconds)
+     * @return SessionHandler
+     */
     public static function create(array $settings): SessionHandler {
         if (!empty($settings['path'])) {
             ini_set('session.save_path', realpath($settings['path']));
