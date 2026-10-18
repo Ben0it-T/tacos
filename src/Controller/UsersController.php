@@ -29,9 +29,23 @@ final class UsersController
     private TeamService $teamService;
     private UserService $userService;
     private ControllerHelper $helper;
+    /** @var array<string, int> */
     private array $options;
+    /** @var array<string, string|int> */
     private array $translations;
 
+    /**
+     * @param Twig $twig
+     * @param FlashMessageService $flash
+     * @param AuthService $authService
+     * @param CustomerService $customerService
+     * @param ProjectService $projectService
+     * @param TeamService $teamService
+     * @param UserService $userService
+     * @param ControllerHelper $helper
+     * @param array<string, int> $options
+     * @param array<string, string|int> $translations
+     */
     public function __construct(Twig $twig, FlashMessageService $flash, AuthService $authService, CustomerService $customerService, ProjectService $projectService, TeamService $teamService, UserService $userService, ControllerHelper $helper, array $options, array $translations)
     {
         $this->twig = $twig;
@@ -46,6 +60,14 @@ final class UsersController
         $this->translations = $translations;
     }
 
+    /**
+     * List users
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $users = $this->userService->findAllUsersWithTeamCount();
@@ -62,6 +84,14 @@ final class UsersController
         ]);
     }
 
+    /**
+     * Create a user
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function createAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $data = (array) $request->getParsedBody();
@@ -77,6 +107,14 @@ final class UsersController
         return $this->helper->redirect($request, $response, 'users');
     }
 
+    /**
+     * Show user details
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function userDetails(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $user = $this->userService->findUserByUsername($args['username']);
@@ -97,6 +135,14 @@ final class UsersController
         ]);
     }
 
+    /**
+     * Show the user edit form
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function editForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $user = $this->userService->findUserByUsername($args['username']);
@@ -119,6 +165,14 @@ final class UsersController
         ]);
     }
 
+    /**
+     * Update a user (logs out if the admin changed their own password)
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function editAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $username = (string)($args['username'] ?? "");
@@ -153,6 +207,13 @@ final class UsersController
     }
 
     // Helpers
+    /**
+     * Translate the role, cast the status and add edit and view links to each user row
+     *
+     * @param ServerRequestInterface $request
+     * @param array<int, array<string, mixed>> $users User rows
+     * @return array<int, array<string, mixed>> User rows with 'editLink' and 'viewLink'
+     */
     private function addUserInfos(ServerRequestInterface $request, array $users): array
     {
         foreach ($users as &$user) {
@@ -172,6 +233,14 @@ final class UsersController
         return $users;
     }
 
+    /**
+     * Map a user, their role and teams to the data used by the details and edit views
+     *
+     * @param User $user
+     * @param Role $role
+     * @param array<int, array<string, mixed>> $teams Team rows (id, name, color, teamlead)
+     * @return array{name: string, username: string, email: string, role: string|int, roleId: int, lastLogin: ?string, registrationDate: ?string, status: int, teams: array<int, array<string, mixed>>}
+     */
     private function mapUserForView(User $user, Role $role, array $teams): array
     {
         $roleKey = strtolower($role->getName());

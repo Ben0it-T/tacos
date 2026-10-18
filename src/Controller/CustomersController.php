@@ -24,9 +24,21 @@ final class CustomersController
     private ProjectService $projectService;
     private TeamService $teamService;
     private ControllerHelper $helper;
+    /** @var array<string, string> */
     private array $options;
+    /** @var array<string, string|int> */
     private array $translations;
 
+    /**
+     * @param Twig $twig
+     * @param FlashMessageService $flash
+     * @param CustomerService $customerService
+     * @param ProjectService $projectService
+     * @param TeamService $teamService
+     * @param ControllerHelper $helper
+     * @param array<string, string> $options
+     * @param array<string, string|int> $translations
+     */
     public function __construct(Twig $twig, FlashMessageService $flash, CustomerService $customerService, ProjectService $projectService, TeamService $teamService, ControllerHelper $helper, array $options, array $translations)
     {
         $this->twig = $twig;
@@ -39,6 +51,14 @@ final class CustomersController
         $this->translations = $translations;
     }
 
+    /**
+     * List customers
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -66,6 +86,14 @@ final class CustomersController
         ]);
     }
 
+    /**
+     * Create a customer
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function createAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $data = (array) $request->getParsedBody();
@@ -81,6 +109,14 @@ final class CustomersController
         return $this->helper->redirect($request, $response, 'customers');
     }
 
+    /**
+     * Show customer details
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function customerDetails(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -109,6 +145,14 @@ final class CustomersController
         ]);
     }
 
+    /**
+     * Show the customer edit form
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function editForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -141,6 +185,14 @@ final class CustomersController
         ]);
     }
 
+    /**
+     * Update a customer
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function editAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -168,6 +220,13 @@ final class CustomersController
     }
 
     // Helpers
+    /**
+     * Add edit and view links to each customer row
+     *
+     * @param ServerRequestInterface $request
+     * @param array<int, array<string, mixed>> $customers Customer rows
+     * @return array<int, array<string, mixed>> Customer rows with 'editLink' and 'viewLink'
+     */
     private function addCustomerLinks(ServerRequestInterface $request, array $customers): array
     {
         foreach ($customers as &$customer) {

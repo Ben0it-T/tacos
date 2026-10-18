@@ -22,9 +22,20 @@ final class PasswordResetController
     private PasswordRequestService $passwordRequestService;
     private ControllerHelper $helper;
     private LoggerInterface $logger;
+    /** @var array<string, int> */
     private array $options;
+    /** @var array<string, string|int> */
     private array $translations;
 
+    /**
+     * @param Twig $twig
+     * @param FlashMessageService $flash
+     * @param PasswordRequestService $passwordRequestService
+     * @param ControllerHelper $helper
+     * @param LoggerInterface $logger
+     * @param array<string, int> $options
+     * @param array<string, string|int> $translations
+     */
     public function __construct(Twig $twig, FlashMessageService $flash, PasswordRequestService $passwordRequestService, ControllerHelper $helper, LoggerInterface $logger, array $options, array $translations)
     {
         $this->twig = $twig;
@@ -36,6 +47,14 @@ final class PasswordResetController
         $this->translations = $translations;
     }
 
+    /**
+     * Show the forgot password form
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function requestForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         return $this->twig->render($response, 'forgot-password.html.twig', [
@@ -43,6 +62,14 @@ final class PasswordResetController
         ]);
     }
 
+    /**
+     * Request a password reset link (same message whether the account exists or not)
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function requestAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $data = (array) $request->getParsedBody();
@@ -74,6 +101,14 @@ final class PasswordResetController
         return $this->helper->redirect($request, $response, 'forgot_password');
     }
 
+    /**
+     * Show the change password form if the reset token is valid
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function changeForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $token = $args['key'] ?? '';
@@ -89,6 +124,14 @@ final class PasswordResetController
         return $this->helper->redirect($request, $response, 'login');
     }
 
+    /**
+     * Change the password with a valid reset token
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function changeAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $data = (array) $request->getParsedBody();

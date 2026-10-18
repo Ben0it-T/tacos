@@ -23,6 +23,15 @@ final class XhrController
         $this->helper = $helper;
     }
 
+    /**
+     * Return, as a JSON list of ids, the projects ('projects', optionally by customer)
+     * or activities ('activities', optionally by project) available to the current user
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments ('action', optional 'key')
+     * @return ResponseInterface
+     */
     public function xhrAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         if ($request->getHeaderLine('X-Requested-With') !== 'XMLHttpRequest') {

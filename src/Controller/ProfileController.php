@@ -23,10 +23,22 @@ final class ProfileController
     private TeamService $teamService;
     private UserService $userService;
     private ControllerHelper $helper;
+    /** @var array<string, int> */
     private array $options;
+    /** @var array<string, string|int> */
     private array $translations;
 
 
+    /**
+     * @param Twig $twig
+     * @param FlashMessageService $flash
+     * @param AuthService $authService
+     * @param TeamService $teamService
+     * @param UserService $userService
+     * @param ControllerHelper $helper
+     * @param array<string, int> $options
+     * @param array<string, string|int> $translations
+     */
     public function __construct(Twig $twig, FlashMessageService $flash, AuthService $authService, TeamService $teamService, UserService $userService, ControllerHelper $helper, array $options, array $translations)
     {
         $this->twig = $twig;
@@ -39,6 +51,14 @@ final class ProfileController
         $this->translations = $translations;
     }
 
+    /**
+     * Show the profile form of the current user
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function editForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -69,6 +89,14 @@ final class ProfileController
         ]);
     }
 
+    /**
+     * Update the profile of the current user (logs out after a password change)
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function editAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();

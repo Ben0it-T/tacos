@@ -19,8 +19,16 @@ final class LoginController
     private FlashMessageService $flash;
     private AuthService $authService;
     private ControllerHelper $helper;
+    /** @var array<string, string|int> */
     private array $translations;
 
+    /**
+     * @param Twig $twig
+     * @param FlashMessageService $flash
+     * @param AuthService $authService
+     * @param ControllerHelper $helper
+     * @param array<string, string|int> $translations
+     */
     public function __construct(Twig $twig, FlashMessageService $flash, AuthService $authService, ControllerHelper $helper, array $translations)
     {
         $this->twig = $twig;
@@ -30,6 +38,14 @@ final class LoginController
         $this->translations = $translations;
     }
 
+    /**
+     * Show the login form (closes any open session first)
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function loginForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         // Open session (valid or stale): close it, then show the login form
@@ -45,6 +61,14 @@ final class LoginController
         ]);
     }
 
+    /**
+     * Authenticate the user
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function loginAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $data = (array) $request->getParsedBody();
@@ -66,12 +90,28 @@ final class LoginController
         }
     }
 
+    /**
+     * Log the user out
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function logoutAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $this->authService->logout();
         return $this->helper->redirect($request, $response, 'login');
     }
 
+    /**
+     * Show the too many attempts page
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function tooManyAttempts(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         return $this->twig->render($response->withStatus(429), 'too-many-attempts.html.twig', array());

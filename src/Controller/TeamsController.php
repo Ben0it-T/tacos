@@ -24,9 +24,22 @@ final class TeamsController
     private TeamService $teamService;
     private UserService $userService;
     private ControllerHelper $helper;
+    /** @var array<string, string> */
     private array $options;
+    /** @var array<string, string|int> */
     private array $translations;
 
+    /**
+     * @param Twig $twig
+     * @param FlashMessageService $flash
+     * @param CustomerService $customerService
+     * @param ProjectService $projectService
+     * @param TeamService $teamService
+     * @param UserService $userService
+     * @param ControllerHelper $helper
+     * @param array<string, string> $options
+     * @param array<string, string|int> $translations
+     */
     public function __construct(Twig $twig, FlashMessageService $flash, CustomerService $customerService, ProjectService $projectService, TeamService $teamService, UserService $userService, ControllerHelper $helper, array $options, array $translations)
     {
         $this->twig = $twig;
@@ -40,6 +53,14 @@ final class TeamsController
         $this->translations = $translations;
     }
 
+    /**
+     * List teams
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -67,6 +88,14 @@ final class TeamsController
         ]);
     }
 
+    /**
+     * Create a team
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function createAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $data = (array) $request->getParsedBody();
@@ -82,6 +111,14 @@ final class TeamsController
         return $this->helper->redirect($request, $response, 'teams');
     }
 
+    /**
+     * Show team details
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function teamsDetails(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -112,6 +149,14 @@ final class TeamsController
         ]);
     }
 
+    /**
+     * Show the team edit form
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function editForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -151,6 +196,14 @@ final class TeamsController
         ]);
     }
 
+    /**
+     * Update a team (name, color and members)
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function editAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -180,6 +233,13 @@ final class TeamsController
     }
 
     // Helpers
+    /**
+     * Add edit and view links to each team row
+     *
+     * @param ServerRequestInterface $request
+     * @param array<int, array<string, mixed>> $teams Team rows
+     * @return array<int, array<string, mixed>> Team rows with 'editLink' and 'viewLink'
+     */
     private function addTeamLinks(ServerRequestInterface $request, array $teams): array
     {
         foreach ($teams as &$team) {

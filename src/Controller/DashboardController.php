@@ -24,6 +24,14 @@ final class DashboardController
         $this->helper = $helper;
     }
 
+    /**
+     * Show the dashboard (active records and working hours)
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();

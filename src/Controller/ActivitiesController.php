@@ -26,9 +26,21 @@ final class ActivitiesController
     private ProjectService $projectService;
     private TeamService $teamService;
     private ControllerHelper $helper;
+    /** @var array<string, string> */
     private array $options;
+    /** @var array<string, string|int> */
     private array $translations;
 
+    /**
+     * @param Twig $twig
+     * @param FlashMessageService $flash
+     * @param ActivityService $activityService
+     * @param ProjectService $projectService
+     * @param TeamService $teamService
+     * @param ControllerHelper $helper
+     * @param array<string, string> $options
+     * @param array<string, string|int> $translations
+     */
     public function __construct(Twig $twig, FlashMessageService $flash, ActivityService $activityService, ProjectService $projectService, TeamService $teamService, ControllerHelper $helper, array $options, array $translations)
     {
         $this->twig = $twig;
@@ -41,6 +53,14 @@ final class ActivitiesController
         $this->translations = $translations;
     }
 
+    /**
+     * List activities
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -71,6 +91,14 @@ final class ActivitiesController
         ]);
     }
 
+    /**
+     * Create an activity
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function createAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -94,6 +122,14 @@ final class ActivitiesController
         return $this->helper->redirect($request, $response, 'activities');
     }
 
+    /**
+     * Show activity details
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function activityDetails(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -124,6 +160,14 @@ final class ActivitiesController
         ]);
     }
 
+    /**
+     * Show the activity edit form
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function editForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -161,6 +205,14 @@ final class ActivitiesController
         ]);
     }
 
+    /**
+     * Update an activity
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function editAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -190,6 +242,13 @@ final class ActivitiesController
     }
 
     // Helpers
+    /**
+     * Add edit and view links to each activity row
+     *
+     * @param ServerRequestInterface $request
+     * @param array<int, array<string, mixed>> $activities Activity rows
+     * @return array<int, array<string, mixed>> Activity rows with 'editLink' and 'viewLink'
+     */
     private function addActivityLinks(ServerRequestInterface $request, array $activities): array
     {
         foreach ($activities as &$activity) {

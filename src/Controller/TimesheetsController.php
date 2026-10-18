@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\Tag;
 use App\Entity\User;
 use App\Helper\ControllerHelper;
 use App\Helper\RoundingHelper;
@@ -33,9 +34,26 @@ final class TimesheetsController
     private UserService $userService;
     private RoundingHelper $roundingHelper;
     private ControllerHelper $helper;
+    /** @var array<string, mixed> */
     private array $options;
+    /** @var array<string, string|int> */
     private array $translations;
 
+    /**
+     * @param Twig $twig
+     * @param FlashMessageService $flash
+     * @param ActivityService $activityService
+     * @param CustomerService $customerService
+     * @param ProjectService $projectService
+     * @param TagService $tagService
+     * @param TeamService $teamService
+     * @param TimesheetService $timesheetService
+     * @param UserService $userService
+     * @param RoundingHelper $roundingHelper
+     * @param ControllerHelper $helper
+     * @param array<string, mixed> $options
+     * @param array<string, string|int> $translations
+     */
     public function __construct(Twig $twig, FlashMessageService $flash, ActivityService $activityService, CustomerService $customerService, ProjectService $projectService, TagService $tagService, TeamService $teamService, TimesheetService $timesheetService, UserService $userService, RoundingHelper $roundingHelper, ControllerHelper $helper, array $options, array $translations)
     {
         $this->twig = $twig;
@@ -53,6 +71,14 @@ final class TimesheetsController
         $this->translations = $translations;
     }
 
+    /**
+     * List the timesheets of the current user (filters kept in session)
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -127,6 +153,14 @@ final class TimesheetsController
         ]);
     }
 
+    /**
+     * List the timesheets of the teams led by the current user (filters kept in session)
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function indexTeams(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -208,6 +242,14 @@ final class TimesheetsController
         ]);
     }
 
+    /**
+     * Show the timesheet creation form
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function createForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -236,6 +278,14 @@ final class TimesheetsController
         ]);
     }
 
+    /**
+     * Create a timesheet
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function createAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -257,6 +307,14 @@ final class TimesheetsController
         return $this->helper->redirect($request, $response, 'timesheets');
     }
 
+    /**
+     * Show the timesheet edit form
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function editForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -307,6 +365,14 @@ final class TimesheetsController
         ]);
     }
 
+    /**
+     * Update a timesheet
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function editAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -333,6 +399,14 @@ final class TimesheetsController
         return $this->helper->redirect($request, $response, 'timesheets_edit', ['timesheetId' => $timesheetId]);
     }
 
+    /**
+     * Restart a timesheet (new running copy), if the restart rule allows it
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function restartAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -366,6 +440,14 @@ final class TimesheetsController
         return $this->helper->redirect($request, $response, 'timesheets');
     }
 
+    /**
+     * Show the timesheet delete confirmation
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function deleteForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -394,6 +476,14 @@ final class TimesheetsController
         ]);
     }
 
+    /**
+     * Delete a timesheet
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function deleteAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -419,6 +509,14 @@ final class TimesheetsController
         return $this->helper->redirect($request, $response, 'timesheets');
     }
 
+    /**
+     * Stop a running timesheet
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function stopAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -445,6 +543,14 @@ final class TimesheetsController
         return $this->helper->redirect($request, $response, 'timesheets');
     }
 
+    /**
+     * Export the filtered timesheets of the current user as CSV
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function exportTimesheets(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -491,6 +597,14 @@ final class TimesheetsController
             ->withHeader('Pragma', 'no-cache');
     }
 
+    /**
+     * Export the filtered timesheets of the led teams as CSV
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function exportTeamsTimesheets(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -547,6 +661,14 @@ final class TimesheetsController
     }
 
     // Helpers
+    /**
+     * Add delete, edit, stop and restart links to a timesheet row
+     *
+     * @param ServerRequestInterface $request
+     * @param array<string, mixed> $timesheet Timesheet row
+     * @param bool $canRestart Whether the restart link is shown
+     * @return array<string, mixed> Timesheet row with 'deleteLink', 'editLink', 'stopLink' and 'restartLink'
+     */
     private function addTimesheetLinks(ServerRequestInterface $request, array $timesheet, bool $canRestart): array
     {
         $id = (int) $timesheet['id'];
@@ -560,6 +682,11 @@ final class TimesheetsController
         return $timesheet;
     }
 
+    /**
+     * CSV column names
+     *
+     * @return list<string>
+     */
     private function buildCsvHeader(): array
     {
         return ['Start', 'End', 'Duration', 'Project', 'Project Number', 'Activity', 'Activity Number', 'User', 'Description', 'Tags'];
@@ -571,7 +698,7 @@ final class TimesheetsController
      * Escapes string values (RFC 4180), neutralizes spreadsheet formulas
      * and concatenates tags using '|'.
      *
-     * @param array $entry      Timesheet data with joined fields
+     * @param array<string, mixed> $entry Timesheet data with joined fields
      * @param string $delimiter CSV delimiter
      * @param string $enclosure CSV enclosure character
      * @return string
@@ -615,7 +742,7 @@ final class TimesheetsController
      * Returns null if session data is invalid.
      *
      * @param User $currentUser
-     * @return array|null
+     * @return array<string, mixed>|null
      */
     private function buildTimesheetCriteriaFromSession(User $currentUser): ?array
     {
@@ -643,6 +770,13 @@ final class TimesheetsController
         ];
     }
 
+    /**
+     * Build team timesheet criteria from session filters.
+     *
+     * Returns null if session data is invalid.
+     *
+     * @return array<string, mixed>|null
+     */
     private function buildTeamsTimesheetCriteriaFromSession(): ?array
     {
         $session = $this->helper->getSessionValue('teamsTimesheets', []);
@@ -670,6 +804,13 @@ final class TimesheetsController
         ];
     }
 
+    /**
+     * Whether a timesheet can be restarted (same rule as the restart button)
+     *
+     * @param array<string, mixed> $timesheet Timesheet data (only 'start' is read)
+     * @param array<string, mixed> $restartCfg Restart settings (timesheet.restart: 'active', 'interval')
+     * @return bool
+     */
     private function canRestartTimesheet(array $timesheet, array $restartCfg): bool
     {
         $startStr = $timesheet['start'] ?? '';
@@ -712,6 +853,13 @@ final class TimesheetsController
         return $clean;
     }
 
+    /**
+     * Get timesheet filters from the query, falling back on those saved in session
+     *
+     * @param ServerRequestInterface $request
+     * @param string $key Session key ('timesheets' or 'teamsTimesheets')
+     * @return array<string, mixed> Query params (see TimesheetService::getQueryParams())
+     */
     private function getTimesheetFilters(ServerRequestInterface $request, string $key): array
     {
         $filters = $this->helper->getSessionValue($key, []);
@@ -728,9 +876,9 @@ final class TimesheetsController
     /**
      * Map tagIds from a timesheet into tag name/color structures
      *
-     * @param array<string, mixed> $timesheet
-     * @param array<int, object> $tags
-     * @return array<int, array{name:string, color:string}>
+     * @param array<string, mixed> $timesheet Timesheet row ('tagIds': comma-separated tag ids)
+     * @param array<int, Tag> $tags Tag entities indexed by id
+     * @return list<array{name: string, color: ?string}>
      */
     private function mapTimesheetTags(array $timesheet, array $tags): array
     {
@@ -756,6 +904,13 @@ final class TimesheetsController
         return $res;
     }
 
+    /**
+     * Validate session filters against a schema
+     *
+     * @param array<string, mixed> $session Session filters
+     * @param array<string, array<string, mixed>> $schema Expected keys, each with a 'type' ('array' or 'string') and 'required' flag
+     * @return bool
+     */
     private function validateTimesheetSession(array $session, array $schema): bool
     {
         if (empty($session)) {

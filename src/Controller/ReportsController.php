@@ -16,8 +16,15 @@ final class ReportsController
     private Twig $twig;
     private TimesheetService $timesheetService;
     private ControllerHelper $helper;
+    /** @var array<string, string|int> */
     private array $translations;
 
+    /**
+     * @param Twig $twig
+     * @param TimesheetService $timesheetService
+     * @param ControllerHelper $helper
+     * @param array<string, string|int> $translations
+     */
     public function __construct(Twig $twig, TimesheetService $timesheetService, ControllerHelper $helper, array $translations)
     {
         $this->twig = $twig;
@@ -26,6 +33,14 @@ final class ReportsController
         $this->translations = $translations;
     }
 
+    /**
+     * Show the reports of the current user
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();

@@ -32,9 +32,24 @@ final class ProjectsController
     private TimesheetService $timesheetService;
     private UserService $userService;
     private ControllerHelper $helper;
+    /** @var array<string, string> */
     private array $options;
+    /** @var array<string, string|int> */
     private array $translations;
 
+    /**
+     * @param Twig $twig
+     * @param FlashMessageService $flash
+     * @param ActivityService $activityService
+     * @param CustomerService $customerService
+     * @param ProjectService $projectService
+     * @param TeamService $teamService
+     * @param TimesheetService $timesheetService
+     * @param UserService $userService
+     * @param ControllerHelper $helper
+     * @param array<string, string> $options
+     * @param array<string, string|int> $translations
+     */
     public function __construct(Twig $twig, FlashMessageService $flash, ActivityService $activityService, CustomerService $customerService, ProjectService $projectService, TeamService $teamService, TimesheetService $timesheetService, UserService $userService, ControllerHelper $helper, array $options, array $translations)
     {
         $this->twig = $twig;
@@ -50,6 +65,14 @@ final class ProjectsController
         $this->translations = $translations;
     }
 
+    /**
+     * List projects
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function index(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -80,6 +103,14 @@ final class ProjectsController
         ]);
     }
 
+    /**
+     * Create a project
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function createAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -103,6 +134,14 @@ final class ProjectsController
         return $this->helper->redirect($request, $response, 'projects');
     }
 
+    /**
+     * Show project details
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function projectDetails(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -153,6 +192,14 @@ final class ProjectsController
         ]);
     }
 
+    /**
+     * Show the project edit form
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function editForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -203,6 +250,14 @@ final class ProjectsController
         ]);
     }
 
+    /**
+     * Update a project
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param array<string, string> $args Route arguments
+     * @return ResponseInterface
+     */
     public function editAction(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
     {
         $currentUser = $this->helper->getCurrentUser();
@@ -234,6 +289,13 @@ final class ProjectsController
     }
 
     // Helpers
+    /**
+     * Add edit and view links to each project row
+     *
+     * @param ServerRequestInterface $request
+     * @param array<int, array<string, mixed>> $projects Project rows
+     * @return array<int, array<string, mixed>> Project rows with 'editLink' and 'viewLink'
+     */
     private function addProjectLinks(ServerRequestInterface $request, array $projects): array
     {
         foreach ($projects as &$project) {
