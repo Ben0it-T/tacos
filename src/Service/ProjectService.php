@@ -302,7 +302,8 @@ final class ProjectService
         $end = !empty($end) ? date_create_from_format($dateFormat, $end) : null;
         $selectedTeams = (array) ($data['project_edit_form']['selectedTeams'] ?? []);
         $selectedTeams = array_values(array_unique(array_map('intval', $selectedTeams)));
-        $selectedActivities = $data['project_edit_form']['selectedActivities'] ?? [];
+        $selectedActivities = (array) ($data['project_edit_form']['selectedActivities'] ?? []);
+        $selectedActivities = array_values(array_unique(array_map('intval', $selectedActivities)));
         $visible = isset($data['project_edit_form_visible']) ? 1 : 0;
         $globalActivities = isset($data['project_edit_form_globalactivities']) ? 1 : 0;
 
@@ -338,6 +339,15 @@ final class ProjectService
             array_diff($currentTeamIds, $allowedTeamIds)
         )));
 
+        // Validate activities scope
+        $allowedActivityIds = array_merge(
+            array_keys($this->activityRepository->findAllProjectActivitiesByProjectId($project->getId())),
+            array_keys($this->activityRepository->findAllGlobalActivities())
+        );
+        if (array_diff($selectedActivities, $allowedActivityIds) !== []) {
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_activities'], $this->translations['form_error_not_allowed']) . "\n";
+        }
+
         // Validate number
         if (!$this->validationHelper->validateNumber($number, true)) {
             $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_project_number'], $this->translations['form_error_format']) . "\n";
@@ -355,19 +365,10 @@ final class ProjectService
             return $errorMsg;
         }
 
-        // Validate activities
+        // Global activities not allowed: drop them silently
         if ($globalActivities == 0) {
-            $globalActivitiesRes = $this->activityRepository->findAllGlobalActivities();
-            $globalActivitiesIds = array();
-            foreach ($globalActivitiesRes as $entry) {
-                $globalActivitiesIds[] = $entry->getId();
-            }
-
-            foreach ($selectedActivities as $key => $val) {
-                if (in_array($val, $globalActivitiesIds)) {
-                    unset($selectedActivities[$key]);
-                }
-            }
+            $globalActivityIds = array_keys($this->activityRepository->findAllGlobalActivities());
+            $selectedActivities = array_values(array_diff($selectedActivities, $globalActivityIds));
         }
 
         $project->setName($name);

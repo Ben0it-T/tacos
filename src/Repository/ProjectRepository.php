@@ -759,7 +759,7 @@ final class ProjectRepository
      * Insert Activities
      *
      * @param int $projectId
-     * @param array<int, int|string> $data Activity ids (cast to int)
+     * @param array<int, int> $data Activity ids
      * @return bool
      */
     public function insertActivities(int $projectId, array $data): bool {
@@ -840,7 +840,7 @@ final class ProjectRepository
      * Update Activities
      *
      * @param int $projectId
-     * @param array<int, int|string> $data Activity ids (cast to int)
+     * @param array<int, int> $data Activity ids
      * @return bool
      */
     public function updateActivities(int $projectId, array $data): bool {
