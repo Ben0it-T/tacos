@@ -8,11 +8,11 @@ final class SqlHelper
     /**
      * Build IN clause
      *
-     * @param array  $values
-     * @param string $prefix
-     * @param string $column
+     * @param array<int, int> $values Ids to match
+     * @param string $prefix Placeholder prefix (e.g. 'usersId' gives :usersId0, :usersId1...)
+     * @param string $column Column to match (e.g. 't.`user_id`')
      *
-     * @return array [string $clause, array $params]
+     * @return array{0: string, 1: array<string, int>} [clause, PDO params]; ['', []] when $values is empty
      */
     public static function buildInClause(array $values, string $prefix, string $column): array
     {

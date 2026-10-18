@@ -53,6 +53,14 @@ final class ControllerHelper
     }
 
     // url & redirect
+    /**
+     * Build the relative URL of a route (base path included)
+     *
+     * @param ServerRequestInterface $request
+     * @param string $routeName
+     * @param array<string, int|string> $data Route arguments
+     * @return string
+     */
     public function getUrlFor(ServerRequestInterface $request, string $routeName, array $data = []): string
     {
         return RouteContext::fromRequest($request)->getRouteParser()->urlFor($routeName, $data);
@@ -63,7 +71,7 @@ final class ControllerHelper
      *
      * @param ServerRequestInterface $request
      * @param string $routeName
-     * @param array $data
+     * @param array<string, int|string> $data Route arguments
      * @return string
      * @throws \RuntimeException if app.baseUrl is missing or invalid
      */
@@ -96,6 +104,15 @@ final class ControllerHelper
         return strtolower($parts['scheme']) . '://' . $parts['host'] . (isset($parts['port']) ? ':' . $parts['port'] : '');
     }
 
+    /**
+     * Redirect (302) to a route
+     *
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @param string $routeName
+     * @param array<string, int|string> $data Route arguments
+     * @return ResponseInterface
+     */
     public function redirect(ServerRequestInterface $request, ResponseInterface $response, string $routeName, array $data = []): ResponseInterface
     {
         $url = $this->getUrlFor($request, $routeName, $data);

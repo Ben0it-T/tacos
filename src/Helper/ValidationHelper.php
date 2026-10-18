@@ -264,9 +264,9 @@ final class ValidationHelper
     }
 
     /**
-     * Validate array
-     * @param int $value
-     * @param array $haystack
+     * Validate role
+     * @param int $value Role id
+     * @param array<int, int> $haystack Allowed role ids (default: 1 user, 2 teamlead, 3 admin)
      * @param bool $empty
      * @return bool
      */
