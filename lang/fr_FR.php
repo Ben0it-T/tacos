@@ -84,6 +84,7 @@ return array(
     'form_label_project' => "Projet",
     'form_label_project_end' => "Fin du projet",
     'form_label_project_number' => "Numéro de projet",
+    'form_label_project_select' => "Sélectionner un projet",
     'form_label_project_start' => "Début du projet",
     'form_label_projects' => "Projets",
     'form_label_report' => "Rapport",
@@ -103,6 +104,7 @@ return array(
     'form_message_password_request' => "Un email a été envoyé avec un lien pour réinitialiser votre mot de passe.\nRemarque : Vous ne pouvez demander un nouveau mot de passe qu'une fois toutes les %timelimit% minutes. Si vous ne recevez pas d'email, vérifiez vos spams ou réessayez.",
 
     'form_text_add_project' => "Limite la visibilité au projet sélectionné.\nSi vous sélectionnez un projet, l'activité ne peut être utilisée qu'avec ce projet.\nSi vous ne sélectionnez pas de projet, cette activité devient globale et peut être combinée avec n'importe quel projet.\nCe paramètre ne peut pas être changé plus tard.",
+    'form_text_add_project_teamlead' => "L'activité ne peut être utilisée qu'avec le projet sélectionné.\nCe paramètre ne peut pas être changé plus tard.",
     'form_text_add_team' => "Limite la visibilité aux équipes sélectionnées.",
     'form_text_add_user' => "Ajoutez un nouvel utilisateur à l'équipe en le sélectionnant dans la liste. Ensuite, vous pouvez décider si l'utilisateur doit devenir chef d'équipe.",
     'form_text_global_activities' => "Si le paramètre est désactivé, les temps ne peuvent être enregistrés qu'avec des activités spécifiques au projet.",

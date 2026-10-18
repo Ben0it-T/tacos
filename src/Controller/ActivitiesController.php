@@ -108,9 +108,10 @@ final class ActivitiesController
 
         $allowedProjectIds = $this->helper->extractIds($this->getAllowedProjects($currentUser));
         $allowedTeamIds = $this->helper->extractIds($this->getAllowedTeams($currentUser));
+        $canCreateGlobal = $this->helper->isAdmin($currentUser);
 
         $data = (array) $request->getParsedBody();
-        $errors = $this->activityService->createActivity($data, $allowedProjectIds, $allowedTeamIds);
+        $errors = $this->activityService->createActivity($data, $allowedProjectIds, $allowedTeamIds, $canCreateGlobal);
 
         if ($errors === '') {
             $this->flash->add('success', $this->translations['form_success_create_activity']);

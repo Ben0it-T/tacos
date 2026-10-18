@@ -122,13 +122,13 @@
                         <div class="row mb-3">
                             <label for="activity_edit_form_project" class="col-form-label col-sm-3">{{ trans.form_label_project }}</label>
                             <div class="col-sm-9">
-                                <select class="form-select" id="activity_edit_form_project" name="activity_edit_form_project" tabindex="3">
-                                    <option selected value=""></option>
+                                <select class="form-select" id="activity_edit_form_project" name="activity_edit_form_project" tabindex="3"{% if userRole != 3 %} required{% endif %}>
+                                    <option selected value="">{% if userRole != 3 %}{{ trans.form_label_project_select }}{% endif %}</option>
                                     {% for project in projects %}
                                         <option value="{{ project.id }}">{{ project.name }}</option>
                                     {% endfor %}
                                 </select>
-                                <div class="form-text">{{ trans.form_text_add_project|nl2br }}</div>
+                                <div class="form-text">{{ (userRole == 3 ? trans.form_text_add_project : trans.form_text_add_project_teamlead)|nl2br }}</div>
                             </div>
                         </div>
 

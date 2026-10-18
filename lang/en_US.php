@@ -84,6 +84,7 @@ return array(
     'form_label_project' => "Project",
     'form_label_project_end' => "Project end",
     'form_label_project_number' => "Project number",
+    'form_label_project_select' => "Select a project",
     'form_label_project_start' => "Project start",
     'form_label_projects' => "Projects",
     'form_label_report' => "Report",
@@ -103,6 +104,7 @@ return array(
     'form_message_password_request' => "An email has been sent with a link to reset your password.\nNote: You can only request a new password once every %timelimit% minutes. If you don't receive the email, please check your spam folder or try again.",
 
     'form_text_add_project' => "Restricts visibility to the selected project.\nIf you select a project, the activity can only be used with that project.\nIf you do not select a project, this activity becomes global and can be combined with any project.\nThis setting cannot be changed later.",
+    'form_text_add_project_teamlead' => "The activity can only be used with the selected project.\nThis setting cannot be changed later.",
     'form_text_add_team' => "Restricts visibility to the selected teams.",
     'form_text_add_user' => "Add a new user to the team by selecting it from the list. Afterwards you can decide if the user should become a teamlead.",
     'form_text_global_activities' => "If the setting is off, times can only be recorded with project-specific activities.",

@@ -186,9 +186,10 @@ final class ActivityService
      * @param array<string, mixed> $data Parsed form data
      * @param array<int, int> $allowedProjectIds Project ids the user is allowed to use
      * @param array<int, int> $allowedTeamIds Team ids the user is allowed to use
+     * @param bool $canCreateGlobal Whether an activity without project (global) may be created (admin only)
      * @return string $errorMsg
      */
-    public function createActivity(array $data, array $allowedProjectIds, array $allowedTeamIds): string {
+    public function createActivity(array $data, array $allowedProjectIds, array $allowedTeamIds, bool $canCreateGlobal): string {
         $errorMsg = "";
         $name = $this->validationHelper->sanitizeString($data['activity_edit_form_name']);
         $color = $this->validationHelper->sanitizeColor($data['activity_edit_form_color'] ?? '#ffffff');
@@ -212,6 +213,11 @@ final class ActivityService
         // Validate project
         if ($projectId === 0) {
             $projectId = null;
+        }
+
+        // Global activity (no project): admin only
+        if ($projectId === null && !$canCreateGlobal) {
+            $errorMsg .= str_replace("%fieldName%", $this->translations['form_label_project'], $this->translations['form_error_empty_fields']) . "\n";
         }
 
         // Validate project scope
