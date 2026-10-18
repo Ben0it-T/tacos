@@ -42,11 +42,11 @@ final class LoginAttempts
     }
 
 
-     public function getBlockedUntil(): ?DateTimeImmutable {
+    public function getBlockedUntil(): ?DateTimeImmutable {
         return $this->blockedUntil;
     }
 
-    public function setBlockedUntil(?DateTimeImmutable $blockedUntil) {
+    public function setBlockedUntil(?DateTimeImmutable $blockedUntil): self {
         $this->blockedUntil = $blockedUntil;
         return $this;
     }

@@ -11,41 +11,41 @@ final class Tag
     private int $visible;
 
 
-    public function getId() {
+    public function getId(): int {
         return $this->id;
     }
 
-    public function setId($id) {
+    public function setId(int $id): self {
         $this->id = $id;
         return $this;
     }
 
 
-    public function getName() {
+    public function getName(): string {
         return $this->name;
     }
 
-    public function setName($name) {
+    public function setName(string $name): self {
         $this->name = $name;
         return $this;
     }
 
 
-    public function getColor() {
+    public function getColor(): ?string {
         return $this->color;
     }
 
-    public function setColor($color) {
+    public function setColor(?string $color): self {
         $this->color = $color;
         return $this;
     }
 
 
-   public function getVisible() {
+    public function getVisible(): int {
         return $this->visible;
     }
 
-    public function setVisible($visible) {
+    public function setVisible(int $visible): self {
         $this->visible = $visible;
         return $this;
     }

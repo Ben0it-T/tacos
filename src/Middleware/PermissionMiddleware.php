@@ -156,7 +156,7 @@ final class PermissionMiddleware implements MiddlewareInterface
                 $activeTimesheet = array(
                     'id' => $activeTs->getId(),
                     'start' => strtotime($activeTs->getStart()),
-                    'stopLink' => $routeParser->urlFor('timesheets_stop', array('timesheetId' => $activeTs->getId())),
+                    'stopLink' => $routeParser->urlFor('timesheets_stop', array('timesheetId' => (string) $activeTs->getId())),
                 );
             }
         }

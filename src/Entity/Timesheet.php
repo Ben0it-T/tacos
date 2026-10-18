@@ -16,91 +16,91 @@ final class Timesheet
     private ?string $modified_at;
 
 
-    public function getId() {
+    public function getId(): int {
         return $this->id;
     }
 
-    public function setId($id) {
+    public function setId(int $id): self {
         $this->id = $id;
         return $this;
     }
 
 
-    public function getUserId() {
+    public function getUserId(): int {
         return $this->user_id;
     }
 
-    public function setUserId($user_id) {
+    public function setUserId(int $user_id): self {
         $this->user_id = $user_id;
         return $this;
     }
 
 
-    public function getActivityId() {
+    public function getActivityId(): int {
         return $this->activity_id;
     }
 
-    public function setActivityId($activity_id) {
+    public function setActivityId(int $activity_id): self {
         $this->activity_id = $activity_id;
         return $this;
     }
 
 
-    public function getProjectId() {
+    public function getProjectId(): int {
         return $this->project_id;
     }
 
-    public function setProjectId($project_id) {
+    public function setProjectId(int $project_id): self {
         $this->project_id = $project_id;
         return $this;
     }
 
 
-    public function getStart() {
+    public function getStart(): string {
         return $this->start;
     }
 
-    public function setStart($start) {
+    public function setStart(string $start): self {
         $this->start = $start;
         return $this;
     }
 
 
-    public function getEnd() {
+    public function getEnd(): ?string {
         return $this->end;
     }
 
-    public function setEnd($end) {
+    public function setEnd(?string $end): self {
         $this->end = $end;
         return $this;
     }
 
 
-    public function getDuration() {
+    public function getDuration(): ?int {
         return $this->duration;
     }
 
-    public function setDuration($duration) {
+    public function setDuration(?int $duration): self {
         $this->duration = $duration;
         return $this;
     }
 
 
-    public function getComment() {
+    public function getComment(): ?string {
         return $this->comment;
     }
 
-    public function setComment($comment) {
+    public function setComment(?string $comment): self {
         $this->comment = $comment;
         return $this;
     }
 
 
-    public function getModifiedAt() {
+    public function getModifiedAt(): ?string {
         return $this->modified_at;
     }
 
-    public function setModifiedAt($modified_at) {
+    public function setModifiedAt(?string $modified_at): self {
         $this->modified_at = $modified_at;
         return $this;
     }

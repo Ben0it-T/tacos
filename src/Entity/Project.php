@@ -19,121 +19,121 @@ final class Project
     private ?string $created_at;
 
 
-    public function getId() {
+    public function getId(): int {
         return $this->id;
     }
 
-    public function setId($id) {
+    public function setId(int $id): self {
         $this->id = $id;
         return $this;
     }
 
 
-    public function getCustomerId() {
+    public function getCustomerId(): int {
         return $this->customer_id;
     }
 
-    public function setCustomerId($customer_id) {
+    public function setCustomerId(int $customer_id): self {
         $this->customer_id = $customer_id;
         return $this;
     }
 
 
-    public function getName() {
+    public function getName(): string {
         return $this->name;
     }
 
-    public function setName($name) {
+    public function setName(string $name): self {
         $this->name = $name;
         return $this;
     }
 
 
-    public function getColor() {
+    public function getColor(): ?string {
         return $this->color;
     }
 
-    public function setColor($color) {
+    public function setColor(?string $color): self {
         $this->color = $color;
         return $this;
     }
 
 
-    public function getNumber() {
+    public function getNumber(): ?string {
         return $this->number;
     }
 
-    public function setNumber($number) {
+    public function setNumber(?string $number): self {
         $this->number = $number;
         return $this;
     }
 
 
-    public function getComment() {
+    public function getComment(): ?string {
         return $this->comment;
     }
 
-    public function setComment($comment) {
+    public function setComment(?string $comment): self {
         $this->comment = $comment;
         return $this;
     }
 
 
-    public function getStart() {
+    public function getStart(): ?string {
         return $this->start;
     }
 
-    public function setStart($start) {
+    public function setStart(?string $start): self {
         $this->start = $start;
         return $this;
     }
 
 
-    public function getEnd() {
+    public function getEnd(): ?string {
         return $this->end;
     }
 
-    public function setEnd($end) {
+    public function setEnd(?string $end): self {
         $this->end = $end;
         return $this;
     }
 
 
-    public function getLastActivity() {
+    public function getLastActivity(): ?string {
         return $this->last_activity;
     }
 
-    public function setLastActivity($last_activity) {
+    public function setLastActivity(?string $last_activity): self {
         $this->last_activity = $last_activity;
         return $this;
     }
 
 
-    public function getGlobalActivities() {
+    public function getGlobalActivities(): int {
         return $this->global_activities;
     }
 
-    public function setGlobalActivities($global_activities) {
+    public function setGlobalActivities(int $global_activities): self {
         $this->global_activities = $global_activities;
         return $this;
     }
 
 
-    public function getVisible() {
+    public function getVisible(): int {
         return $this->visible;
     }
 
-    public function setVisible($visible) {
+    public function setVisible(int $visible): self {
         $this->visible = $visible;
         return $this;
     }
 
 
-    public function getCreatedAt() {
+    public function getCreatedAt(): ?string {
         return $this->created_at;
     }
 
-    public function setCreatedAt($created_at) {
+    public function setCreatedAt(?string $created_at): self {
         $this->created_at = $created_at;
         return $this;
     }

@@ -19,111 +19,111 @@ final class User
 
 
 
-    public function getId() {
+    public function getId(): int {
         return $this->id;
     }
 
-    public function setId($id) {
+    public function setId(int $id): self {
         $this->id = $id;
         return $this;
     }
 
 
-    public function getUsername() {
+    public function getUsername(): string {
         return $this->username;
     }
 
-    public function setUsername($username) {
+    public function setUsername(string $username): self {
         $this->username = $username;
         return $this;
     }
 
 
-    public function getName() {
+    public function getName(): string {
         return $this->name;
     }
 
-    public function setName($name) {
+    public function setName(string $name): self {
         $this->name = $name;
         return $this;
     }
 
 
-    public function getEmail() {
+    public function getEmail(): string {
         return $this->email;
     }
 
-    public function setEmail($email) {
+    public function setEmail(string $email): self {
         $this->email = $email;
         return $this;
     }
 
 
-    public function getPassword() {
+    public function getPassword(): string {
         return $this->password;
     }
 
-    public function setPassword($password) {
+    public function setPassword(string $password): self {
         $this->password = $password;
         return $this;
     }
 
 
-    public function getEnabled() {
+    public function getEnabled(): int {
         return $this->enabled;
     }
 
-    public function setEnabled($enabled) {
+    public function setEnabled(int $enabled): self {
         $this->enabled = $enabled;
         return $this;
     }
 
 
-    public function getRegistrationDate() {
+    public function getRegistrationDate(): ?string {
         return $this->registrationDate;
     }
 
-    public function setRegistrationDate($registrationDate) {
+    public function setRegistrationDate(?string $registrationDate): self {
         $this->registrationDate = $registrationDate;
         return $this;
     }
 
 
-    public function getRole() {
+    public function getRole(): int {
         return $this->roleId;
     }
 
-    public function setRole($roleId) {
+    public function setRole(int $roleId): self {
         $this->roleId = $roleId;
         return $this;
     }
 
 
-    public function getLastLogin() {
+    public function getLastLogin(): ?string {
         return $this->lastLogin;
     }
 
-    public function setLastLogin($lastLogin) {
+    public function setLastLogin(?string $lastLogin): self {
         $this->lastLogin = $lastLogin;
         return $this;
     }
 
 
-    public function getRequestToken() {
+    public function getRequestToken(): ?string {
         return $this->requestToken;
     }
 
-    public function setRequestToken($requestToken) {
+    public function setRequestToken(?string $requestToken): self {
         $this->requestToken = $requestToken;
         return $this;
     }
 
 
-    public function getRequestDate() {
+    public function getRequestDate(): ?string {
         return $this->requestDate;
     }
 
-    public function setRequestDate($requestDate) {
+    public function setRequestDate(?string $requestDate): self {
         $this->requestDate = $requestDate;
         return $this;
     }
