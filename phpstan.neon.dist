@@ -1,13 +1,8 @@
 parameters:
-    level: 4
+    level: 6
 
     paths:
         - config
         - src
 
     tmpDir: var/tmp/phpstan
-
-    ignoreErrors:
-        -
-            identifier: return.unusedType
-            path: src/Session/Handler/DatabaseSessionHandler.php
