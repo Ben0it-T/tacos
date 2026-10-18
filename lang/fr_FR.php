@@ -14,6 +14,7 @@ return array(
     'btn_login' => "Connexion",
     'btn_logout' => "Déconnexion",
     'btn_password_reset' => "Réinitialiser mon mot de passe",
+    'btn_restart' => "Relancer",
     'btn_save' => "Enregistrer",
     'btn_stop' => "Stop",
 

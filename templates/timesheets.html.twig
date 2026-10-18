@@ -166,9 +166,12 @@
                                         </button>
                                     </form>
                                     {% elseif timesheet.restartLink is not empty %}
-                                    <a class="icon-link icon-link-hover mx-2" href="{{ timesheet.restartLink }}">
-                                        <i class="bi bi-arrow-repeat text-secondary"></i>
-                                    </a>
+                                    <form method="post" action="{{ timesheet.restartLink }}" class="d-inline" data-single-submit>
+                                        {% include 'csrf-fields.html.twig' %}
+                                        <button type="submit" class="icon-link icon-link-hover mx-2 p-0 bg-transparent border-0" title="{{ trans.btn_restart }}" aria-label="{{ trans.btn_restart }}">
+                                            <i class="bi bi-arrow-repeat text-secondary"></i>
+                                        </button>
+                                    </form>
                                     {% endif %}
                                     <a class="icon-link icon-link-hover mx-2" href="{{ timesheet.editLink }}">
                                         <i class="bi bi-pencil"></i>

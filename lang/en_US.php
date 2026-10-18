@@ -14,6 +14,7 @@ return array(
     'btn_login' => "Log in",
     'btn_logout' => "Log out",
     'btn_password_reset' => "Reset your password",
+    'btn_restart' => "Restart",
     'btn_save' => "Save",
     'btn_stop' => "Stop",
 

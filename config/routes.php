@@ -57,7 +57,7 @@ return function (App $app) {
     $app->post('/timesheets/{timesheetId}/delete', \App\Controller\TimesheetsController::class . ':deleteAction')->setName('timesheets_delete_attempt');
     $app->get( '/timesheets/{timesheetId}/edit', \App\Controller\TimesheetsController::class . ':editForm')->setName('timesheets_edit');
     $app->post('/timesheets/{timesheetId}/edit', \App\Controller\TimesheetsController::class . ':editAction')->setName('timesheets_edit_attempt');
-    $app->get( '/timesheets/{timesheetId}/restart', \App\Controller\TimesheetsController::class . ':restartAction')->setName('timesheets_restart');
+    $app->post('/timesheets/{timesheetId}/restart', \App\Controller\TimesheetsController::class . ':restartAction')->setName('timesheets_restart');
     $app->post('/timesheets/{timesheetId}/stop', \App\Controller\TimesheetsController::class . ':stopAction')->setName('timesheets_stop');
     $app->get( '/timesheets/export', \App\Controller\TimesheetsController::class . ':exportTimesheets')->setName('timesheets_export');
 
