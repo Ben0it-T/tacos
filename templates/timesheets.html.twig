@@ -159,9 +159,12 @@
                             <td>
                                 <div class="float-end text-nowrap">
                                     {% if timesheet.end is empty %}
-                                    <a class="icon-link icon-link-hover mx-2" href="{{ timesheet.stopLink }}">
-                                        <i class="bi bi-stop-circle text-danger"></i>
-                                    </a>
+                                    <form method="post" action="{{ timesheet.stopLink }}" class="d-inline" data-single-submit>
+                                        {% include 'csrf-fields.html.twig' %}
+                                        <button type="submit" class="icon-link icon-link-hover mx-2 p-0 bg-transparent border-0" title="{{ trans.btn_stop }}" aria-label="{{ trans.btn_stop }}">
+                                            <i class="bi bi-stop-circle text-danger"></i>
+                                        </button>
+                                    </form>
                                     {% elseif timesheet.restartLink is not empty %}
                                     <a class="icon-link icon-link-hover mx-2" href="{{ timesheet.restartLink }}">
                                         <i class="bi bi-arrow-repeat text-secondary"></i>

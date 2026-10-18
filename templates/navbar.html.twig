@@ -7,10 +7,13 @@
         <a class="navbar-brand d-flex p-2 flex-fill" href="{{ navLinks.current }}">{{ title }}</a>
 
         {% if activeTimesheet.id is defined %}
-            <a class="navbar-brand d-flex align-items-center" href="{{ activeTimesheet.stopLink }}" title="{{ trans.btn_stop }}">
-                <i class="bi bi-stop-fill animate-icon text-danger" style="font-size: 1.5rem;"></i>
-                <span id="currentActiveTimeSheet" start="{{ activeTimesheet.start }}" class="d-none d-sm-block" style="font-size: 1rem;">0:00</span>
-            </a>
+            <form method="post" action="{{ activeTimesheet.stopLink }}" class="d-flex" data-single-submit>
+                {% include 'csrf-fields.html.twig' %}
+                <button type="submit" class="navbar-brand d-flex align-items-center bg-transparent border-0 px-0" title="{{ trans.btn_stop }}" aria-label="{{ trans.btn_stop }}">
+                    <i class="bi bi-stop-fill animate-icon text-danger" style="font-size: 1.5rem;"></i>
+                    <span id="currentActiveTimeSheet" start="{{ activeTimesheet.start }}" class="d-none d-sm-block" style="font-size: 1rem;">0:00</span>
+                </button>
+            </form>
         {% else %}
             <a class="navbar-brand d-flex align-items-center" href="{{ navLinks.timesheets_create }}" title="{{ trans.btn_create }}">
                 <i class="bi bi-play-fill animate-icon text-success" style="font-size: 1.5rem;"></i>
