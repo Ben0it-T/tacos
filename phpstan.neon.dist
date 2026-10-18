@@ -6,3 +6,5 @@ parameters:
         - src
 
     tmpDir: var/tmp/phpstan
+
+    phpVersion: 80300
