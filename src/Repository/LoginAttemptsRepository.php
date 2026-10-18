@@ -24,7 +24,7 @@ final class LoginAttemptsRepository
      * Find login attempts by trackingId
      *
      * @param int $trackingId
-     * @return LoginAttempts entity or false
+     * @return LoginAttempts|false LoginAttempts entity or false
      */
     public function findByTrackingId(int $trackingId): LoginAttempts|false {
         $sql = 'SELECT l.* FROM `tacos_login_attempts` l WHERE l.`tracking_id` = :trackingId LIMIT 1';

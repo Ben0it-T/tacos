@@ -138,7 +138,7 @@ final class CustomerRepository
      * Find All Customers
      *
      * @param ?int $visible
-     * @return array of Customer entities
+     * @return array<int, Customer> Customer entities indexed by id
      */
     public function findAll(?int $visible = null): array {
         $sql  = 'SELECT c.* FROM `tacos_customers` c ';
@@ -168,7 +168,7 @@ final class CustomerRepository
      *
      * @param int $userId
      * @param ?int $visible
-     * @return array of Customer entities
+     * @return array<int, Customer> Customer entities indexed by id
      */
     public function findAllByUserId(int $userId, ?int $visible = null): array {
         $sql  = 'SELECT DISTINCT c.* ';
@@ -203,7 +203,7 @@ final class CustomerRepository
      *
      * @param int $teamleaderId
      * @param ?int $visible
-     * @return array of Customer entities
+     * @return array<int, Customer> Customer entities indexed by id
      */
     public function findAllByTeamleaderId(int $teamleaderId, ?int $visible = null): array {
         $sql  = 'SELECT DISTINCT c.* ';
@@ -238,7 +238,7 @@ final class CustomerRepository
      *
      * @param int $teamId
      * @param ?int $visible
-     * @return array of Customer entities
+     * @return array<int, Customer> Customer entities indexed by id
      */
     public function findAllByTeamId(int $teamId, ?int $visible = null): array {
         $sql  = 'SELECT c.* ';
@@ -272,7 +272,7 @@ final class CustomerRepository
     /**
      * Find Customers with Teams count and Projects count
      *
-     * @return array of Customers with Teams count and Projects count
+     * @return array<int, array<string, mixed>> Customer rows (id, name, color, number, visible, teamsCount, projectsCount)
      */
     public function findAllCustomersWithTeamsCountAndProjectsCount(): array {
         $sql  = "SELECT c.`id`, c.`name`, c.`color`, c.`number`, c.`visible`, ";
@@ -298,7 +298,7 @@ final class CustomerRepository
      *  - customer with team     => visible only if user is member of at least one customer team
      *
      * @param int $userId
-     * @return array of Customers with Teams count and Projects count
+     * @return array<int, array<string, mixed>> Customer rows (id, name, color, number, visible, teamsCount, projectsCount)
      */
     public function findAllCustomersWithTeamsCountAndProjectsCountByUserId(int $userId): array {
         $sql  = "SELECT c.`id`, c.`name`, c.`color`, c.`number`, c.`visible`, ";
@@ -339,7 +339,7 @@ final class CustomerRepository
      *  - customer with team     => visible only if user is teamlead of at least one customer team
      *
      * @param int $teamleaderId
-     * @return array of Customers with Teams count and Projects count
+     * @return array<int, array<string, mixed>> Customer rows (id, name, color, number, visible, teamsCount, projectsCount)
      */
     public function findAllCustomersWithTeamsCountAndProjectsCountByTeamleaderId(int $teamleaderId): array {
         $sql  = "SELECT c.`id`, c.`name`, c.`color`, c.`number`, c.`visible`, ";
@@ -472,7 +472,7 @@ final class CustomerRepository
      * Insert Teams
      *
      * @param int $customerId
-     * @param array $data Array of teamIds
+     * @param array<int, int|string> $data Team ids (cast to int)
      * @return bool
      */
     public function insertTeams(int $customerId, array $data): bool {
@@ -553,7 +553,7 @@ final class CustomerRepository
      * Update Teams
      *
      * @param int $customerId
-     * @param array $data Array of teamIds
+     * @param array<int, int|string> $data Team ids (cast to int)
      * @return bool
      */
     public function updateTeams(int $customerId, array $data): bool {

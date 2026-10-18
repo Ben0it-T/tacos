@@ -135,7 +135,7 @@ final class ProjectRepository
      * Find All Projects
      *
      * @param ?int $visible
-     * @return array of Project entities
+     * @return array<int, Project> Project entities indexed by id
      */
     public function findAll(?int $visible = null): array {
         $sql  = 'SELECT p.* FROM `tacos_projects` p ';
@@ -165,7 +165,7 @@ final class ProjectRepository
      *
      * @param int  $customerId
      * @param ?int $visible
-     * @return array of Project entities
+     * @return array<int, Project> Project entities indexed by id
      */
     public function findAllByCustomerId(int $customerId, ?int $visible = null): array {
         $sql  = 'SELECT p.* FROM `tacos_projects` p ';
@@ -204,7 +204,7 @@ final class ProjectRepository
      *
      * @param int  $userId
      * @param ?int $visible
-     * @return array of Project entities
+     * @return array<int, Project> Project entities indexed by id
      */
     public function findAllByUserId(int $userId, ?int $visible = null): array {
         $sql  = 'SELECT DISTINCT p.* ';
@@ -258,7 +258,7 @@ final class ProjectRepository
      * @param int  $userId
      * @param int  $customerId
      * @param ?int $visible
-     * @return array of Project entities
+     * @return array<int, Project> Project entities indexed by id
      */
     public function findAllByUserIdAndCustomerId(int $userId, int $customerId, ?int $visible = null): array {
         $sql  = 'SELECT DISTINCT p.* ';
@@ -313,7 +313,7 @@ final class ProjectRepository
      *
      * @param int  $teamleaderId
      * @param ?int $visible
-     * @return array of Project entities
+     * @return array<int, Project> Project entities indexed by id
      */
     public function findAllByTeamleaderId(int $teamleaderId, ?int $visible = null): array {
         $sql  = 'SELECT DISTINCT p.* ';
@@ -377,7 +377,7 @@ final class ProjectRepository
     /**
      * Find All Projects with Teams count and Customer
      *
-     * @return array of Projects with Teams count and Customer
+     * @return array<int, array<string, mixed>> Project rows (id, name, color, number, comment, visible, customerName, customerColor, teamsCount)
      */
     public function findAllProjectsWithTeamsCountAndCustomer(): array {
         $sql  = 'SELECT p.`id`, p.`name`, p.`color`, p.`number`, p.`comment`, p.`visible`, ';
@@ -406,7 +406,7 @@ final class ProjectRepository
      *  - customer with team    + project with team    => visible if user is member of at least one customer team AND at least one project team
      *
      * @param int $teamleaderId
-     * @return array of Projects with Teams count and Customer
+     * @return array<int, array<string, mixed>> Project rows (id, name, color, number, comment, visible, customerName, customerColor, teamsCount)
      */
     public function findAllProjectsWithTeamsCountAndCustomerByTeamleaderId(int $teamleaderId): array {
         $sql  = 'SELECT p.`id`, p.`name`, p.`color`, p.`number`, p.`comment`, p.`visible`, ';
@@ -448,7 +448,7 @@ final class ProjectRepository
      *  - customer with team    + project with team    => visible if user is member of at least one customer team AND at least one project team
      *
      * @param int $userId
-     * @return array of Projects with Customer
+     * @return array<int, array<string, mixed>> Project rows (id, name, color, number, comment, visible, customerName, customerColor)
      */
     public function findAllProjectsWithCustomerByUserId(int $userId): array {
         $sql  = 'SELECT DISTINCT p.`id`, p.`name`, p.`color`, p.`number`, p.`comment`, p.`visible`, ';
@@ -486,7 +486,7 @@ final class ProjectRepository
      *  - customer with team    + project with team    => visible if user is member of at least one customer team AND at least one project team
      *
      * @param int $teamId
-     * @return array of Projects with Customer
+     * @return array<int, array<string, mixed>> Project rows (id, name, color, number, comment, visible, customerName, customerColor)
      */
     public function findAllProjectsWithCustomerByTeamId(int $teamId): array {
         $sql  = 'SELECT DISTINCT p.`id`, p.`name`, p.`color`, p.`number`, p.`comment`, p.`visible`, ';
@@ -619,7 +619,7 @@ final class ProjectRepository
      * Insert Teams
      *
      * @param int $projectId
-     * @param array $data Array of teamIds
+     * @param array<int, int> $data Team ids
      * @return bool
      */
     public function insertTeams(int $projectId, array $data): bool {
@@ -699,7 +699,7 @@ final class ProjectRepository
      * Update Teams
      *
      * @param int $projectId
-     * @param array $data Array of teamIds
+     * @param array<int, int> $data Team ids
      * @return bool
      */
     public function updateTeams(int $projectId, array $data): bool {
@@ -759,7 +759,7 @@ final class ProjectRepository
      * Insert Activities
      *
      * @param int $projectId
-     * @param array $data Array of activityIds
+     * @param array<int, int|string> $data Activity ids (cast to int)
      * @return bool
      */
     public function insertActivities(int $projectId, array $data): bool {
@@ -840,7 +840,7 @@ final class ProjectRepository
      * Update Activities
      *
      * @param int $projectId
-     * @param array $data Array of activityIds
+     * @param array<int, int|string> $data Activity ids (cast to int)
      * @return bool
      */
     public function updateActivities(int $projectId, array $data): bool {

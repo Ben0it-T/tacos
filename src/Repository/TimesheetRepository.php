@@ -25,7 +25,7 @@ final class TimesheetRepository
      * Find Timesheet by id
      *
      * @param int $id
-     * @return Timesheet entity or false
+     * @return Timesheet|false Timesheet entity or false
      */
     public function find(int $id): Timesheet|false {
         $sql = 'SELECT t.* FROM `tacos_timesheet` t WHERE t.`id` = :id LIMIT 1';
@@ -48,7 +48,7 @@ final class TimesheetRepository
      *
      * @param int $id
      * @param int $userId
-     * @return Timesheet entity or false
+     * @return Timesheet|false Timesheet entity or false
      */
     public function findOneByIdAndUserId(int $id, int $userId): Timesheet|false {
         $sql  = 'SELECT t.* ';
@@ -75,7 +75,7 @@ final class TimesheetRepository
      * Find the last active Timesheet by user ID
      *
      * @param int $userId
-     * @return Timesheet entity or false
+     * @return Timesheet|false Timesheet entity or false
      */
     public function findOneActiveRecordByUserId(int $userId): Timesheet|false {
         $sql  = 'SELECT t.* ';
@@ -101,7 +101,7 @@ final class TimesheetRepository
     /**
      * Find all Timesheets
      *
-     * @return array of Timesheet entities
+     * @return array<int, Timesheet> Timesheet entities indexed by id
      */
     public function findAll(): array {
         $sql = 'SELECT t.* FROM `tacos_timesheet` t ORDER BY t.`start` ASC';
@@ -121,13 +121,13 @@ final class TimesheetRepository
     /**
      * Find all Timesheets (with User, Projet, Activity and Tags) by criteria
      *
-     * @param array $dates
-     * @param array $usersIds
-     * @param array $projectIds
-     * @param array $activityIds
-     * @param array $tagIds
+     * @param array<int, string> $dates [start, end] (Y-m-d), or [] for no date filter
+     * @param array<int, int> $usersIds User ids ([] for no filter)
+     * @param array<int, int> $projectIds Project ids ([] for no filter)
+     * @param array<int, int> $activityIds Activity ids ([] for no filter)
+     * @param array<int, int> $tagIds Tag ids ([] for no filter)
      *
-     * @return array of Timesheet with User, Projet, Activity and Tags
+     * @return array<int, array<string, mixed>> Timesheet rows (t.* with userName, projectName, projectColor, projectNumber, activityName, activityColor, activityNumber, tagIds)
      */
     public function findTimesheetsWithUserAndProjectAndActivityAndTagsByCriteria(array $dates, array $usersIds, array $projectIds, array $activityIds, array $tagIds): array {
         $params = array();
@@ -198,7 +198,7 @@ final class TimesheetRepository
      * Find all active Timesheets by user Id
      *
      * @param int $userId
-     * @return array of Timesheets entities
+     * @return array<int, Timesheet> Running timesheet entities indexed by id
      */
     public function findAllActiveRecordsByUserId(int $userId): array {
         $sql  = 'SELECT t.* ';
@@ -303,8 +303,8 @@ final class TimesheetRepository
      * @param int $userId
      * @param string $date1 Y-m-d
      * @param string $date2 Y-m-d
-     * @param int $report
-     * @return array
+     * @param int $report Grouping: 1 project, 2 project number, 3 activity, 4 activity number, 5 customer, 6 customer number (default: project)
+     * @return array{data: array<int, array<string, mixed>>, sumRows: array<int, array<string, mixed>>, sumCols: array<int, array<string, mixed>>, total: mixed} data: duration per name and date; sumRows: per name; sumCols: per date; total: total duration
      */
     public function getReportData(int $userId, string $date1, string $date2, int $report): array {
 
@@ -612,7 +612,7 @@ final class TimesheetRepository
      * Insert Tags
      *
      * @param int $timesheetId
-     * @param array $data Array of tagsIds
+     * @param array<int, int> $data Tag ids
      * @return bool
      */
     public function insertTags(int $timesheetId, array $data): bool {
@@ -693,7 +693,7 @@ final class TimesheetRepository
      * Update Tags
      *
      * @param int $timesheetId
-     * @param array $data Array of tagsIds
+     * @param array<int, int> $data Tag ids
      * @return bool
      */
     public function updateTags(int $timesheetId, array $data): bool {

@@ -25,7 +25,7 @@ final class UserRepository
      * Find (enabled) User by id
      *
      * @param int $id
-     * @return User entity or false
+     * @return User|false User entity or false
      */
     public function find(int $id): User|false {
         $sql = 'SELECT u.* FROM `tacos_users` u WHERE u.`id` = :id AND u.`enabled` = 1 LIMIT 1';
@@ -47,7 +47,7 @@ final class UserRepository
      * Find (enabled) User by identifier
      *
      * @param string $identifier
-     * @return User entity or false
+     * @return User|false User entity or false
      */
     public function findOneByIdentifier(string $identifier): User|false {
         $sql  = 'SELECT u.* ';
@@ -76,7 +76,7 @@ final class UserRepository
      *
      * @param string $token
      * @param int $tokenLifetime
-     * @return User entity or false
+     * @return User|false User entity or false
      */
     public function findOneByToken(string $token, int $tokenLifetime): User|false {
         $threshold = date("Y-m-d H:i:s", intval(time() - $tokenLifetime));
@@ -106,7 +106,7 @@ final class UserRepository
      * Find User by username
      *
      * @param string $username
-     * @return User entity or false
+     * @return User|false User entity or false
      */
     public function findOneByUsername(string $username): User|false {
         $sql  = 'SELECT u.* ';
@@ -132,7 +132,7 @@ final class UserRepository
      * Find all Users
      *
      * @param ?int $enabled
-     * @return array of User entities
+     * @return array<int, User> User entities indexed by id
      */
     public function findAll(?int $enabled = null): array {
         $sql  = 'SELECT u.* ';
@@ -161,9 +161,9 @@ final class UserRepository
     /**
      * Find all Users in Teams
      *
-     * @param array $teamsIds
+     * @param array<int, int> $teamsIds Team ids
      * @param ?int $enabled
-     * @return array of User entities
+     * @return array<int, User> User entities indexed by id
      */
     public function findAllUsersInTeams(array $teamsIds, ?int $enabled = null): array {
         $users = array();
@@ -201,7 +201,7 @@ final class UserRepository
      *
      * @param $teamId
      * @param $enabled
-     * @return array of Users
+     * @return array<int, array<string, mixed>> Member rows (id, name, enabled, teamlead)
      */
     public function findAllUsersByTeamId(int $teamId, ?int $enabled = null): array {
         $sql  = 'SELECT u.`id`, u.`name`, u.`enabled`, ut.`teamlead` ';
@@ -230,7 +230,7 @@ final class UserRepository
      *
      * @param $teamId
      * @param $enabled
-     * @return array of Teamleaders
+     * @return array<int, array<string, mixed>> Teamleader rows (id, name, enabled)
      */
     public function findAllTeamleadersByTeamId(int $teamId, ?int $enabled = null): array {
         $sql  = 'SELECT u.`id`, u.`name`, u.`enabled` ';
@@ -257,7 +257,7 @@ final class UserRepository
     /**
      * Find all Users with Teams count
      *
-     * @return array of Users with Role and Teams count
+     * @return array<int, array<string, mixed>> User rows (id, username, name, enable, lastLogin, role, teams)
      */
     public function findAllUsersWithTeamCount(): array {
         $sql  = 'SELECT u.`id`, u.`username`, u.`name`, u.`enabled` as enable, u.`last_login` as lastLogin, ';

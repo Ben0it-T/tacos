@@ -38,7 +38,7 @@ final class RoleRepository
     /**
      * Find all Roles
      *
-     * @return array of Role entities
+     * @return array<int, Role> Role entities indexed by id
      */
     public function findAll(): array {
         $stmt = $this->pdo->prepare('SELECT `tacos_roles`.* FROM `tacos_roles`');

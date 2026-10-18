@@ -22,7 +22,7 @@ final class TeamRepository
      * Find Team by id
      *
      * @param int $id
-     * @return Team entity or false
+     * @return Team|false Team entity or false
      */
     public function find(int $id): Team|false {
         $sql = 'SELECT t.* FROM `tacos_teams` t WHERE t.`id` = :id LIMIT 1';
@@ -45,7 +45,7 @@ final class TeamRepository
      *
      * @param int $teamId
      * @param int $teamleaderId
-     * @return Team entity or false
+     * @return Team|false Team entity or false
      */
     public function findOneByIdAndTeamleaderId(int $teamId, int $teamleaderId): Team|false {
         $sql  = 'SELECT t.* ';
@@ -76,7 +76,7 @@ final class TeamRepository
     /**
      * Find all Teams
      *
-     * @return array of Team entities
+     * @return array<int, Team> Team entities indexed by id
      */
     public function findAll(): array {
         $sql = 'SELECT t.* FROM `tacos_teams` t ORDER BY t.`name` ASC';
@@ -97,7 +97,7 @@ final class TeamRepository
      * Find all Teams by activity id
      *
      * @param int $activityId
-     * @return array of Team entities
+     * @return array<int, Team> Team entities indexed by id
      */
     public function findAllByActivityId(int $activityId): array {
         $sql  = 'SELECT t.* ';
@@ -124,7 +124,7 @@ final class TeamRepository
      * Find all Teams by customer id
      *
      * @param int $customerId
-     * @return array of Team entities
+     * @return array<int, Team> Team entities indexed by id
      */
     public function findAllByCustomerId(int $customerId): array {
         $sql  = 'SELECT t.* ';
@@ -151,7 +151,7 @@ final class TeamRepository
      * Find all Teams by project id
      *
      * @param int $projectId
-     * @return array of Team entities
+     * @return array<int, Team> Team entities indexed by id
      */
     public function findAllByProjectId(int $projectId): array {
         $sql  = 'SELECT t.* ';
@@ -178,7 +178,7 @@ final class TeamRepository
      * Find all Teams by user id
      *
      * @param int $userId
-     * @return array of Team entities
+     * @return array<int, Team> Team entities indexed by id
      */
     public function findAllByUserId(int $userId): array {
         $sql  = 'SELECT t.* ';
@@ -205,7 +205,7 @@ final class TeamRepository
      * Find all Teams by teamleader id
      *
      * @param int $teamleaderId
-     * @return array of Team entities
+     * @return array<int, Team> Team entities indexed by id
      */
     public function findAllByTeamleaderId(int $teamleaderId): array {
         $sql  = 'SELECT t.* ';
@@ -261,7 +261,7 @@ final class TeamRepository
      * Find all Teams with teamlead by user id
      *
      * @param int $userId
-     * @return array of Team entities
+     * @return array<int, array<string, mixed>> Team rows of the user (id, name, color, teamlead)
      */
     public function findAllTeamsWithTeamleadByUserId(int $userId): array {
         $sql  = 'SELECT t.`id`, t.`name`, t.`color`, ut.`teamlead` ';
@@ -281,7 +281,7 @@ final class TeamRepository
     /**
      * Find all Teams with Users count and Teamleaders
      *
-     * @return array of Teams with Users count and Teamleaders
+     * @return array<int, array<string, mixed>> Team rows (id, name, color, members, teamleaders)
      */
     public function findAllTeamsWithUserCountAndTeamleads(): array {
         $sql  = "SELECT t.`id`, t.`name`, t.`color`, ";
@@ -302,7 +302,7 @@ final class TeamRepository
     /**
      * Find all Teams with Users count and Teamleaders by Teamleader id
      *
-     * @return array of Teams with Users count and Teamleaders
+     * @return array<int, array<string, mixed>> Team rows (id, name, color, members, teamleaders)
      */
     public function findAllTeamsWithUserCountAndTeamleadsByTeamleaderId(int $teamleaderId): array {
         $sql  = "SELECT t.`id`, t.`name`, t.`color`, ";
@@ -418,7 +418,7 @@ final class TeamRepository
      * Insert Members
      *
      * @param int $teamId
-     * @param array $data Array of userIds
+     * @param array<int, array<string, mixed>> $data Members indexed by user id, each with a 'teamlead' flag (0|1)
      * @return bool
      */
     public function insertMembers(int $teamId, array $data): bool {
@@ -490,7 +490,7 @@ final class TeamRepository
      * Update Members
      *
      * @param int $teamId
-     * @param array $data Array of userIds
+     * @param array<int, array<string, mixed>> $data Members indexed by user id, each with a 'teamlead' flag (0|1)
      * @return bool
      */
     public function updateMembers(int $teamId, array $data): bool {

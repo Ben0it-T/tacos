@@ -141,7 +141,7 @@ final class ActivityRepository
      * Find All Activities
      *
      * @param ?int $visible
-     * @return array of Activity entities
+     * @return array<int, Activity> Activity entities indexed by id
      */
     public function findAll(?int $visible = null): array {
         $sql  = 'SELECT a.* FROM `tacos_activities` a ';
@@ -173,7 +173,7 @@ final class ActivityRepository
      *
      * @param int  $projectId
      * @param ?int $visible
-     * @return array of Activity entities
+     * @return array<int, Activity> Activity entities indexed by id
      */
     public function findAllByProjectId(int $projectId, ?int $visible = null): array {
         $sql  = 'SELECT a.* ';
@@ -208,7 +208,7 @@ final class ActivityRepository
      *
      * @param int  $projectId
      * @param ?int $visible
-     * @return array of Activity entities
+     * @return array<int, Activity> Activity entities indexed by id
      */
     public function findAllProjectActivitiesByProjectId(int $projectId, ?int $visible = null): array {
         $sql  = 'SELECT a.* ';
@@ -241,7 +241,7 @@ final class ActivityRepository
      * Find All 'Global Activities'
      *
      * @param ?int $visible
-     * @return array of Activity entities
+     * @return array<int, Activity> Activity entities indexed by id
      */
     public function findAllGlobalActivities(?int $visible = null): array {
         $sql  = 'SELECT a.* ';
@@ -275,7 +275,7 @@ final class ActivityRepository
      *
      * @param int  $userId
      * @param ?int $visible
-     * @return array of Activity entities
+     * @return array<int, Activity> Activity entities indexed by id
      */
     public function findAllByUserId(int $userId, ?int $visible = null): array {
         $sql  = 'SELECT DISTINCT a.* ';
@@ -311,7 +311,7 @@ final class ActivityRepository
      *
      * @param int  $teamleaderId
      * @param ?int $visible
-     * @return array of Activity entities
+     * @return array<int, Activity> Activity entities indexed by id
      */
     public function findAllByTeamleaderId(int $teamleaderId, ?int $visible = null): array {
         $sql  = 'SELECT DISTINCT a.* ';
@@ -348,7 +348,7 @@ final class ActivityRepository
      * @param int  $userId
      * @param int  $projectId
      * @param ?int $visible
-     * @return array of Activity entities
+     * @return array<int, Activity> Activity entities indexed by id
      */
     public function findAllByUserIdAndProjectId(int $userId, int $projectId, ?int $visible = null): array {
         $sql  = 'SELECT DISTINCT a.* ';
@@ -407,7 +407,7 @@ final class ActivityRepository
     /**
      * Find All Activities with Teams count and Project
      *
-     * @return array of Activities with Teams count and Project
+     * @return array<int, array<string, mixed>> Activity rows (id, name, color, number, comment, visible, projectName, projectColor, teamsCount)
      */
     public function findAllActivitiesWithTeamsCountAndProject(): array {
         $sql  = 'SELECT a.`id`, a.`name`, a.`color`, a.`number`, a.`comment`, a.`visible`, ';
@@ -429,7 +429,7 @@ final class ActivityRepository
      * Find All Activities with Teams count and Project by Teamleader id
      *
      * @param int $teamleaderId
-     * @return array of Activities with Teams count and Project
+     * @return array<int, array<string, mixed>> Activity rows (id, name, color, number, comment, visible, projectName, projectColor, teamsCount)
      */
     public function findAllActivitiesWithTeamsCountAndProjectByTeamleaderId(int $teamleaderId): array {
         $sql  = 'SELECT a.`id`, a.`name`, a.`color`, a.`number`, a.`comment`, a.`visible`, ';
@@ -550,7 +550,7 @@ final class ActivityRepository
      * Insert Teams
      *
      * @param int $activityId
-     * @param array $data Array of teamIds
+     * @param array<int, int> $data Team ids
      * @return bool
      */
     public function insertTeams(int $activityId, array $data): bool {
@@ -631,7 +631,7 @@ final class ActivityRepository
      * Update Teams
      *
      * @param int $activityId
-     * @param array $data $data Array of teamIds
+     * @param array<int, int> $data Team ids
      * @return bool
      */
     public function updateTeams(int $activityId, array $data): bool {

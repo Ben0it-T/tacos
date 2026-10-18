@@ -22,7 +22,7 @@ final class TagRepository
      * Find Tag by id
      *
      * @param int $id
-     * @return Tag entity or false
+     * @return Tag|false Tag entity or false
      */
     public function find(int $id): Tag|false {
         $stmt = $this->pdo->prepare('SELECT t.* FROM `tacos_tags` t WHERE t.`id` = :id LIMIT 1');
@@ -43,7 +43,7 @@ final class TagRepository
      * Find All Tag
      *
      * @param ?int $visible
-     * @return array of Tag entities
+     * @return array<int, Tag> Tag entities indexed by id
      */
     public function findAll(?int $visible = null): array {
         $sql  = 'SELECT t.* FROM `tacos_tags` t ';
@@ -73,7 +73,7 @@ final class TagRepository
      *
      * @param int  $timesheetId
      * @param ?int $visible
-     * @return array of Tag entities
+     * @return array<int, Tag> Tag entities indexed by id
      */
     public function findAllByTimesheetId(int $timesheetId, ?int $visible = null): array {
         $sql  = 'SELECT t.* ';
@@ -105,7 +105,7 @@ final class TagRepository
      * Find All Tag ids by timesheet id
      *
      * @param int $timesheetId
-     * @return array of Tag ids
+     * @return array<int, int> Tag ids
      */
     public function findAllTagIdsByTimesheetId(int $timesheetId): array {
         $sql  = 'SELECT t.`id` ';
