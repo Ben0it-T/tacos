@@ -8,6 +8,7 @@ use App\Middleware\TwigCsrfMiddleware;
 
 use Slim\App;
 use Slim\Csrf\Guard;
+use Slim\Exception\HttpMethodNotAllowedException;
 use Slim\Exception\HttpNotFoundException;
 use Slim\Psr7\Response;
 use Slim\Views\Twig;
@@ -39,6 +40,16 @@ return function (App $app): void {
             $twig = $container->get(Twig::class);
             $response = new Response();
             return $twig->render($response->withStatus(404), 'not-found.html.twig');
+        }
+    );
+
+    // Method Not Allowed Handler: redirect to the timesheets
+    // (e.g. a GET on a POST-only route: logout, stop, restart)
+    $errorMiddleware->setErrorHandler(
+        HttpMethodNotAllowedException::class,
+        function ($request, Throwable $exception) use ($app) {
+            $url = $app->getRouteCollector()->getRouteParser()->urlFor('timesheets');
+            return (new Response())->withStatus(302)->withHeader('Location', $url);
         }
     );
 };
